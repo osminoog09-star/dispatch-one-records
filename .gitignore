@@ -24,6 +24,12 @@ clients/**/_stub/bin/
 clients/**/libs/*.dll
 clients/**/libs/*.exe
 
+# ===== Сборка агента (exe раздаётся отдельно, не через git) =====
+agent/build/
+agent/dist/*.exe
+agent/dist/_test_out.txt
+*.spec
+
 # ===== Скретч/временное =====
 vinewood-study/
 *.log

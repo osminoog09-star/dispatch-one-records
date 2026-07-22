@@ -12,13 +12,47 @@ import urllib.request
 import urllib.error
 
 # ---------- Настройки ----------
-PDCOMP_STORE = os.environ.get(
+import sys
+
+
+def _base_dir():
+    # рядом с .exe (PyInstaller) или рядом со скриптом
+    if getattr(sys, "frozen", False):
+        return os.path.dirname(sys.executable)
+    return os.path.dirname(os.path.abspath(__file__))
+
+
+def _load_config_file():
+    """Читает sync-config.ini рядом с программой (key=value). Возвращает dict."""
+    cfg = {}
+    path = os.path.join(_base_dir(), "sync-config.ini")
+    if os.path.exists(path):
+        try:
+            for line in open(path, "r", encoding="utf-8-sig"):
+                line = line.strip()
+                if not line or line.startswith("#") or line.startswith(";") or "=" not in line:
+                    continue
+                k, v = line.split("=", 1)
+                cfg[k.strip().upper()] = v.strip()
+        except Exception as e:
+            print(f"[warn] не прочитать sync-config.ini: {e}")
+    return cfg
+
+
+_FILE = _load_config_file()
+
+
+def _setting(key, default):
+    return _FILE.get(key) or os.environ.get(key) or default
+
+
+PDCOMP_STORE = _setting(
     "PDCOMP_STORE",
     r"C:\Program Files\Rockstar Games\Grand Theft Auto V Legacy\plugins\LSPDFR\pdComp\data\store",
 )
-SITE_URL = os.environ.get("SITE_URL", "http://localhost:8000")
-API_KEY = os.environ.get("RECORDS_API_KEY", "dev-key")
-POLL_SECONDS = int(os.environ.get("POLL_SECONDS", "8"))
+SITE_URL = _setting("SITE_URL", "http://localhost:8000").rstrip("/")
+API_KEY = _setting("RECORDS_API_KEY", "dev-key")
+POLL_SECONDS = int(_setting("POLL_SECONDS", "8"))
 
 
 def fix_mojibake(s):

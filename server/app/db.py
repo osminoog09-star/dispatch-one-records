@@ -1,27 +1,25 @@
 """Слой БД (SQLite, stdlib — без ORM). Дела, офицеры, история статусов."""
 import sqlite3
+import json
 import datetime
 from contextlib import contextmanager
 
 import config
 
-# Статусы дела (конечный автомат) + русские подписи
 STATUSES = ["submitted", "under_review", "in_court", "convicted", "dismissed", "closed"]
 STATUS_RU = {
-    "submitted": "Подано",
-    "under_review": "На рассмотрении",
-    "in_court": "В суде",
-    "convicted": "Приговор",
-    "dismissed": "Отклонено",
-    "closed": "Закрыто",
+    "submitted": "Подано", "under_review": "На рассмотрении", "in_court": "В суде",
+    "convicted": "Приговор", "dismissed": "Отклонено", "closed": "Закрыто",
 }
 LICENSE_RU = {
-    "Valid": "Действительны",
-    "Suspended": "Приостановлены",
-    "Expired": "Просрочены",
-    "Unlicensed": "Без прав",
-    "None": "—",
-    None: "—",
+    "Valid": "Действительны", "Suspended": "Приостановлены", "Expired": "Просрочены",
+    "Unlicensed": "Без прав", "None": "—", None: "—",
+}
+
+# Доп. колонки (для миграции существующей БД)
+EXTRA_COLUMNS = {
+    "vehicle_model": "TEXT", "vehicle_plate": "TEXT", "vehicle_color": "TEXT",
+    "charges": "TEXT", "found_items": "TEXT", "reason": "TEXT", "notes": "TEXT",
 }
 
 
@@ -59,6 +57,8 @@ def init_db():
                 screenshot TEXT,
                 status TEXT NOT NULL DEFAULT 'submitted',
                 discord_sent INTEGER DEFAULT 0,
+                vehicle_model TEXT, vehicle_plate TEXT, vehicle_color TEXT,
+                charges TEXT, found_items TEXT, reason TEXT, notes TEXT,
                 FOREIGN KEY (officer_id) REFERENCES officers(id)
             );
             CREATE TABLE IF NOT EXISTS status_log (
@@ -70,10 +70,46 @@ def init_db():
             );
             """
         )
+        # миграция: добавить недостающие колонки в старую БД
+        existing = {r["name"] for r in c.execute("PRAGMA table_info(cases)").fetchall()}
+        for col, typ in EXTRA_COLUMNS.items():
+            if col not in existing:
+                c.execute(f"ALTER TABLE cases ADD COLUMN {col} {typ}")
 
 
 def _now():
     return datetime.datetime.now().isoformat(timespec="seconds")
+
+
+# ---------- Авто-вывод статей из данных (то, чего игра сама не даёт) ----------
+def derive_charges(data):
+    """Формирует список статей по тому, что известно об аресте."""
+    charges = []
+    if data.get("wanted"):
+        charges.append("Нахождение в розыске")
+    lic = data.get("license_state")
+    if lic == "Suspended":
+        charges.append("Управление ТС с приостановленными правами")
+    elif lic == "Expired":
+        charges.append("Управление с просроченными правами")
+    elif lic == "Unlicensed":
+        charges.append("Управление ТС без прав")
+    for item in (data.get("found_items") or []):
+        low = str(item).lower()
+        if any(w in low for w in ["оруж", "пистол", "ствол", "нож"]):
+            charges.append("Незаконное хранение оружия")
+        elif any(w in low for w in ["наркот", "марих", "кокаин", "вещест"]):
+            charges.append("Хранение запрещённых веществ")
+        elif any(w in low for w in ["краден", "угон"]):
+            charges.append("Хранение краденого имущества")
+    if (data.get("citations") or 0) >= 3:
+        charges.append("Множественные нарушения ПДД")
+    # убрать дубли, сохранить порядок
+    seen, out = set(), []
+    for ch in charges:
+        if ch not in seen:
+            seen.add(ch); out.append(ch)
+    return out
 
 
 def get_or_create_officer(callsign, name=None):
@@ -88,43 +124,59 @@ def get_or_create_officer(callsign, name=None):
 
 
 def create_case(data):
-    """data: dict от мода. Возвращает id нового дела."""
     officer_id = get_or_create_officer(data.get("callsign", "UNKNOWN"), data.get("officer_name"))
     now = _now()
+
+    found = data.get("found_items") or []
+    if isinstance(found, str):
+        found = [x.strip() for x in found.split(",") if x.strip()]
+
+    charges = data.get("charges")
+    if not charges:                       # статей нет — выводим автоматически
+        charges = derive_charges({**data, "found_items": found})
+    elif isinstance(charges, str):
+        charges = [x.strip() for x in charges.split(",") if x.strip()]
+
     with get_conn() as c:
         cur = c.execute(
             """INSERT INTO cases
                (officer_id, suspect_name, wanted, license_state, citations, zone, postal,
-                game_time, created_at, screenshot, status)
-               VALUES (?,?,?,?,?,?,?,?,?,?, 'submitted')""",
+                game_time, created_at, screenshot, status,
+                vehicle_model, vehicle_plate, vehicle_color, charges, found_items, reason, notes)
+               VALUES (?,?,?,?,?,?,?,?,?,?, 'submitted', ?,?,?,?,?,?,?)""",
             (
-                officer_id,
-                data.get("suspect_name", "Неизвестный"),
-                1 if data.get("wanted") else 0,
-                data.get("license_state"),
-                int(data.get("citations", 0) or 0),
-                data.get("zone"),
-                data.get("postal"),
-                data.get("game_time"),
-                now,
-                data.get("screenshot"),
+                officer_id, data.get("suspect_name", "Неизвестный"),
+                1 if data.get("wanted") else 0, data.get("license_state"),
+                int(data.get("citations", 0) or 0), data.get("zone"), data.get("postal"),
+                data.get("game_time"), now, data.get("screenshot"),
+                data.get("vehicle_model"), data.get("vehicle_plate"), data.get("vehicle_color"),
+                json.dumps(charges, ensure_ascii=False), json.dumps(found, ensure_ascii=False),
+                data.get("reason"), data.get("notes"),
             ),
         )
         case_id = cur.lastrowid
-        c.execute(
-            "INSERT INTO status_log (case_id, status, changed_at) VALUES (?, 'submitted', ?)",
-            (case_id, now),
-        )
+        c.execute("INSERT INTO status_log (case_id, status, changed_at) VALUES (?, 'submitted', ?)",
+                  (case_id, now))
         return case_id
 
 
+def _jsonlist(val):
+    if not val:
+        return []
+    try:
+        return json.loads(val)
+    except Exception:
+        return [x.strip() for x in str(val).split(",") if x.strip()]
+
+
 def _row_to_case(r):
-    return {
-        **dict(r),
-        "wanted": bool(r["wanted"]),
-        "status_ru": STATUS_RU.get(r["status"], r["status"]),
-        "license_ru": LICENSE_RU.get(r["license_state"], r["license_state"] or "—"),
-    }
+    d = dict(r)
+    d["wanted"] = bool(r["wanted"])
+    d["status_ru"] = STATUS_RU.get(r["status"], r["status"])
+    d["license_ru"] = LICENSE_RU.get(r["license_state"], r["license_state"] or "—")
+    d["charges"] = _jsonlist(r["charges"]) if "charges" in r.keys() else []
+    d["found_items"] = _jsonlist(r["found_items"]) if "found_items" in r.keys() else []
+    return d
 
 
 def list_cases(limit=100, officer_id=None, status=None):

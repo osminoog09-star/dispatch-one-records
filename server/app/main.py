@@ -102,16 +102,29 @@ def dev_seed():
     names = ["Джон Доу", "Майкл Смит", "Карлос Рамирес", "Анна Джонсон", "Дмитрий Волков"]
     zones = ["Vinewood Hills", "Del Perro", "Strawberry", "Sandy Shores", "Downtown"]
     lic = ["Valid", "Suspended", "Expired", "Unlicensed"]
+    vehicles = [("Bravado Buffalo", "чёрный"), ("Declasse Sabre", "красный"),
+                ("Vapid Dominator", "синий"), ("Karin Sultan", "белый"), ("Обеспечьте пешком", "—")]
+    contraband_pool = ["Пистолет Pistol .50", "Марихуана (24 г)", "Крупная сумма наличных ($4200)",
+                       "Краденый телефон", "Нож", "Кокаин (5 г)"]
+    reasons = ["Остановка транспорта — нарушение ПДД", "Подозрительное поведение",
+               "Реакция на вызов", "Проверка по ориентировке"]
+
+    veh, color = random.choice(vehicles)
+    found = random.sample(contraband_pool, k=random.randint(0, 3))
     data = {
-        "callsign": "7-WILLIAM-1",
-        "officer_name": "M1lash",
+        "callsign": "7-WILLIAM-1", "officer_name": "M1lash",
         "suspect_name": random.choice(names),
         "wanted": random.choice([True, False, False]),
         "license_state": random.choice(lic),
         "citations": random.randint(0, 6),
-        "zone": random.choice(zones),
-        "postal": str(random.randint(1000, 9999)),
+        "zone": random.choice(zones), "postal": str(random.randint(1000, 9999)),
         "game_time": f"{random.randint(0,23):02d}:{random.randint(0,59):02d}",
+        "vehicle_model": veh if veh != "Обеспечьте пешком" else None,
+        "vehicle_plate": None if veh == "Обеспечьте пешком" else "".join(random.choice("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ") for _ in range(8)),
+        "vehicle_color": None if veh == "Обеспечьте пешком" else color,
+        "found_items": found,
+        "reason": random.choice(reasons),
+        "notes": "Задержанный доставлен в участок. Сопротивления не оказывал.",
     }
     cid = db.create_case(data)
     flash(f"Создано тестовое дело #{cid}.", "ok")

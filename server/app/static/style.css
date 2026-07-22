@@ -81,6 +81,13 @@ h3{font-size:14px;margin:0 0 .5em;color:var(--muted);text-transform:uppercase;le
 .report-fields{display:grid;grid-template-columns:1fr 1fr;gap:12px 20px;margin:0}
 .report-fields dt{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.3px}
 .report-fields dd{margin:2px 0 0;font-weight:600}
+.rep-block{margin-top:16px;padding-top:14px;border-top:1px solid var(--border)}
+.rep-block h4{margin:0 0 8px;font-size:12px;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);font-weight:700}
+.rep-block p{margin:0}
+.chips-list{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:8px}
+.chip-charge,.chip-found{padding:5px 12px;border-radius:8px;font-size:13px;font-weight:600}
+.chip-charge{background:#2a1616;border:1px solid #7a3a3a;color:#f0b3b3}
+.chip-found{background:#211d12;border:1px solid #7a6a31;color:#e0cf9f}
 .shot{width:100%;border-radius:10px;margin-top:16px;border:1px solid var(--border)}
 
 .btn{background:var(--surface2);color:var(--text);border:1px solid var(--border);

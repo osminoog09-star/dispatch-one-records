@@ -23,11 +23,46 @@
       <div><dt>Подозреваемый</dt><dd>{{ case.suspect_name }}
         {% if case.wanted %}<span class="tag wanted">В РОЗЫСКЕ</span>{% else %}<span class="tag ok">Чисто</span>{% endif %}</dd></div>
       <div><dt>Права</dt><dd>{{ case.license_ru }}</dd></div>
-      <div><dt>Штрафы</dt><dd>{{ case.citations }}</dd></div>
+      <div><dt>Штрафы в истории</dt><dd>{{ case.citations }}</dd></div>
       <div><dt>Район</dt><dd>{{ case.zone or '—' }} {% if case.postal %}· индекс {{ case.postal }}{% endif %}</dd></div>
       <div><dt>Время</dt><dd>{{ case.game_time or '—' }}</dd></div>
       <div><dt>Офицер</dt><dd><a href="{{ url_for('officer_view', callsign=case.callsign) }}"><span class="cs">{{ case.callsign }}</span></a> {{ case.officer_name or '' }}</dd></div>
     </dl>
+
+    {% if case.reason %}
+    <div class="rep-block"><h4>Причина задержания</h4><p>{{ case.reason }}</p></div>
+    {% endif %}
+
+    <div class="rep-block">
+      <h4>Статьи <span class="muted small">(авто-вывод)</span></h4>
+      {% if case.charges %}
+        <ul class="chips-list">
+          {% for ch in case.charges %}<li class="chip-charge">{{ ch }}</li>{% endfor %}
+        </ul>
+      {% else %}<p class="muted">Статьи не вменялись.</p>{% endif %}
+    </div>
+
+    {% if case.vehicle_model %}
+    <div class="rep-block">
+      <h4>Транспортное средство</h4>
+      <p>{{ case.vehicle_model }}{% if case.vehicle_color %} · {{ case.vehicle_color }}{% endif %}
+         {% if case.vehicle_plate %} · номер <span class="cs">{{ case.vehicle_plate }}</span>{% endif %}</p>
+    </div>
+    {% endif %}
+
+    <div class="rep-block">
+      <h4>Изъято / найдено</h4>
+      {% if case.found_items %}
+        <ul class="chips-list">
+          {% for it in case.found_items %}<li class="chip-found">{{ it }}</li>{% endfor %}
+        </ul>
+      {% else %}<p class="muted">Ничего не изъято.</p>{% endif %}
+    </div>
+
+    {% if case.notes %}
+    <div class="rep-block"><h4>Заметки</h4><p>{{ case.notes }}</p></div>
+    {% endif %}
+
     {% if case.screenshot %}
       <img class="shot" src="{{ url_for('screenshot', fn=case.screenshot) }}" alt="Скриншот сцены">
     {% endif %}

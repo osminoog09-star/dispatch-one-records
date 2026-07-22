@@ -12,15 +12,26 @@ COLOR_NORMAL = 0x2E5C8A   # синий — обычное
 
 def build_embed(case):
     wanted = case["wanted"]
+    charges = case.get("charges") or []
+    found = case.get("found_items") or []
+    veh = case.get("vehicle_model")
+    veh_val = "—"
+    if veh:
+        veh_val = veh + (f" · {case['vehicle_color']}" if case.get("vehicle_color") else "")
+        if case.get("vehicle_plate"):
+            veh_val += f" · {case['vehicle_plate']}"
+
     fields = [
         {"name": "Подозреваемый", "value": case.get("suspect_name") or "Неизвестный", "inline": True},
         {"name": "Статус розыска", "value": "🔴 В розыске" if wanted else "🟢 Чисто", "inline": True},
         {"name": "Права", "value": case.get("license_ru") or "—", "inline": True},
-        {"name": "Район", "value": case.get("zone") or "—", "inline": True},
-        {"name": "Индекс", "value": case.get("postal") or "—", "inline": True},
-        {"name": "Штрафы", "value": str(case.get("citations") or 0), "inline": True},
+        {"name": "Причина", "value": case.get("reason") or "—", "inline": False},
+        {"name": "Статьи", "value": ("\n".join("• " + c for c in charges)) if charges else "—", "inline": False},
+        {"name": "Транспорт", "value": veh_val, "inline": True},
+        {"name": "Изъято", "value": (", ".join(found)) if found else "—", "inline": True},
+        {"name": "Район", "value": (case.get("zone") or "—") + (f" · {case['postal']}" if case.get("postal") else ""), "inline": True},
+        {"name": "Время", "value": case.get("game_time") or "—", "inline": True},
         {"name": "Офицер", "value": case.get("callsign") or "—", "inline": True},
-        {"name": "Время", "value": case.get("game_time") or case.get("created_at") or "—", "inline": True},
         {"name": "Статус дела", "value": case.get("status_ru") or "—", "inline": True},
     ]
     embed = {

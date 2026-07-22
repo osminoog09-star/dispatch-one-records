@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Дела{% endblock %}
+{% block content %}
+<h1>Реестр дел</h1>
+
+<div class="filters">
+  <a href="{{ url_for('cases') }}" class="chip {{ 'on' if not active_status }}">Все</a>
+  {% for s in statuses %}
+    <a href="{{ url_for('cases', status=s) }}" class="chip {{ 'on' if active_status==s }}">{{ STATUS_RU[s] }}</a>
+  {% endfor %}
+</div>
+
+{% if cases %}
+<table class="tbl">
+  <thead><tr><th>#</th><th>Подозреваемый</th><th>Район</th><th>Офицер</th><th>Создано</th><th>Статус</th></tr></thead>
+  <tbody>
+  {% for c in cases %}
+    <tr onclick="location='{{ url_for('case_view', cid=c.id) }}'">
+      <td>#{{ c.id }}</td>
+      <td>{{ c.suspect_name }} {% if c.wanted %}<span class="tag wanted">розыск</span>{% endif %}</td>
+      <td>{{ c.zone or '—' }}</td>
+      <td><span class="cs">{{ c.callsign }}</span></td>
+      <td class="muted">{{ c.created_at }}</td>
+      <td><span class="tag st-{{ c.status }}">{{ c.status_ru }}</span></td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% else %}
+  <p class="empty">Нет дел по этому фильтру.</p>
+{% endif %}
+{% endblock %}

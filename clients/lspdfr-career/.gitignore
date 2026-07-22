@@ -1,0 +1,7 @@
+bin/
+obj/
+_stub/out/
+_stub/obj/
+_stub/bin/
+libs/*.dll
+libs/*.exe

@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block title %}Дело #{{ case.id }}{% endblock %}
+{% block content %}
+
+<a class="back" href="{{ url_for('cases') }}">← к реестру</a>
+
+<div class="case-head">
+  <h1>Рапорт о задержании · Дело #{{ case.id }}</h1>
+  <span class="tag st-{{ case.status }} big">{{ case.status_ru }}</span>
+</div>
+
+<div class="case-grid">
+  <!-- Красивая карточка (данные — кириллица работает) -->
+  <section class="card report">
+    <div class="report-top">
+      <span class="badge">★</span>
+      <div>
+        <div class="rep-title">{{ community }} · Рапорт о задержании</div>
+        <div class="rep-sub">Дело #{{ case.id }} · {{ case.created_at }}</div>
+      </div>
+    </div>
+    <dl class="report-fields">
+      <div><dt>Подозреваемый</dt><dd>{{ case.suspect_name }}
+        {% if case.wanted %}<span class="tag wanted">В РОЗЫСКЕ</span>{% else %}<span class="tag ok">Чисто</span>{% endif %}</dd></div>
+      <div><dt>Права</dt><dd>{{ case.license_ru }}</dd></div>
+      <div><dt>Штрафы</dt><dd>{{ case.citations }}</dd></div>
+      <div><dt>Район</dt><dd>{{ case.zone or '—' }} {% if case.postal %}· индекс {{ case.postal }}{% endif %}</dd></div>
+      <div><dt>Время</dt><dd>{{ case.game_time or '—' }}</dd></div>
+      <div><dt>Офицер</dt><dd><a href="{{ url_for('officer_view', callsign=case.callsign) }}"><span class="cs">{{ case.callsign }}</span></a> {{ case.officer_name or '' }}</dd></div>
+    </dl>
+    {% if case.screenshot %}
+      <img class="shot" src="{{ url_for('screenshot', fn=case.screenshot) }}" alt="Скриншот сцены">
+    {% endif %}
+  </section>
+
+  <!-- Действия -->
+  <aside class="side">
+    <div class="card">
+      <h3>Отправить в Discord</h3>
+      <p class="muted small">Красивая карточка уйдёт в канал сообщества.</p>
+      <form method="post" action="{{ url_for('case_discord', cid=case.id) }}">
+        <button class="btn primary">
+          {% if case.discord_sent %}Отправить снова{% else %}Отправить карточку{% endif %}
+        </button>
+      </form>
+      {% if case.discord_sent %}<p class="sent">✓ Уже отправлялось</p>{% endif %}
+    </div>
+
+    <div class="card">
+      <h3>Статус дела</h3>
+      <form method="post" action="{{ url_for('case_status', cid=case.id) }}" class="statusform">
+        <select name="status">
+          {% for s in statuses %}
+            <option value="{{ s }}" {{ 'selected' if s==case.status }}>{{ STATUS_RU[s] }}</option>
+          {% endfor %}
+        </select>
+        <button class="btn">Обновить</button>
+      </form>
+    </div>
+
+    <div class="card">
+      <h3>История статусов</h3>
+      <ul class="history">
+        {% for h in case.history %}
+          <li><span class="tag st-{{ h.status }}">{{ h.status_ru }}</span> <span class="muted small">{{ h.changed_at }}</span></li>
+        {% endfor %}
+      </ul>
+    </div>
+  </aside>
+</div>
+{% endblock %}

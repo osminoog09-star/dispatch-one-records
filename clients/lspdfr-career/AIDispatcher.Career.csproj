@@ -1,0 +1,48 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net48</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <AssemblyName>AIDispatcher.Career</AssemblyName>
+    <RootNamespace>DispatchOne.Career</RootNamespace>
+    <PlatformTarget>x64</PlatformTarget>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <Deterministic>true</Deterministic>
+    <Copyright>Dispatch One</Copyright>
+    <Product>Dispatch One — Career</Product>
+  </PropertyGroup>
+
+  <!-- Позволяет собирать net48 через dotnet SDK без установки targeting pack в систему -->
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
+  </ItemGroup>
+
+  <!-- Папка заглушки — не часть основного проекта -->
+  <ItemGroup>
+    <Compile Remove="_stub\**\*.cs" />
+  </ItemGroup>
+
+  <!-- Игровые/модовые сборки: ссылаемся, но НЕ копируем в вывод (Private=false) -->
+  <ItemGroup>
+    <!-- Для СБОРКИ используем читаемую сборку с типами Rage.* .
+         Вариант A (боевой): libs\RagePluginHookAPI.dll (официальный SDK RagePluginHook).
+         Вариант B (проверка компиляции без скачивания): _stub\out\RagePluginHook.dll — заглушка. -->
+    <Reference Include="RagePluginHook">
+      <HintPath>_stub\out\RagePluginHook.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="LSPD First Response">
+      <HintPath>libs\LSPD First Response.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="RAGENativeUI">
+      <HintPath>libs\RAGENativeUI.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Newtonsoft.Json">
+      <HintPath>libs\Newtonsoft.Json.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+
+</Project>

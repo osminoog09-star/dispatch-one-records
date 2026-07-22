@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Офицер {{ officer.callsign }}{% endblock %}
+{% block content %}
+<a class="back" href="{{ url_for('index') }}">← на главную</a>
+
+<div class="case-head">
+  <h1><span class="cs big">{{ officer.callsign }}</span> {{ officer.name or '' }}</h1>
+  <span class="tag">{{ cases|length }} дел</span>
+</div>
+
+<h2>Дела офицера</h2>
+{% if cases %}
+<table class="tbl">
+  <thead><tr><th>#</th><th>Подозреваемый</th><th>Район</th><th>Создано</th><th>Статус</th></tr></thead>
+  <tbody>
+  {% for c in cases %}
+    <tr onclick="location='{{ url_for('case_view', cid=c.id) }}'">
+      <td>#{{ c.id }}</td>
+      <td>{{ c.suspect_name }} {% if c.wanted %}<span class="tag wanted">розыск</span>{% endif %}</td>
+      <td>{{ c.zone or '—' }}</td>
+      <td class="muted">{{ c.created_at }}</td>
+      <td><span class="tag st-{{ c.status }}">{{ c.status_ru }}</span></td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% else %}
+  <p class="empty">У офицера пока нет дел.</p>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}Сводка{% endblock %}
+{% block content %}
+
+<section class="stats">
+  <div class="stat"><div class="num">{{ summary.total }}</div><div class="lbl">Всего дел</div></div>
+  <div class="stat"><div class="num">{{ summary.today }}</div><div class="lbl">Сегодня</div></div>
+  <div class="stat"><div class="num">{{ summary.officers }}</div><div class="lbl">Офицеров</div></div>
+  <div class="stat"><a class="seed" href="{{ url_for('dev_seed') }}">+ тест-дело</a></div>
+</section>
+
+<div class="cols">
+  <section class="col">
+    <h2>Последние дела</h2>
+    {% if cases %}
+      <table class="tbl">
+        <thead><tr><th>#</th><th>Подозреваемый</th><th>Офицер</th><th>Статус</th></tr></thead>
+        <tbody>
+        {% for c in cases %}
+          <tr onclick="location='{{ url_for('case_view', cid=c.id) }}'">
+            <td>#{{ c.id }}</td>
+            <td>{{ c.suspect_name }} {% if c.wanted %}<span class="tag wanted">розыск</span>{% endif %}</td>
+            <td><span class="cs">{{ c.callsign }}</span></td>
+            <td><span class="tag st-{{ c.status }}">{{ c.status_ru }}</span></td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <p class="empty">Дел пока нет. Нажми «+ тест-дело», чтобы проверить.</p>
+    {% endif %}
+  </section>
+
+  <section class="col">
+    <h2>Офицеры</h2>
+    {% if officers %}
+      <table class="tbl">
+        <thead><tr><th>Позывной</th><th>Дел</th><th>Розыск</th></tr></thead>
+        <tbody>
+        {% for o in officers %}
+          <tr onclick="location='{{ url_for('officer_view', callsign=o.callsign) }}'">
+            <td><span class="cs">{{ o.callsign }}</span> {{ o.name or '' }}</td>
+            <td>{{ o.cases_count }}</td>
+            <td>{{ o.wanted_count or 0 }}</td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <p class="empty">Офицеров пока нет.</p>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}

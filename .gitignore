@@ -1,0 +1,36 @@
+# ===== Секреты и локальные данные =====
+.env
+*.env
+server/data.db
+server/screenshots/*
+!server/screenshots/.gitkeep
+
+# ===== Python =====
+__pycache__/
+*.py[cod]
+.venv/
+server/.venv/
+*.egg-info/
+
+# ===== .NET (карьерный мод / клиент) =====
+bin/
+obj/
+clients/**/bin/
+clients/**/obj/
+clients/**/_stub/out/
+clients/**/_stub/obj/
+clients/**/_stub/bin/
+# Чужие игровые DLL не коммитим (лицензии — см. docs/LEGAL-IP.md)
+clients/**/libs/*.dll
+clients/**/libs/*.exe
+
+# ===== Скретч/временное =====
+vinewood-study/
+*.log
+
+# ===== IDE / ОС =====
+.vs/
+.idea/
+.vscode/
+Thumbs.db
+Desktop.ini

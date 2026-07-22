@@ -125,6 +125,9 @@ def dev_seed():
         "found_items": found,
         "reason": random.choice(reasons),
         "notes": "Задержанный доставлен в участок. Сопротивления не оказывал.",
+        "fine": random.choice([0, 250, 500, 750, 1200]),
+        "bail": random.choice([0, 1000, 2500, 5000]),
+        "jail_time": random.choice(["—", "5 суток", "30 суток", "6 месяцев", "2 года"]),
     }
     cid = db.create_case(data)
     flash(f"Создано тестовое дело #{cid}.", "ok")

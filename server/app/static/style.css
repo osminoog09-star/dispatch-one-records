@@ -81,6 +81,12 @@ h3{font-size:14px;margin:0 0 .5em;color:var(--muted);text-transform:uppercase;le
 .report-fields{display:grid;grid-template-columns:1fr 1fr;gap:12px 20px;margin:0}
 .report-fields dt{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.3px}
 .report-fields dd{margin:2px 0 0;font-weight:600}
+.mugshot{width:60px;height:60px;border-radius:10px;object-fit:cover;border:1px solid var(--border);flex-shrink:0}
+.mugshot.placeholder{display:grid;place-items:center;font-size:28px;background:var(--surface2);color:var(--muted)}
+.penalties{display:flex;gap:10px;flex-wrap:wrap}
+.pen{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 16px;min-width:90px}
+.pen-lbl{display:block;font-size:11px;text-transform:uppercase;color:var(--muted);letter-spacing:.3px}
+.pen-val{display:block;font-size:18px;font-weight:700;margin-top:2px}
 .rep-block{margin-top:16px;padding-top:14px;border-top:1px solid var(--border)}
 .rep-block h4{margin:0 0 8px;font-size:12px;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);font-weight:700}
 .rep-block p{margin:0}

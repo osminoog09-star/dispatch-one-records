@@ -20,7 +20,17 @@ LICENSE_RU = {
 EXTRA_COLUMNS = {
     "vehicle_model": "TEXT", "vehicle_plate": "TEXT", "vehicle_color": "TEXT",
     "charges": "TEXT", "found_items": "TEXT", "reason": "TEXT", "notes": "TEXT",
+    "mugshot": "TEXT", "fine": "INTEGER", "bail": "INTEGER", "jail_time": "TEXT",
 }
+
+
+def fmt_dt(iso):
+    """ISO → 'ДД.ММ.ГГГГ ЧЧ:ММ' (реальное время задержания)."""
+    try:
+        dt = datetime.datetime.fromisoformat(iso)
+        return dt.strftime("%d.%m.%Y %H:%M")
+    except Exception:
+        return iso or "—"
 
 
 @contextmanager
@@ -59,6 +69,7 @@ def init_db():
                 discord_sent INTEGER DEFAULT 0,
                 vehicle_model TEXT, vehicle_plate TEXT, vehicle_color TEXT,
                 charges TEXT, found_items TEXT, reason TEXT, notes TEXT,
+                mugshot TEXT, fine INTEGER, bail INTEGER, jail_time TEXT,
                 FOREIGN KEY (officer_id) REFERENCES officers(id)
             );
             CREATE TABLE IF NOT EXISTS status_log (
@@ -142,8 +153,9 @@ def create_case(data):
             """INSERT INTO cases
                (officer_id, suspect_name, wanted, license_state, citations, zone, postal,
                 game_time, created_at, screenshot, status,
-                vehicle_model, vehicle_plate, vehicle_color, charges, found_items, reason, notes)
-               VALUES (?,?,?,?,?,?,?,?,?,?, 'submitted', ?,?,?,?,?,?,?)""",
+                vehicle_model, vehicle_plate, vehicle_color, charges, found_items, reason, notes,
+                mugshot, fine, bail, jail_time)
+               VALUES (?,?,?,?,?,?,?,?,?,?, 'submitted', ?,?,?,?,?,?,?, ?,?,?,?)""",
             (
                 officer_id, data.get("suspect_name", "Неизвестный"),
                 1 if data.get("wanted") else 0, data.get("license_state"),
@@ -152,6 +164,10 @@ def create_case(data):
                 data.get("vehicle_model"), data.get("vehicle_plate"), data.get("vehicle_color"),
                 json.dumps(charges, ensure_ascii=False), json.dumps(found, ensure_ascii=False),
                 data.get("reason"), data.get("notes"),
+                data.get("mugshot"),
+                int(data["fine"]) if data.get("fine") not in (None, "") else None,
+                int(data["bail"]) if data.get("bail") not in (None, "") else None,
+                data.get("jail_time"),
             ),
         )
         case_id = cur.lastrowid
@@ -176,6 +192,7 @@ def _row_to_case(r):
     d["license_ru"] = LICENSE_RU.get(r["license_state"], r["license_state"] or "—")
     d["charges"] = _jsonlist(r["charges"]) if "charges" in r.keys() else []
     d["found_items"] = _jsonlist(r["found_items"]) if "found_items" in r.keys() else []
+    d["created_fmt"] = fmt_dt(r["created_at"])
     return d
 
 

@@ -13,10 +13,15 @@
   <!-- Красивая карточка (данные — кириллица работает) -->
   <section class="card report">
     <div class="report-top">
-      <span class="badge">★</span>
+      {% if case.mugshot %}
+        <img class="mugshot" src="{{ url_for('screenshot', fn=case.mugshot) }}" alt="Фото подозреваемого">
+      {% else %}
+        <div class="mugshot placeholder">👤</div>
+      {% endif %}
       <div>
         <div class="rep-title">{{ community }} · Рапорт о задержании</div>
-        <div class="rep-sub">Дело #{{ case.id }} · {{ case.created_at }}</div>
+        <div class="rep-sub">Дело #{{ case.id }} · задержание {{ case.created_fmt }}
+          {% if case.game_time %}· игровое время {{ case.game_time }}{% endif %}</div>
       </div>
     </div>
     <dl class="report-fields">
@@ -58,6 +63,17 @@
         </ul>
       {% else %}<p class="muted">Ничего не изъято.</p>{% endif %}
     </div>
+
+    {% if case.fine or case.bail or (case.jail_time and case.jail_time != '—') %}
+    <div class="rep-block">
+      <h4>Наказание</h4>
+      <div class="penalties">
+        <div class="pen"><span class="pen-lbl">Штраф</span><span class="pen-val">${{ case.fine or 0 }}</span></div>
+        <div class="pen"><span class="pen-lbl">Залог</span><span class="pen-val">${{ case.bail or 0 }}</span></div>
+        <div class="pen"><span class="pen-lbl">Срок</span><span class="pen-val">{{ case.jail_time or '—' }}</span></div>
+      </div>
+    </div>
+    {% endif %}
 
     {% if case.notes %}
     <div class="rep-block"><h4>Заметки</h4><p>{{ case.notes }}</p></div>

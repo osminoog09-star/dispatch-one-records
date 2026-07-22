@@ -32,8 +32,12 @@ def build_embed(case):
         {"name": "Район", "value": (case.get("zone") or "—") + (f" · {case['postal']}" if case.get("postal") else ""), "inline": True},
         {"name": "Время", "value": case.get("game_time") or "—", "inline": True},
         {"name": "Офицер", "value": case.get("callsign") or "—", "inline": True},
+        {"name": "Наказание", "value": f"Штраф ${case.get('fine') or 0} · Залог ${case.get('bail') or 0} · Срок {case.get('jail_time') or '—'}", "inline": False},
         {"name": "Статус дела", "value": case.get("status_ru") or "—", "inline": True},
     ]
+    if case.get("created_fmt"):
+        embed_ts = {"name": "Задержание", "value": case["created_fmt"], "inline": True}
+        fields.insert(-1, embed_ts)
     embed = {
         "title": f"Рапорт о задержании · Дело #{case['id']}",
         "color": COLOR_WANTED if wanted else COLOR_NORMAL,

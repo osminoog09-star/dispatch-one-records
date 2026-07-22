@@ -47,6 +47,44 @@ def build_embed(case):
     return embed
 
 
+def build_markdown(case):
+    """Готовый текст рапорта для ручной вставки в Discord (markdown)."""
+    L = []
+    L.append(f"📋 **Рапорт о задержании · Дело #{case['id']}**")
+    wanted = "🔴 В розыске" if case.get("wanted") else "🟢 Чисто"
+    L.append(f"**Подозреваемый:** {case.get('suspect_name') or 'Неизвестный'} — {wanted}")
+    if case.get("reason"):
+        L.append(f"**Причина:** {case['reason']}")
+    charges = case.get("charges") or []
+    if charges:
+        L.append("**Статьи:**")
+        L.extend(f"• {c}" for c in charges)
+    if case.get("vehicle_model"):
+        veh = case["vehicle_model"]
+        if case.get("vehicle_color"):
+            veh += f" · {case['vehicle_color']}"
+        if case.get("vehicle_plate"):
+            veh += f" · {case['vehicle_plate']}"
+        L.append(f"**Транспорт:** {veh}")
+    found = case.get("found_items") or []
+    if found:
+        L.append(f"**Изъято:** {', '.join(found)}")
+    loc = case.get("zone") or "—"
+    if case.get("postal"):
+        loc += f" · инд. {case['postal']}"
+    if case.get("game_time"):
+        loc += f" · {case['game_time']}"
+    L.append(f"**Место/время:** {loc}")
+    if case.get("fine") or case.get("bail") or (case.get("jail_time") and case["jail_time"] != "—"):
+        L.append(f"**Наказание:** Штраф ${case.get('fine') or 0} · Залог ${case.get('bail') or 0} · Срок {case.get('jail_time') or '—'}")
+    officer = case.get("callsign") or "—"
+    if case.get("officer_name"):
+        officer += f" ({case['officer_name']})"
+    L.append(f"**Офицер:** {officer}")
+    L.append(f"*Статус: {case.get('status_ru') or '—'} · задержание {case.get('created_fmt') or ''}*")
+    return "\n".join(L)
+
+
 def send_case(case):
     """Возвращает (ok, message). Скрин прикладывается файлом, если есть на диске."""
     if not config.DISCORD_WEBHOOK_URL:

@@ -42,7 +42,8 @@ def case_view(cid):
     case = db.get_case(cid)
     if not case:
         abort(404)
-    return render_template("case.html", case=case, statuses=db.STATUSES)
+    discord_md = discord_post.build_markdown(case)
+    return render_template("case.html", case=case, statuses=db.STATUSES, discord_md=discord_md)
 
 
 @app.route("/case/<int:cid>/discord", methods=["POST"])

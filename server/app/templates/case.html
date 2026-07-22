@@ -88,12 +88,22 @@
   <!-- Действия -->
   <aside class="side">
     <div class="card">
-      <h3>Отправить в Discord</h3>
-      <p class="muted small">Красивая карточка уйдёт в канал сообщества.</p>
+      <h3>Скопировать для Discord</h3>
+      <p class="muted small">Скопируй текст и вставь в канал вручную. Discord оформит красиво.</p>
+      <textarea id="dmd" class="dmd" readonly rows="10">{{ discord_md }}</textarea>
+      <button class="btn primary" onclick="copyDiscord()">📋 Скопировать текст</button>
+      {% if case.screenshot %}
+        <a class="btn" style="display:block;text-align:center;margin-top:8px"
+           href="{{ url_for('screenshot', fn=case.screenshot) }}" download>⬇ Скачать скрин (прикрепить в Discord)</a>
+      {% endif %}
+      <p id="copied" class="sent" style="display:none">✓ Скопировано! Вставь в канал (Ctrl+V)</p>
+    </div>
+
+    <div class="card">
+      <h3>Авто-постинг (webhook)</h3>
+      <p class="muted small">Заработает, когда добавим webhook канала.</p>
       <form method="post" action="{{ url_for('case_discord', cid=case.id) }}">
-        <button class="btn primary">
-          {% if case.discord_sent %}Отправить снова{% else %}Отправить карточку{% endif %}
-        </button>
+        <button class="btn">Отправить через webhook</button>
       </form>
       {% if case.discord_sent %}<p class="sent">✓ Уже отправлялось</p>{% endif %}
     </div>
@@ -120,4 +130,20 @@
     </div>
   </aside>
 </div>
+
+<script>
+function copyDiscord(){
+  var ta = document.getElementById('dmd');
+  var done = function(){
+    var c = document.getElementById('copied');
+    c.style.display = 'block';
+    setTimeout(function(){ c.style.display = 'none'; }, 3000);
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(ta.value).then(done, function(){ ta.select(); document.execCommand('copy'); done(); });
+  } else {
+    ta.select(); document.execCommand('copy'); done();
+  }
+}
+</script>
 {% endblock %}

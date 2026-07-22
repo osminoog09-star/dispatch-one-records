@@ -102,6 +102,17 @@ h3{font-size:14px;margin:0 0 .5em;color:var(--muted);text-transform:uppercase;le
 .btn:hover{border-color:var(--muted)}
 .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff;width:100%}
 .btn.primary:hover{background:var(--accent2)}
+.court-stats{grid-template-columns:repeat(4,1fr)}
+.court-list{display:flex;flex-direction:column;gap:10px}
+.court-row{display:flex;justify-content:space-between;gap:16px;background:var(--surface);border:1px solid var(--border);
+  border-radius:12px;padding:14px 18px;transition:background .12s}
+.court-row:hover{background:var(--surface2)}
+.court-name{font-weight:700;font-size:16px}
+.court-charge{margin-top:4px;font-size:13px}
+.court-verdict{text-align:right;min-width:180px}
+.court-verdict .muted{margin-top:4px}
+.court-charge-item{padding:10px 0;border-bottom:1px solid var(--border)}
+.court-charge-item:last-child{border-bottom:none}
 .status-dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px;vertical-align:middle;background:var(--muted)}
 .status-dot.on{background:#3fa66a} .status-dot.busy{background:#e0b53f}
 .status-dot.scene{background:#3b82f6} .status-dot.off{background:#69707a}

@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Судебный реестр{% endblock %}
+{% block content %}
+<h1>Судебный реестр</h1>
+
+<section class="stats court-stats">
+  <div class="stat"><div class="num">{{ summary.total }}</div><div class="lbl">Итого</div></div>
+  <div class="stat"><div class="num" style="color:#e0b53f">{{ summary.pending }}</div><div class="lbl">В ожидании</div></div>
+  <div class="stat"><div class="num" style="color:#3fa66a">{{ summary.closed }}</div><div class="lbl">Закрыто</div></div>
+  <div class="stat"><div class="num">{{ summary.appeals }}</div><div class="lbl">Апелляции</div></div>
+</section>
+
+{% if cases %}
+<div class="court-list">
+  {% for c in cases %}
+  <a class="court-row" href="{{ url_for('court_case_view', cid=c.id) }}">
+    <div class="court-main">
+      <div class="court-name">{{ c.subject_name }}</div>
+      <div class="muted small">{{ c.source or '—' }} · подано {{ c.filed_fmt }}</div>
+      <div class="court-charge">
+        {% if c.charges %}
+          {{ c.charges[0].ChargeCode }} {{ c.charges[0].Description }}
+          {% if c.charges|length > 1 %}<span class="muted">+{{ c.charges|length - 1 }}</span>{% endif %}
+        {% endif %}
+      </div>
+    </div>
+    <div class="court-verdict">
+      <span class="tag {{ c.label_cls }} big">{{ c.label }}</span>
+      {% if c.sentence %}<div class="muted small">{{ c.sentence }}</div>{% endif %}
+      <div class="muted small">{{ c.charges|length }} пункт(ов)</div>
+    </div>
+  </a>
+  {% endfor %}
+</div>
+{% else %}
+  <p class="empty">Судебных дел пока нет. Появятся после синхронизации с игрой (pdComp).</p>
+{% endif %}
+{% endblock %}

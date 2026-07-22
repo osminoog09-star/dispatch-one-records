@@ -75,6 +75,29 @@ def officer_view(callsign):
                            shifts=db.list_shifts(50, officer_id=off["id"]))
 
 
+@app.route("/court")
+def court():
+    return render_template("court.html", cases=db.list_court_cases(200), summary=db.court_summary())
+
+
+@app.route("/court/<int:cid>")
+def court_case_view(cid):
+    case = db.get_court_case(cid)
+    if not case:
+        abort(404)
+    return render_template("court_case.html", case=case)
+
+
+@app.route("/api/court", methods=["POST"])
+def api_court():
+    key = request.headers.get("X-Api-Key") or request.form.get("api_key")
+    if key != config.API_KEY:
+        return jsonify({"error": "unauthorized"}), 401
+    data = request.get_json(silent=True) or request.form.to_dict()
+    cid, created = db.upsert_court_case(data)
+    return jsonify({"ok": True, "id": cid, "created": created}), (201 if created else 200)
+
+
 @app.route("/shifts")
 def shifts():
     return render_template("shifts.html", shifts=db.list_shifts(200))
@@ -102,6 +125,10 @@ def api_case():
         return jsonify({"error": "unauthorized"}), 401
 
     data = request.get_json(silent=True) or request.form.to_dict()
+    # дедуп по ID из игры — чтобы не задваивать один и тот же арест
+    existing = db.case_exists_external(data.get("external_id"))
+    if existing:
+        return jsonify({"ok": True, "case_id": existing, "duplicate": True}), 200
     if "screenshot" in request.files:
         f = request.files["screenshot"]
         safe = f"case_{int(time.time())}_{os.path.basename(f.filename)}"

@@ -21,7 +21,7 @@ EXTRA_COLUMNS = {
     "vehicle_model": "TEXT", "vehicle_plate": "TEXT", "vehicle_color": "TEXT",
     "charges": "TEXT", "found_items": "TEXT", "reason": "TEXT", "notes": "TEXT",
     "mugshot": "TEXT", "fine": "INTEGER", "bail": "INTEGER", "jail_time": "TEXT",
-    "is_test": "INTEGER",
+    "is_test": "INTEGER", "external_id": "TEXT",
 }
 
 
@@ -116,6 +116,22 @@ def init_db():
                 status TEXT NOT NULL,
                 changed_at TEXT NOT NULL
             )""")
+        c.execute(
+            """CREATE TABLE IF NOT EXISTS court_cases (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                external_id TEXT UNIQUE,
+                subject_name TEXT,
+                source TEXT,
+                filed_at TEXT,
+                status INTEGER,
+                outcome INTEGER,
+                sentence TEXT,
+                notes TEXT,
+                judge TEXT, prosecutor TEXT, defense TEXT, courtroom TEXT, plea TEXT,
+                appeal_filed INTEGER DEFAULT 0,
+                charges TEXT, timeline TEXT,
+                synced_at TEXT
+            )""")
 
 
 def _now():
@@ -203,9 +219,19 @@ def create_case(data):
             ),
         )
         case_id = cur.lastrowid
+        if data.get("external_id"):
+            c.execute("UPDATE cases SET external_id=? WHERE id=?", (data["external_id"], case_id))
         c.execute("INSERT INTO status_log (case_id, status, changed_at) VALUES (?, 'submitted', ?)",
                   (case_id, now))
         return case_id
+
+
+def case_exists_external(external_id):
+    if not external_id:
+        return None
+    with get_conn() as c:
+        r = c.execute("SELECT id FROM cases WHERE external_id=?", (external_id,)).fetchone()
+        return r["id"] if r else None
 
 
 def _jsonlist(val):
@@ -335,6 +361,75 @@ def get_officer(callsign):
                 (r["id"],)).fetchall()
         ]
         return d
+
+
+# ---------- Судебный реестр (из pdComp cases.json) ----------
+COURT_OUTCOME = {0: "В ожидании", 1: "Дело прекращено", 2: "Не виновен", 3: "Осуждён"}
+COURT_OUTCOME_CLS = {0: "st-submitted", 1: "st-dismissed", 2: "st-dismissed", 3: "st-convicted"}
+
+
+def court_label(status, outcome, appeal):
+    if appeal:
+        return "Апелляция", "st-in_court"
+    if status != 3:
+        return "В ожидании", "st-submitted"
+    return COURT_OUTCOME.get(outcome, "Закрыто"), COURT_OUTCOME_CLS.get(outcome, "st-closed")
+
+
+def upsert_court_case(data):
+    ext = data.get("external_id")
+    now = _now()
+    charges = json.dumps(data.get("charges") or [], ensure_ascii=False)
+    timeline = json.dumps(data.get("timeline") or [], ensure_ascii=False)
+    with get_conn() as c:
+        existing = c.execute("SELECT id FROM court_cases WHERE external_id=?", (ext,)).fetchone() if ext else None
+        row = (data.get("subject_name"), data.get("source"), data.get("filed_at"),
+               data.get("status"), data.get("outcome"), data.get("sentence"), data.get("notes"),
+               data.get("judge"), data.get("prosecutor"), data.get("defense"),
+               data.get("courtroom"), data.get("plea"), 1 if data.get("appeal_filed") else 0,
+               charges, timeline, now)
+        if existing:
+            c.execute("""UPDATE court_cases SET subject_name=?, source=?, filed_at=?, status=?,
+                         outcome=?, sentence=?, notes=?, judge=?, prosecutor=?, defense=?,
+                         courtroom=?, plea=?, appeal_filed=?, charges=?, timeline=?, synced_at=?
+                         WHERE id=?""", row + (existing["id"],))
+            return existing["id"], False
+        cur = c.execute("""INSERT INTO court_cases
+            (subject_name, source, filed_at, status, outcome, sentence, notes, judge, prosecutor,
+             defense, courtroom, plea, appeal_filed, charges, timeline, synced_at, external_id)
+            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", row + (ext,))
+        return cur.lastrowid, True
+
+
+def _row_to_court(r):
+    d = dict(r)
+    lbl, cls = court_label(r["status"], r["outcome"], r["appeal_filed"])
+    d["label"], d["label_cls"] = lbl, cls
+    d["charges"] = _jsonlist(r["charges"]) if "charges" in r.keys() else []
+    d["timeline"] = _jsonlist(r["timeline"]) if "timeline" in r.keys() else []
+    d["filed_fmt"] = fmt_dt(r["filed_at"]) if r["filed_at"] else "—"
+    return d
+
+
+def list_court_cases(limit=200):
+    with get_conn() as c:
+        return [_row_to_court(r) for r in c.execute(
+            "SELECT * FROM court_cases ORDER BY filed_at DESC LIMIT ?", (limit,)).fetchall()]
+
+
+def get_court_case(cid):
+    with get_conn() as c:
+        r = c.execute("SELECT * FROM court_cases WHERE id=?", (cid,)).fetchone()
+        return _row_to_court(r) if r else None
+
+
+def court_summary():
+    with get_conn() as c:
+        total = c.execute("SELECT COUNT(*) FROM court_cases").fetchone()[0]
+        pending = c.execute("SELECT COUNT(*) FROM court_cases WHERE status!=3").fetchone()[0]
+        closed = c.execute("SELECT COUNT(*) FROM court_cases WHERE status=3").fetchone()[0]
+        appeals = c.execute("SELECT COUNT(*) FROM court_cases WHERE appeal_filed=1").fetchone()[0]
+        return {"total": total, "pending": pending, "closed": closed, "appeals": appeals}
 
 
 def summary_counts():

@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block title %}Дело — {{ case.subject_name }}{% endblock %}
+{% block content %}
+<a class="back" href="{{ url_for('court') }}">← в судебный реестр</a>
+
+<div class="case-head">
+  <h1>Уголовное дело · {{ case.subject_name }}</h1>
+  <span class="tag {{ case.label_cls }} big">{{ case.label }}</span>
+</div>
+
+<div class="case-grid">
+  <section class="card report">
+    <div class="report-top">
+      <span class="badge">⚖</span>
+      <div>
+        <div class="rep-title">Высший суд штата Сан-Андреас · округ Лос-Сантос</div>
+        <div class="rep-sub">Подано {{ case.filed_fmt }} · {{ case.source or '—' }}</div>
+      </div>
+    </div>
+
+    <div class="rep-block">
+      <h4>Пункты и решения</h4>
+      {% for ch in case.charges %}
+        <div class="court-charge-item">
+          <div><b>{{ ch.ChargeCode }}</b> {{ ch.Description }}
+            <span class="muted small">· {{ ch.LegalClass }} · {{ ch.Severity }}</span></div>
+          <div class="muted small">Решение: {{ ch.Sentence or '—' }}</div>
+          {% if ch.CourtNote %}<div class="muted small">{{ ch.CourtNote }}</div>{% endif %}
+        </div>
+      {% endfor %}
+    </div>
+
+    {% if case.timeline %}
+    <div class="rep-block">
+      <h4>Журнал действий</h4>
+      <ul class="dutylog">
+        {% for t in case.timeline %}
+          <li><b>{{ t.Title }}</b> — {{ t.Detail }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% endif %}
+  </section>
+
+  <aside class="side">
+    <div class="card">
+      <h3>Приговор</h3>
+      <dl class="report-fields">
+        <div><dt>Статус</dt><dd>{{ case.label }}</dd></div>
+        <div><dt>Наказание</dt><dd>{{ case.sentence or '—' }}</dd></div>
+        <div><dt>Заявление</dt><dd>{{ case.plea or '—' }}</dd></div>
+        <div><dt>Зал</dt><dd>{{ case.courtroom or '—' }}</dd></div>
+      </dl>
+    </div>
+    <div class="card">
+      <h3>Участники</h3>
+      <dl class="report-fields">
+        <div><dt>Судья</dt><dd>{{ case.judge or '—' }}</dd></div>
+        <div><dt>Обвинитель</dt><dd>{{ case.prosecutor or '—' }}</dd></div>
+        <div><dt>Защита</dt><dd>{{ case.defense or '—' }}</dd></div>
+      </dl>
+    </div>
+    {% if case.notes %}
+    <div class="card"><h3>Примечание</h3><p class="muted small">{{ case.notes }}</p></div>
+    {% endif %}
+  </aside>
+</div>
+{% endblock %}

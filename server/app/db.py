@@ -129,7 +129,8 @@ def get_or_create_officer(callsign, name=None):
     with get_conn() as c:
         row = c.execute("SELECT * FROM officers WHERE callsign=?", (callsign,)).fetchone()
         if row:
-            if name and not row["name"]:
+            # обновляем имя, если мод прислал актуальное (имя персонажа могло смениться)
+            if name and name != row["name"]:
                 c.execute("UPDATE officers SET name=? WHERE id=?", (name, row["id"]))
             return row["id"]
         cur = c.execute("INSERT INTO officers (callsign, name) VALUES (?, ?)", (callsign, name))

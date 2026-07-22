@@ -112,7 +112,7 @@ def dev_seed():
     veh, color = random.choice(vehicles)
     found = random.sample(contraband_pool, k=random.randint(0, 3))
     data = {
-        "callsign": "7-WILLIAM-1", "officer_name": "M1lash",
+        "callsign": "7-WILLIAM-1", "officer_name": config.OFFICER_NAME,
         "suspect_name": random.choice(names),
         "wanted": random.choice([True, False, False]),
         "license_state": random.choice(lic),

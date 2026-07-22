@@ -10,6 +10,10 @@ API_KEY = os.environ.get("RECORDS_API_KEY", "dev-key")
 # Название сообщества (для шапки сайта).
 COMMUNITY_NAME = os.environ.get("COMMUNITY_NAME", "LAPD")
 
+# Имя офицера-персонажа по умолчанию (для тест-дел). В реальном моде имя берётся
+# из игрового персонажа LSPDFR / из настройки мода.
+OFFICER_NAME = os.environ.get("OFFICER_NAME", "Denis Sherman")
+
 # Пути
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = os.path.join(BASE_DIR, "data.db")

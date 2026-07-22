@@ -21,6 +21,7 @@ EXTRA_COLUMNS = {
     "vehicle_model": "TEXT", "vehicle_plate": "TEXT", "vehicle_color": "TEXT",
     "charges": "TEXT", "found_items": "TEXT", "reason": "TEXT", "notes": "TEXT",
     "mugshot": "TEXT", "fine": "INTEGER", "bail": "INTEGER", "jail_time": "TEXT",
+    "is_test": "INTEGER",
 }
 
 
@@ -70,6 +71,7 @@ def init_db():
                 vehicle_model TEXT, vehicle_plate TEXT, vehicle_color TEXT,
                 charges TEXT, found_items TEXT, reason TEXT, notes TEXT,
                 mugshot TEXT, fine INTEGER, bail INTEGER, jail_time TEXT,
+                is_test INTEGER DEFAULT 0,
                 FOREIGN KEY (officer_id) REFERENCES officers(id)
             );
             CREATE TABLE IF NOT EXISTS status_log (
@@ -154,8 +156,8 @@ def create_case(data):
                (officer_id, suspect_name, wanted, license_state, citations, zone, postal,
                 game_time, created_at, screenshot, status,
                 vehicle_model, vehicle_plate, vehicle_color, charges, found_items, reason, notes,
-                mugshot, fine, bail, jail_time)
-               VALUES (?,?,?,?,?,?,?,?,?,?, 'submitted', ?,?,?,?,?,?,?, ?,?,?,?)""",
+                mugshot, fine, bail, jail_time, is_test)
+               VALUES (?,?,?,?,?,?,?,?,?,?, 'submitted', ?,?,?,?,?,?,?, ?,?,?,?, ?)""",
             (
                 officer_id, data.get("suspect_name", "Неизвестный"),
                 1 if data.get("wanted") else 0, data.get("license_state"),
@@ -168,6 +170,7 @@ def create_case(data):
                 int(data["fine"]) if data.get("fine") not in (None, "") else None,
                 int(data["bail"]) if data.get("bail") not in (None, "") else None,
                 data.get("jail_time"),
+                1 if data.get("is_test") else 0,
             ),
         )
         case_id = cur.lastrowid
@@ -193,6 +196,7 @@ def _row_to_case(r):
     d["charges"] = _jsonlist(r["charges"]) if "charges" in r.keys() else []
     d["found_items"] = _jsonlist(r["found_items"]) if "found_items" in r.keys() else []
     d["created_fmt"] = fmt_dt(r["created_at"])
+    d["is_test"] = bool(r["is_test"]) if "is_test" in r.keys() else False
     return d
 
 
@@ -243,12 +247,14 @@ def mark_discord_sent(case_id):
 
 
 def list_officers_with_stats():
+    # Статистика ЧЕСТНАЯ — тестовые дела (is_test=1) в подсчёт не идут.
     with get_conn() as c:
         return [dict(r) for r in c.execute(
             """SELECT officers.id, officers.callsign, officers.name,
                       COUNT(cases.id) AS cases_count,
                       SUM(CASE WHEN cases.wanted=1 THEN 1 ELSE 0 END) AS wanted_count
-               FROM officers LEFT JOIN cases ON cases.officer_id = officers.id
+               FROM officers
+               LEFT JOIN cases ON cases.officer_id = officers.id AND cases.is_test=0
                GROUP BY officers.id ORDER BY cases_count DESC""").fetchall()]
 
 
@@ -259,9 +265,21 @@ def get_officer(callsign):
 
 
 def summary_counts():
+    # Только реальные дела (тесты исключены — статистика честная).
     with get_conn() as c:
-        total = c.execute("SELECT COUNT(*) FROM cases").fetchone()[0]
-        today = c.execute("SELECT COUNT(*) FROM cases WHERE substr(created_at,1,10)=?",
+        total = c.execute("SELECT COUNT(*) FROM cases WHERE is_test=0").fetchone()[0]
+        today = c.execute("SELECT COUNT(*) FROM cases WHERE is_test=0 AND substr(created_at,1,10)=?",
                           (datetime.date.today().isoformat(),)).fetchone()[0]
         officers = c.execute("SELECT COUNT(*) FROM officers").fetchone()[0]
-        return {"total": total, "today": today, "officers": officers}
+        tests = c.execute("SELECT COUNT(*) FROM cases WHERE is_test=1").fetchone()[0]
+        return {"total": total, "today": today, "officers": officers, "tests": tests}
+
+
+def delete_test_cases():
+    with get_conn() as c:
+        ids = [row[0] for row in c.execute("SELECT id FROM cases WHERE is_test=1").fetchall()]
+        if ids:
+            qmarks = ",".join("?" * len(ids))
+            c.execute(f"DELETE FROM status_log WHERE case_id IN ({qmarks})", ids)
+            c.execute("DELETE FROM cases WHERE is_test=1")
+        return len(ids)

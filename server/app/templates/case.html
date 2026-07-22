@@ -6,6 +6,7 @@
 
 <div class="case-head">
   <h1>Рапорт о задержании · Дело #{{ case.id }}</h1>
+  {% if case.is_test %}<span class="tag test big">ТЕСТОВОЕ ДЕЛО</span>{% endif %}
   <span class="tag st-{{ case.status }} big">{{ case.status_ru }}</span>
 </div>
 

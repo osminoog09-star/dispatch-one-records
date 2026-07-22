@@ -6,8 +6,15 @@
   <div class="stat"><div class="num">{{ summary.total }}</div><div class="lbl">Всего дел</div></div>
   <div class="stat"><div class="num">{{ summary.today }}</div><div class="lbl">Сегодня</div></div>
   <div class="stat"><div class="num">{{ summary.officers }}</div><div class="lbl">Офицеров</div></div>
-  <div class="stat"><a class="seed" href="{{ url_for('dev_seed') }}">+ тест-дело</a></div>
+  <div class="stat">
+    <a class="seed" href="{{ url_for('dev_seed') }}">+ тест-дело</a>
+    {% if summary.tests %}
+      <div class="lbl" style="margin-top:8px">тестов: {{ summary.tests }} ·
+        <a href="{{ url_for('dev_clear_tests') }}" style="color:var(--wanted)">очистить</a></div>
+    {% endif %}
+  </div>
 </section>
+<p class="muted small" style="margin:-12px 0 20px">Счётчики учитывают только реальные дела. Тестовые помечены и в статистику не входят.</p>
 
 <div class="cols">
   <section class="col">
@@ -19,7 +26,9 @@
         {% for c in cases %}
           <tr onclick="location='{{ url_for('case_view', cid=c.id) }}'">
             <td>#{{ c.id }}</td>
-            <td>{{ c.suspect_name }} {% if c.wanted %}<span class="tag wanted">розыск</span>{% endif %}</td>
+            <td>{{ c.suspect_name }}
+              {% if c.is_test %}<span class="tag test">ТЕСТ</span>{% endif %}
+              {% if c.wanted %}<span class="tag wanted">розыск</span>{% endif %}</td>
             <td><span class="cs">{{ c.callsign }}</span></td>
             <td><span class="tag st-{{ c.status }}">{{ c.status_ru }}</span></td>
           </tr>

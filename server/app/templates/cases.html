@@ -17,7 +17,9 @@
   {% for c in cases %}
     <tr onclick="location='{{ url_for('case_view', cid=c.id) }}'">
       <td>#{{ c.id }}</td>
-      <td>{{ c.suspect_name }} {% if c.wanted %}<span class="tag wanted">розыск</span>{% endif %}</td>
+      <td>{{ c.suspect_name }}
+        {% if c.is_test %}<span class="tag test">ТЕСТ</span>{% endif %}
+        {% if c.wanted %}<span class="tag wanted">розыск</span>{% endif %}</td>
       <td>{{ c.zone or '—' }}</td>
       <td><span class="cs">{{ c.callsign }}</span></td>
       <td class="muted">{{ c.created_at }}</td>

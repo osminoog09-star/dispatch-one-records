@@ -128,10 +128,18 @@ def dev_seed():
         "fine": random.choice([0, 250, 500, 750, 1200]),
         "bail": random.choice([0, 1000, 2500, 5000]),
         "jail_time": random.choice(["—", "5 суток", "30 суток", "6 месяцев", "2 года"]),
+        "is_test": True,   # тестовое дело — не идёт в честную статистику
     }
     cid = db.create_case(data)
-    flash(f"Создано тестовое дело #{cid}.", "ok")
+    flash(f"Создано ТЕСТОВОЕ дело #{cid} (в статистику не входит).", "ok")
     return redirect(url_for("case_view", cid=cid))
+
+
+@app.route("/dev/clear-tests")
+def dev_clear_tests():
+    n = db.delete_test_cases()
+    flash(f"Удалено тестовых дел: {n}.", "ok")
+    return redirect(url_for("index"))
 
 
 if __name__ == "__main__":

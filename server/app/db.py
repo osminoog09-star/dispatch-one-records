@@ -248,7 +248,7 @@ def _row_to_case(r):
     d["wanted"] = bool(r["wanted"])
     d["status_ru"] = STATUS_RU.get(r["status"], r["status"])
     d["license_ru"] = LICENSE_RU.get(r["license_state"], r["license_state"] or "—")
-    d["charges"] = _jsonlist(r["charges"]) if "charges" in r.keys() else []
+    d["charges"] = [localize(x) for x in (_jsonlist(r["charges"]) if "charges" in r.keys() else [])]
     d["found_items"] = _jsonlist(r["found_items"]) if "found_items" in r.keys() else []
     d["created_fmt"] = fmt_dt(r["created_at"])
     d["is_test"] = bool(r["is_test"]) if "is_test" in r.keys() else False
@@ -363,6 +363,70 @@ def get_officer(callsign):
         return d
 
 
+# ---------- Локализация (pdComp местами отдаёт англ. шаблоны) ----------
+import re
+
+_TIMELINE_TITLE = {
+    "Case filed": "Дело заведено",
+    "Hearing scheduled": "Слушание назначено",
+    "Hearing held": "Слушание проведено",
+    "Plea entered": "Заявление стороны",
+    "Disposition entered": "Вынесено решение",
+    "Probation ordered": "Назначен испытательный срок",
+    "Bench warrant issued": "Выдан ордер на арест",
+    "Appeal filed": "Подана апелляция",
+}
+# фразы — от длинных к коротким (порядок важен)
+_PHRASES = [
+    ("The defendant was found not responsible on this line.", "По этому пункту вина не установлена."),
+    ("The citation was heard and resolved in favor of the defendant.", "Дело по штрафу решено в пользу защиты."),
+    ("The court accepted this line and assessed the applicable fine. Appearance was required for the hearing.",
+     "Суд принял этот пункт и назначил штраф. Явка на слушание была обязательна."),
+    ("Responsibility was found on the filed citation; the fine order is now active.",
+     "По штрафу установлена ответственность; постановление о штрафе действует."),
+    ("No sentence (case notguilty)", "Без наказания (не виновен)"),
+    ("mandatory appearance tracked", "обязательная явка учтена"),
+    ("case file opened", "дело заведено"),
+    ("assigned before", "назначен перед"),
+    ("heard the matter in", "рассмотрел дело в"),
+    ("No fine assessed", "Штраф не назначен"),
+    ("No sentence", "Без наказания"),
+    ("Not responsible", "Не признаёт вину"),
+    ("Not guilty", "Не виновен"),
+    ("NotGuilty", "Не виновен"),
+    ("Responsible", "Признаёт вину"),
+    ("Convicted", "Осуждён"),
+    ("Dismissed", "Дело прекращено"),
+    ("Guilty", "Виновен"),
+    ("State v.", "Штат против"),
+    ("court costs", "судебные издержки"),
+    ("costs", "издержки"),
+    ("incl.", "вкл."),
+    ("Fine", "Штраф"),
+    ("Infraction", "Нарушение"),
+    ("Misdemeanor", "Проступок"),
+    ("Felony", "Тяжкое"),
+]
+# кириллические заглавные → латинские двойники (для номеров залов/отделов)
+_CYR2LAT = {"А": "A", "Б": "B", "В": "B", "Г": "G", "Д": "D", "Е": "E", "Ж": "J", "З": "Z",
+            "И": "I", "Й": "Y", "К": "K", "Л": "L", "М": "M", "Н": "N", "О": "O", "П": "P",
+            "Р": "R", "С": "C", "Т": "T", "У": "U", "Ф": "F", "Х": "H", "Ц": "C", "Ч": "C"}
+
+
+def _fix_rooms(s):
+    """Буква номера зала/отдела после цифры → латиница: '24Г' → '24G'."""
+    return re.sub(r"(\d)([А-Я])", lambda m: m.group(1) + _CYR2LAT.get(m.group(2), m.group(2)), s)
+
+
+def localize(text):
+    if not text or not isinstance(text, str):
+        return text
+    out = text
+    for en, ru in _PHRASES:
+        out = out.replace(en, ru)
+    return _fix_rooms(out)
+
+
 # ---------- Судебный реестр (из pdComp cases.json) ----------
 COURT_OUTCOME = {0: "В ожидании", 1: "Дело прекращено", 2: "Не виновен", 3: "Осуждён"}
 COURT_OUTCOME_CLS = {0: "st-submitted", 1: "st-dismissed", 2: "st-dismissed", 3: "st-convicted"}
@@ -405,8 +469,24 @@ def _row_to_court(r):
     d = dict(r)
     lbl, cls = court_label(r["status"], r["outcome"], r["appeal_filed"])
     d["label"], d["label_cls"] = lbl, cls
-    d["charges"] = _jsonlist(r["charges"]) if "charges" in r.keys() else []
-    d["timeline"] = _jsonlist(r["timeline"]) if "timeline" in r.keys() else []
+
+    charges = _jsonlist(r["charges"]) if "charges" in r.keys() else []
+    for ch in charges:
+        ch["Sentence"] = localize(ch.get("Sentence"))
+        ch["CourtNote"] = localize(ch.get("CourtNote"))
+        ch["Severity"] = localize(ch.get("Severity"))
+    d["charges"] = charges
+
+    timeline = _jsonlist(r["timeline"]) if "timeline" in r.keys() else []
+    for t in timeline:
+        t["Title"] = _TIMELINE_TITLE.get(t.get("Title"), localize(t.get("Title")))
+        t["Detail"] = localize(t.get("Detail"))
+    d["timeline"] = timeline
+
+    d["sentence"] = localize(d.get("sentence"))
+    d["plea"] = localize(d.get("plea"))
+    d["notes"] = localize(d.get("notes"))
+    d["courtroom"] = _fix_rooms(d["courtroom"]) if d.get("courtroom") else d.get("courtroom")
     d["filed_fmt"] = fmt_dt(r["filed_at"]) if r["filed_at"] else "—"
     return d
 

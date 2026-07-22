@@ -8,8 +8,8 @@ Dispatch One — sync-агент.
 import os
 import json
 import time
-
-import requests
+import urllib.request
+import urllib.error
 
 # ---------- Настройки ----------
 PDCOMP_STORE = os.environ.get(
@@ -81,6 +81,21 @@ def map_court_case(cc):
     }
 
 
+def post_json(url, payload, api_key):
+    """POST JSON через стандартную библиотеку (без внешних зависимостей).
+    Возвращает (status_code, body_dict)."""
+    body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
+    req = urllib.request.Request(url, data=body, method="POST")
+    req.add_header("Content-Type", "application/json; charset=utf-8")
+    req.add_header("X-Api-Key", api_key)
+    try:
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            data = resp.read().decode("utf-8")
+            return resp.status, (json.loads(data) if data else {})
+    except urllib.error.HTTPError as e:
+        return e.code, {"error": e.read().decode("utf-8", "ignore")[:200]}
+
+
 def read_json(path):
     if not os.path.exists(path):
         return None
@@ -101,15 +116,14 @@ def sync_arrests():
     for a in arrests:
         payload = map_arrest(a)
         try:
-            r = requests.post(f"{SITE_URL}/api/case", json=payload,
-                              headers={"X-Api-Key": API_KEY}, timeout=10)
-            if r.status_code == 201:
+            status, body = post_json(f"{SITE_URL}/api/case", payload, API_KEY)
+            if status == 201:
                 new += 1
                 print(f"[+] арест: {payload['suspect_name']} ({payload['officer_name']})")
-            elif r.status_code == 200 and r.json().get("duplicate"):
+            elif status == 200 and body.get("duplicate"):
                 dup += 1
             else:
-                print(f"[warn] сервер вернул {r.status_code}: {r.text[:120]}")
+                print(f"[warn] сервер вернул {status}: {body}")
         except Exception as e:
             print(f"[err] отправка не удалась: {e}")
     return new, dup
@@ -124,15 +138,14 @@ def sync_court():
     for cc in cases:
         payload = map_court_case(cc)
         try:
-            r = requests.post(f"{SITE_URL}/api/court", json=payload,
-                              headers={"X-Api-Key": API_KEY}, timeout=10)
-            if r.status_code == 201:
+            status, body = post_json(f"{SITE_URL}/api/court", payload, API_KEY)
+            if status == 201:
                 new += 1
                 print(f"[+] суд.дело: {payload['subject_name']}")
-            elif r.status_code == 200:
+            elif status == 200:
                 upd += 1
             else:
-                print(f"[warn] суд сервер вернул {r.status_code}: {r.text[:120]}")
+                print(f"[warn] суд сервер вернул {status}: {body}")
         except Exception as e:
             print(f"[err] суд отправка: {e}")
     return new, upd

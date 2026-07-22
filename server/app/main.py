@@ -85,7 +85,8 @@ def court_case_view(cid):
     case = db.get_court_case(cid)
     if not case:
         abort(404)
-    return render_template("court_case.html", case=case)
+    return render_template("court_case.html", case=case,
+                           discord_md=discord_post.build_court_markdown(case))
 
 
 @app.route("/api/court", methods=["POST"])

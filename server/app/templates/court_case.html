@@ -63,6 +63,22 @@
     {% if case.notes %}
     <div class="card"><h3>Примечание</h3><p class="muted small">{{ case.notes }}</p></div>
     {% endif %}
+
+    <div class="card">
+      <h3>Скопировать для Discord</h3>
+      <textarea id="dmd" class="dmd" readonly rows="9">{{ discord_md }}</textarea>
+      <button class="btn primary" onclick="copyDiscord()">📋 Скопировать текст</button>
+      <p id="copied" class="sent" style="display:none">✓ Скопировано! Вставь в канал (Ctrl+V)</p>
+    </div>
   </aside>
 </div>
+
+<script>
+function copyDiscord(){
+  var ta=document.getElementById('dmd');
+  var done=function(){var c=document.getElementById('copied');c.style.display='block';setTimeout(function(){c.style.display='none';},3000);};
+  if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(ta.value).then(done,function(){ta.select();document.execCommand('copy');done();});}
+  else{ta.select();document.execCommand('copy');done();}
+}
+</script>
 {% endblock %}

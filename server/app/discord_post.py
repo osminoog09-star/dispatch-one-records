@@ -85,6 +85,31 @@ def build_markdown(case):
     return "\n".join(L)
 
 
+def build_court_markdown(c):
+    """Готовый текст судебного дела для вставки в Discord."""
+    L = []
+    L.append(f"⚖ **Уголовное дело · {c.get('subject_name') or 'Неизвестный'}**")
+    L.append(f"**Статус:** {c.get('label') or '—'}")
+    charges = c.get("charges") or []
+    if charges:
+        L.append("**Пункты и решения:**")
+        for ch in charges:
+            line = f"• {ch.get('ChargeCode','')} {ch.get('Description','')}".strip()
+            if ch.get("Sentence"):
+                line += f" — {ch['Sentence']}"
+            L.append(line)
+    if c.get("sentence"):
+        L.append(f"**Наказание:** {c['sentence']}")
+    parts = []
+    if c.get("judge"): parts.append(f"судья {c['judge']}")
+    if c.get("prosecutor"): parts.append(f"обвинитель {c['prosecutor']}")
+    if c.get("defense"): parts.append(f"защита {c['defense']}")
+    if parts:
+        L.append("**Суд:** " + " · ".join(parts))
+    L.append(f"*Подано: {c.get('filed_fmt') or '—'}*")
+    return "\n".join(L)
+
+
 def build_shift_markdown(s):
     """Готовый рапорт смены для вставки в Discord."""
     L = []

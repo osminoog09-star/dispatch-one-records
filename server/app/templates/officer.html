@@ -5,8 +5,18 @@
 
 <div class="case-head">
   <h1><span class="cs big">{{ officer.callsign }}</span> {{ officer.name or '' }}</h1>
-  <span class="tag">{{ cases|length }} дел</span>
+  <span class="tag"><span class="status-dot {{ officer.status_cls }}"></span>{{ officer.status_ru }}</span>
+  {% if officer.status_since_fmt %}<span class="muted small">с {{ officer.status_since_fmt }}</span>{% endif %}
 </div>
+
+{% if officer.status_log %}
+<h2>Журнал дежурства</h2>
+<ul class="dutylog">
+  {% for e in officer.status_log %}
+    <li><span class="status-dot {{ e.cls }}"></span> {{ e.status_ru }} <span class="muted small">— {{ e.at }}</span></li>
+  {% endfor %}
+</ul>
+{% endif %}
 
 {% if shifts %}
 <h2>Смены</h2>

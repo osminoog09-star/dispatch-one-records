@@ -44,13 +44,13 @@
     <h2>Офицеры</h2>
     {% if officers %}
       <table class="tbl">
-        <thead><tr><th>Позывной</th><th>Дел</th><th>Розыск</th></tr></thead>
+        <thead><tr><th>Позывной</th><th>Статус</th><th>Дел</th></tr></thead>
         <tbody>
         {% for o in officers %}
           <tr onclick="location='{{ url_for('officer_view', callsign=o.callsign) }}'">
             <td><span class="cs">{{ o.callsign }}</span> {{ o.name or '' }}</td>
+            <td><span class="status-dot {{ o.status_cls }}"></span>{{ o.status_ru }}</td>
             <td>{{ o.cases_count }}</td>
-            <td>{{ o.wanted_count or 0 }}</td>
           </tr>
         {% endfor %}
         </tbody>

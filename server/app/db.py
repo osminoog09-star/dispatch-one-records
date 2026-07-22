@@ -99,11 +99,23 @@ def init_db():
             );
             """
         )
-        # миграция: добавить недостающие колонки в старую БД
+        # миграция cases
         existing = {r["name"] for r in c.execute("PRAGMA table_info(cases)").fetchall()}
         for col, typ in EXTRA_COLUMNS.items():
             if col not in existing:
                 c.execute(f"ALTER TABLE cases ADD COLUMN {col} {typ}")
+        # миграция officers (статус доступности)
+        oexisting = {r["name"] for r in c.execute("PRAGMA table_info(officers)").fetchall()}
+        for col, typ in {"current_status": "TEXT", "status_since": "TEXT"}.items():
+            if col not in oexisting:
+                c.execute(f"ALTER TABLE officers ADD COLUMN {col} {typ}")
+        c.execute(
+            """CREATE TABLE IF NOT EXISTS status_history (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                officer_id INTEGER NOT NULL,
+                status TEXT NOT NULL,
+                changed_at TEXT NOT NULL
+            )""")
 
 
 def _now():
@@ -266,19 +278,63 @@ def mark_discord_sent(case_id):
 def list_officers_with_stats():
     # Статистика ЧЕСТНАЯ — тестовые дела (is_test=1) в подсчёт не идут.
     with get_conn() as c:
-        return [dict(r) for r in c.execute(
-            """SELECT officers.id, officers.callsign, officers.name,
+        rows = c.execute(
+            """SELECT officers.id, officers.callsign, officers.name, officers.current_status,
                       COUNT(cases.id) AS cases_count,
                       SUM(CASE WHEN cases.wanted=1 THEN 1 ELSE 0 END) AS wanted_count
                FROM officers
                LEFT JOIN cases ON cases.officer_id = officers.id AND cases.is_test=0
-               GROUP BY officers.id ORDER BY cases_count DESC""").fetchall()]
+               GROUP BY officers.id ORDER BY cases_count DESC""").fetchall()
+        out = []
+        for r in rows:
+            d = dict(r)
+            si = status_info(d.get("current_status"))
+            d["status_ru"], d["status_cls"] = si["ru"], si["cls"]
+            out.append(d)
+        return out
+
+
+# Статусы доступности офицера (мод шлёт при смене в игре)
+DUTY_STATUS = {
+    "10-8": {"ru": "На службе", "cls": "on"},
+    "10-6": {"ru": "Занят", "cls": "busy"},
+    "10-23": {"ru": "На вызове", "cls": "scene"},
+    "10-7": {"ru": "Не на службе", "cls": "off"},
+}
+
+
+def status_info(code):
+    return DUTY_STATUS.get(code, {"ru": "Не на службе", "cls": "off"})
+
+
+def set_officer_status(callsign, status, name=None):
+    officer_id = get_or_create_officer(callsign, name)
+    now = _now()
+    with get_conn() as c:
+        c.execute("UPDATE officers SET current_status=?, status_since=? WHERE id=?",
+                  (status, now, officer_id))
+        c.execute("INSERT INTO status_history (officer_id, status, changed_at) VALUES (?,?,?)",
+                  (officer_id, status, now))
+    return officer_id
 
 
 def get_officer(callsign):
     with get_conn() as c:
         r = c.execute("SELECT * FROM officers WHERE callsign=?", (callsign,)).fetchone()
-        return dict(r) if r else None
+        if not r:
+            return None
+        d = dict(r)
+        si = status_info(d.get("current_status"))
+        d["status_ru"], d["status_cls"] = si["ru"], si["cls"]
+        d["status_since_fmt"] = fmt_dt(d["status_since"]) if d.get("status_since") else None
+        d["status_log"] = [
+            {"status": h["status"], "status_ru": status_info(h["status"])["ru"],
+             "cls": status_info(h["status"])["cls"], "at": fmt_dt(h["changed_at"])}
+            for h in c.execute(
+                "SELECT status, changed_at FROM status_history WHERE officer_id=? ORDER BY id DESC LIMIT 30",
+                (r["id"],)).fetchall()
+        ]
+        return d
 
 
 def summary_counts():

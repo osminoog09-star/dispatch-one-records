@@ -122,6 +122,17 @@ def api_shift():
     return jsonify({"ok": True, "shift_id": sid}), 201
 
 
+@app.route("/api/status", methods=["POST"])
+def api_status():
+    key = request.headers.get("X-Api-Key") or request.form.get("api_key")
+    if key != config.API_KEY:
+        return jsonify({"error": "unauthorized"}), 401
+    data = request.get_json(silent=True) or request.form.to_dict()
+    db.set_officer_status(data.get("callsign", "UNKNOWN"), data.get("status", "10-7"),
+                          data.get("officer_name"))
+    return jsonify({"ok": True}), 200
+
+
 # ---------- Dev-хелпер: создать тестовое дело (без игры) ----------
 @app.route("/dev/seed")
 def dev_seed():
@@ -180,6 +191,13 @@ def dev_seed_shift():
     sid = db.create_shift(data)
     flash(f"Создан ТЕСТОВЫЙ рапорт смены #{sid}.", "ok")
     return redirect(url_for("shift_view", sid=sid))
+
+
+@app.route("/dev/status/<code>")
+def dev_status(code):
+    db.set_officer_status("7-WILLIAM-1", code, config.OFFICER_NAME)
+    flash(f"Статус офицера изменён: {db.status_info(code)['ru']}.", "ok")
+    return redirect(url_for("officer_view", callsign="7-WILLIAM-1"))
 
 
 @app.route("/dev/clear-tests")

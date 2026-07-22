@@ -81,6 +81,22 @@ def init_db():
                 changed_at TEXT NOT NULL,
                 FOREIGN KEY (case_id) REFERENCES cases(id)
             );
+            CREATE TABLE IF NOT EXISTS shifts (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                officer_id INTEGER NOT NULL,
+                shift_type TEXT,
+                started_at TEXT NOT NULL,
+                ended_at TEXT,
+                duration_min INTEGER DEFAULT 0,
+                arrests INTEGER DEFAULT 0,
+                traffic_stops INTEGER DEFAULT 0,
+                pursuits INTEGER DEFAULT 0,
+                pit INTEGER DEFAULT 0,
+                callouts INTEGER DEFAULT 0,
+                fines_total INTEGER DEFAULT 0,
+                is_test INTEGER DEFAULT 0,
+                FOREIGN KEY (officer_id) REFERENCES officers(id)
+            );
             """
         )
         # миграция: добавить недостающие колонки в старую БД
@@ -283,4 +299,61 @@ def delete_test_cases():
             qmarks = ",".join("?" * len(ids))
             c.execute(f"DELETE FROM status_log WHERE case_id IN ({qmarks})", ids)
             c.execute("DELETE FROM cases WHERE is_test=1")
-        return len(ids)
+        n2 = c.execute("SELECT COUNT(*) FROM shifts WHERE is_test=1").fetchone()[0]
+        c.execute("DELETE FROM shifts WHERE is_test=1")
+        return len(ids) + n2
+
+
+# ---------- Смены (рапорт смены) ----------
+SHIFT_TYPE_RU = {"day": "дневная", "evening": "вечерняя", "night": "ночная", None: "—"}
+
+
+def create_shift(data):
+    officer_id = get_or_create_officer(data.get("callsign", "UNKNOWN"), data.get("officer_name"))
+    with get_conn() as c:
+        cur = c.execute(
+            """INSERT INTO shifts
+               (officer_id, shift_type, started_at, ended_at, duration_min,
+                arrests, traffic_stops, pursuits, pit, callouts, fines_total, is_test)
+               VALUES (?,?,?,?,?,?,?,?,?,?,?,?)""",
+            (
+                officer_id, data.get("shift_type"),
+                data.get("started_at") or _now(), data.get("ended_at") or _now(),
+                int(data.get("duration_min", 0) or 0),
+                int(data.get("arrests", 0) or 0), int(data.get("traffic_stops", 0) or 0),
+                int(data.get("pursuits", 0) or 0), int(data.get("pit", 0) or 0),
+                int(data.get("callouts", 0) or 0), int(data.get("fines_total", 0) or 0),
+                1 if data.get("is_test") else 0,
+            ),
+        )
+        return cur.lastrowid
+
+
+def _row_to_shift(r):
+    d = dict(r)
+    d["is_test"] = bool(r["is_test"]) if "is_test" in r.keys() else False
+    d["type_ru"] = SHIFT_TYPE_RU.get(r["shift_type"], r["shift_type"] or "—")
+    dm = r["duration_min"] or 0
+    d["duration_h"] = f"{dm // 60}ч {dm % 60}м"
+    d["started_fmt"] = fmt_dt(r["started_at"])
+    return d
+
+
+def list_shifts(limit=100, officer_id=None):
+    q = """SELECT shifts.*, officers.callsign, officers.name AS officer_name
+           FROM shifts JOIN officers ON officers.id = shifts.officer_id"""
+    params = []
+    if officer_id:
+        q += " WHERE shifts.officer_id=?"; params.append(officer_id)
+    q += " ORDER BY shifts.id DESC LIMIT ?"; params.append(limit)
+    with get_conn() as c:
+        return [_row_to_shift(r) for r in c.execute(q, params).fetchall()]
+
+
+def get_shift(shift_id):
+    with get_conn() as c:
+        r = c.execute(
+            """SELECT shifts.*, officers.callsign, officers.name AS officer_name
+               FROM shifts JOIN officers ON officers.id = shifts.officer_id
+               WHERE shifts.id=?""", (shift_id,)).fetchone()
+        return _row_to_shift(r) if r else None

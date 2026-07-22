@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}Смена #{{ shift.id }}{% endblock %}
+{% block content %}
+<a class="back" href="{{ url_for('shifts') }}">← к сменам</a>
+
+<div class="case-head">
+  <h1>Рапорт смены #{{ shift.id }}</h1>
+  {% if shift.is_test %}<span class="tag test big">ТЕСТ</span>{% endif %}
+  <span class="tag big">{{ shift.type_ru }}</span>
+</div>
+
+<div class="case-grid">
+  <section class="card report">
+    <div class="report-top">
+      <span class="badge">🕓</span>
+      <div>
+        <div class="rep-title">{{ community }} · Рапорт смены</div>
+        <div class="rep-sub">
+          Офицер <a href="{{ url_for('officer_view', callsign=shift.callsign) }}"><span class="cs">{{ shift.callsign }}</span></a>
+          {{ shift.officer_name or '' }} · начало {{ shift.started_fmt }}
+        </div>
+      </div>
+    </div>
+
+    <div class="shift-metrics">
+      <div class="metric big-metric"><div class="mnum">{{ shift.duration_h }}</div><div class="mlbl">Длительность</div></div>
+      <div class="metric"><div class="mnum">{{ shift.arrests }}</div><div class="mlbl">Задержаний</div></div>
+      <div class="metric"><div class="mnum">{{ shift.traffic_stops }}</div><div class="mlbl">Остановок</div></div>
+      <div class="metric"><div class="mnum">{{ shift.pursuits }}</div><div class="mlbl">Погонь</div></div>
+      <div class="metric"><div class="mnum">{{ shift.pit }}</div><div class="mlbl">PIT-манёвров</div></div>
+      <div class="metric"><div class="mnum">{{ shift.callouts }}</div><div class="mlbl">Вызовов</div></div>
+      <div class="metric"><div class="mnum">${{ shift.fines_total }}</div><div class="mlbl">Штрафов</div></div>
+    </div>
+  </section>
+
+  <aside class="side">
+    <div class="card">
+      <h3>Скопировать для Discord</h3>
+      <p class="muted small">Вставь текст рапорта смены в канал вручную.</p>
+      <textarea id="dmd" class="dmd" readonly rows="9">{{ discord_md }}</textarea>
+      <button class="btn primary" onclick="copyDiscord()">📋 Скопировать текст</button>
+      <p id="copied" class="sent" style="display:none">✓ Скопировано! Вставь в канал (Ctrl+V)</p>
+    </div>
+  </aside>
+</div>
+
+<script>
+function copyDiscord(){
+  var ta=document.getElementById('dmd');
+  var done=function(){var c=document.getElementById('copied');c.style.display='block';setTimeout(function(){c.style.display='none';},3000);};
+  if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(ta.value).then(done,function(){ta.select();document.execCommand('copy');done();});}
+  else{ta.select();document.execCommand('copy');done();}
+}
+</script>
+{% endblock %}

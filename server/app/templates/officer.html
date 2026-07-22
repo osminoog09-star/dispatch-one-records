@@ -8,6 +8,26 @@
   <span class="tag">{{ cases|length }} дел</span>
 </div>
 
+{% if shifts %}
+<h2>Смены</h2>
+<table class="tbl">
+  <thead><tr><th>#</th><th>Тип</th><th>Длит.</th><th>Задерж.</th><th>Остан.</th><th>Погони</th><th>Начало</th></tr></thead>
+  <tbody>
+  {% for s in shifts %}
+    <tr onclick="location='{{ url_for('shift_view', sid=s.id) }}'">
+      <td>#{{ s.id }}</td>
+      <td>{{ s.type_ru }}{% if s.is_test %} <span class="tag test">ТЕСТ</span>{% endif %}</td>
+      <td>{{ s.duration_h }}</td>
+      <td>{{ s.arrests }}</td>
+      <td>{{ s.traffic_stops }}</td>
+      <td>{{ s.pursuits }}</td>
+      <td class="muted">{{ s.started_fmt }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endif %}
+
 <h2>Дела офицера</h2>
 {% if cases %}
 <table class="tbl">

@@ -102,6 +102,11 @@ h3{font-size:14px;margin:0 0 .5em;color:var(--muted);text-transform:uppercase;le
 .btn:hover{border-color:var(--muted)}
 .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff;width:100%}
 .btn.primary:hover{background:var(--accent2)}
+.shift-metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:6px}
+.metric{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center}
+.metric.big-metric{grid-column:span 3;background:var(--bg)}
+.metric .mnum{font-size:24px;font-weight:700}
+.metric .mlbl{font-size:12px;color:var(--muted);margin-top:2px;text-transform:uppercase;letter-spacing:.3px}
 .dmd{width:100%;background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:8px;
   padding:10px;font-family:ui-monospace,Consolas,monospace;font-size:12.5px;resize:vertical;margin-bottom:10px;line-height:1.45}
 .statusform{display:flex;gap:8px}

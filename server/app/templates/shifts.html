@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Смены{% endblock %}
+{% block content %}
+<div class="case-head">
+  <h1>Рапорты смен</h1>
+  <a class="seed" href="{{ url_for('dev_seed_shift') }}">+ тест-смена</a>
+</div>
+
+{% if shifts %}
+<table class="tbl">
+  <thead><tr><th>#</th><th>Офицер</th><th>Тип</th><th>Длит.</th><th>Задерж.</th><th>Остан.</th><th>Погони</th><th>Начало</th></tr></thead>
+  <tbody>
+  {% for s in shifts %}
+    <tr onclick="location='{{ url_for('shift_view', sid=s.id) }}'">
+      <td>#{{ s.id }}</td>
+      <td><span class="cs">{{ s.callsign }}</span>
+        {% if s.is_test %}<span class="tag test">ТЕСТ</span>{% endif %}</td>
+      <td>{{ s.type_ru }}</td>
+      <td>{{ s.duration_h }}</td>
+      <td>{{ s.arrests }}</td>
+      <td>{{ s.traffic_stops }}</td>
+      <td>{{ s.pursuits }}</td>
+      <td class="muted">{{ s.started_fmt }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% else %}
+  <p class="empty">Смен пока нет. Нажми «+ тест-смена» для проверки.</p>
+{% endif %}
+{% endblock %}

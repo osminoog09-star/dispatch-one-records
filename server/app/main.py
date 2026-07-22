@@ -71,7 +71,22 @@ def officer_view(callsign):
     if not off:
         abort(404)
     return render_template("officer.html", officer=off,
-                           cases=db.list_cases(200, officer_id=off["id"]))
+                           cases=db.list_cases(200, officer_id=off["id"]),
+                           shifts=db.list_shifts(50, officer_id=off["id"]))
+
+
+@app.route("/shifts")
+def shifts():
+    return render_template("shifts.html", shifts=db.list_shifts(200))
+
+
+@app.route("/shift/<int:sid>")
+def shift_view(sid):
+    shift = db.get_shift(sid)
+    if not shift:
+        abort(404)
+    return render_template("shift.html", shift=shift,
+                           discord_md=discord_post.build_shift_markdown(shift))
 
 
 @app.route("/screenshots/<path:fn>")
@@ -95,6 +110,16 @@ def api_case():
 
     cid = db.create_case(data)
     return jsonify({"ok": True, "case_id": cid}), 201
+
+
+@app.route("/api/shift", methods=["POST"])
+def api_shift():
+    key = request.headers.get("X-Api-Key") or request.form.get("api_key")
+    if key != config.API_KEY:
+        return jsonify({"error": "unauthorized"}), 401
+    data = request.get_json(silent=True) or request.form.to_dict()
+    sid = db.create_shift(data)
+    return jsonify({"ok": True, "shift_id": sid}), 201
 
 
 # ---------- Dev-хелпер: создать тестовое дело (без игры) ----------
@@ -134,6 +159,27 @@ def dev_seed():
     cid = db.create_case(data)
     flash(f"Создано ТЕСТОВОЕ дело #{cid} (в статистику не входит).", "ok")
     return redirect(url_for("case_view", cid=cid))
+
+
+@app.route("/dev/seed-shift")
+def dev_seed_shift():
+    dur = random.randint(45, 240)
+    arrests = random.randint(0, 6)
+    data = {
+        "callsign": "7-WILLIAM-1", "officer_name": config.OFFICER_NAME,
+        "shift_type": random.choice(["day", "evening", "night"]),
+        "duration_min": dur,
+        "arrests": arrests,
+        "traffic_stops": random.randint(arrests, arrests + 10),
+        "pursuits": random.randint(0, 4),
+        "pit": random.randint(0, 3),
+        "callouts": random.randint(0, 8),
+        "fines_total": random.choice([0, 500, 1200, 2400, 3600]),
+        "is_test": True,
+    }
+    sid = db.create_shift(data)
+    flash(f"Создан ТЕСТОВЫЙ рапорт смены #{sid}.", "ok")
+    return redirect(url_for("shift_view", sid=sid))
 
 
 @app.route("/dev/clear-tests")

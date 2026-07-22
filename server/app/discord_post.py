@@ -85,6 +85,21 @@ def build_markdown(case):
     return "\n".join(L)
 
 
+def build_shift_markdown(s):
+    """Готовый рапорт смены для вставки в Discord."""
+    L = []
+    L.append(f"🕓 **Рапорт смены #{s['id']} — {s.get('type_ru') or '—'}**")
+    L.append(f"**Офицер:** {s.get('callsign') or '—'}" + (f" ({s['officer_name']})" if s.get("officer_name") else ""))
+    L.append(f"**Длительность:** {s.get('duration_h') or '—'}")
+    L.append(f"**Задержаний:** {s.get('arrests') or 0}")
+    L.append(f"**Остановок транспорта:** {s.get('traffic_stops') or 0}")
+    L.append(f"**Погонь:** {s.get('pursuits') or 0} · **PIT-манёвров:** {s.get('pit') or 0}")
+    L.append(f"**Вызовов обработано:** {s.get('callouts') or 0}")
+    L.append(f"**Штрафов на сумму:** ${s.get('fines_total') or 0}")
+    L.append(f"*Начало смены: {s.get('started_fmt') or ''}*")
+    return "\n".join(L)
+
+
 def send_case(case):
     """Возвращает (ok, message). Скрин прикладывается файлом, если есть на диске."""
     if not config.DISCORD_WEBHOOK_URL:

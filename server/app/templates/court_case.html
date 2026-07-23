@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Дело — {{ case.subject_name }}{% endblock %}
+{% block title %}Дело {{ case.case_no }} — {{ case.subject_name }}{% endblock %}
 {% block content %}
 <a class="back" href="{{ url_for('court') }}">← в судебный реестр</a>
 
@@ -8,77 +8,98 @@
   <span class="tag {{ case.label_cls }} big">{{ case.label }}</span>
 </div>
 
-<div class="case-grid">
-  <section class="card report">
-    <div class="report-top">
-      <span class="badge">⚖</span>
-      <div>
-        <div class="rep-title">Высший суд штата Сан-Андреас · округ Лос-Сантос</div>
-        <div class="rep-sub">Подано {{ case.filed_fmt }} · {{ case.source or '—' }}</div>
+<div class="doc-actions">
+  <button class="btn primary" onclick="downloadDoc()">📄 Скачать карточку картинкой (PNG)</button>
+  <button class="btn" onclick="copyDiscord()">📋 Скопировать текст для Discord</button>
+  <span class="muted small">Картинку можно перетащить прямо в Discord.</span>
+</div>
+
+<!-- ДОКУМЕНТ (рендерится в картинку) -->
+<div id="doc" class="doc">
+  <div class="doc-title">
+    <div class="doc-court">ВЫСШИЙ СУД ШТАТА САН-АНДРЕАС</div>
+    <div class="doc-county">ОКРУГ ЛОС-САНТОС · ЗАВЕРЕННАЯ ВЫПИСКА ИЗ РЕЕСТРА</div>
+  </div>
+
+  <div class="doc-body">
+    <div class="doc-left">
+      <div class="doc-party">
+        ШТАТ САН-АНДРЕАС, <span class="doc-mut">истец,</span><br>
+        &nbsp;&nbsp;&nbsp;против<br>
+        <b>{{ case.subject_name|upper }}</b>, <span class="doc-mut">подсудимый.</span>
       </div>
+      <table class="doc-tbl">
+        <tr><td>Дело №</td><td><b>{{ case.case_no }}</b></td></tr>
+        <tr><td>Подано</td><td>{{ case.filed_fmt }}</td></tr>
+        <tr><td>Источник</td><td>{{ case.source or '—' }}</td></tr>
+        <tr><td>Судья</td><td>{{ case.judge or '—' }}</td></tr>
+        <tr><td>Отделение</td><td>{{ case.courtroom or '—' }}</td></tr>
+        <tr><td>Обвинитель</td><td>{{ case.prosecutor or '—' }}</td></tr>
+        <tr><td>Защита</td><td>{{ case.defense or '—' }}</td></tr>
+      </table>
+
+      <div class="doc-sec-title">ПРИГОВОР</div>
+      <table class="doc-tbl">
+        <tr><td>Статус</td><td><b>{{ case.label }}</b></td></tr>
+        <tr><td>Заявление</td><td>{{ case.plea or '—' }}</td></tr>
+        <tr><td>Наказание</td><td>{{ case.sentence or '—' }}</td></tr>
+      </table>
     </div>
 
-    <div class="rep-block">
-      <h4>Пункты и решения</h4>
-      {% for ch in case.charges %}
-        <div class="court-charge-item">
-          <div><b>{{ ch.ChargeCode }}</b> {{ ch.Description }}
-            <span class="muted small">· {{ ch.LegalClass }} · {{ ch.Severity }}</span></div>
-          <div class="muted small">Решение: {{ ch.Sentence or '—' }}</div>
-          {% if ch.CourtNote %}<div class="muted small">{{ ch.CourtNote }}</div>{% endif %}
-        </div>
-      {% endfor %}
-    </div>
+    <div class="doc-right">
+      <div class="doc-sec-title">ПУНКТЫ И РЕШЕНИЯ</div>
+      <ol class="doc-charges">
+        {% for ch in case.charges %}
+          <li>
+            <b>{{ ch.ChargeCode }}</b> {{ ch.Description }}
+            <span class="doc-mut">· {{ ch.LegalClass }} · {{ ch.Severity }}</span><br>
+            <span class="doc-verdict">{{ ch.Sentence or '—' }}</span>
+          </li>
+        {% endfor %}
+      </ol>
 
-    {% if case.timeline %}
-    <div class="rep-block">
-      <h4>Журнал действий</h4>
-      <ul class="dutylog">
+      <div class="doc-sec-title">ЖУРНАЛ ДЕЙСТВИЙ</div>
+      <ol class="doc-timeline">
         {% for t in case.timeline %}
           <li><b>{{ t.Title }}</b> — {{ t.Detail }}</li>
         {% endfor %}
-      </ul>
+      </ol>
     </div>
-    {% endif %}
-  </section>
+  </div>
 
-  <aside class="side">
-    <div class="card">
-      <h3>Приговор</h3>
-      <dl class="report-fields">
-        <div><dt>Статус</dt><dd>{{ case.label }}</dd></div>
-        <div><dt>Наказание</dt><dd>{{ case.sentence or '—' }}</dd></div>
-        <div><dt>Заявление</dt><dd>{{ case.plea or '—' }}</dd></div>
-        <div><dt>Зал</dt><dd>{{ case.courtroom or '—' }}</dd></div>
-      </dl>
+  <div class="doc-footer">
+    <div class="doc-seal">⚖</div>
+    <div class="doc-cert">
+      Удостоверяю, что вышеизложенное является верной и точной копией журнала действий
+      и решения по указанному делу.
     </div>
-    <div class="card">
-      <h3>Участники</h3>
-      <dl class="report-fields">
-        <div><dt>Судья</dt><dd>{{ case.judge or '—' }}</dd></div>
-        <div><dt>Обвинитель</dt><dd>{{ case.prosecutor or '—' }}</dd></div>
-        <div><dt>Защита</dt><dd>{{ case.defense or '—' }}</dd></div>
-      </dl>
+    <div class="doc-sign">
+      <div>_______________________<br><span class="doc-mut">Секретарь суда</span></div>
+      <div>{{ case.filed_fmt }}<br><span class="doc-mut">Дата заверения</span></div>
     </div>
-    {% if case.notes %}
-    <div class="card"><h3>Примечание</h3><p class="muted small">{{ case.notes }}</p></div>
-    {% endif %}
-
-    <div class="card">
-      <h3>Скопировать для Discord</h3>
-      <textarea id="dmd" class="dmd" readonly rows="9">{{ discord_md }}</textarea>
-      <button class="btn primary" onclick="copyDiscord()">📋 Скопировать текст</button>
-      <p id="copied" class="sent" style="display:none">✓ Скопировано! Вставь в канал (Ctrl+V)</p>
-    </div>
-  </aside>
+    <div class="doc-form">ВЫСШИЙ СУД САН-АНДРЕАС · ФОРМА SA-CR-110</div>
+  </div>
 </div>
 
+<textarea id="dmd" style="display:none">{{ discord_md }}</textarea>
+<p id="copied" class="sent" style="display:none">✓ Скопировано! Вставь в канал (Ctrl+V)</p>
+
+<script src="{{ url_for('static', filename='html2canvas.min.js') }}"></script>
 <script>
+function downloadDoc(){
+  var el=document.getElementById('doc');
+  html2canvas(el,{scale:2,backgroundColor:'#f4f1e8',useCORS:true}).then(function(canvas){
+    var a=document.createElement('a');
+    a.download='{{ case.case_no }}_{{ case.subject_name }}.png';
+    a.href=canvas.toDataURL('image/png');
+    a.click();
+  });
+}
 function copyDiscord(){
   var ta=document.getElementById('dmd');
   var done=function(){var c=document.getElementById('copied');c.style.display='block';setTimeout(function(){c.style.display='none';},3000);};
-  if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(ta.value).then(done,function(){ta.select();document.execCommand('copy');done();});}
-  else{ta.select();document.execCommand('copy');done();}
+  if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(ta.value).then(done,function(){ta.style.display='block';ta.select();document.execCommand('copy');ta.style.display='none';done();});}
+  else{ta.style.display='block';ta.select();document.execCommand('copy');ta.style.display='none';done();}
 }
 </script>
 {% endblock %}

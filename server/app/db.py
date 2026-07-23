@@ -488,6 +488,13 @@ def _row_to_court(r):
     d["notes"] = localize(d.get("notes"))
     d["courtroom"] = _fix_rooms(d["courtroom"]) if d.get("courtroom") else d.get("courtroom")
     d["filed_fmt"] = fmt_dt(r["filed_at"]) if r["filed_at"] else "—"
+    # номер дела (детерминированный из ID)
+    ext = r["external_id"] or str(r["id"])
+    try:
+        num = int(ext.replace("-", "")[:8], 16) % 9000000 + 1000000
+    except Exception:
+        num = 1000000 + (r["id"] or 0)
+    d["case_no"] = f"SA-CR-{num}"
     return d
 
 

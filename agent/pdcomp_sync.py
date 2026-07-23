@@ -94,6 +94,77 @@ def map_arrest(a):
     }
 
 
+import difflib
+
+_TRANSLIT = {
+    "а": "a", "б": "b", "в": "v", "г": "g", "д": "d", "е": "e", "ё": "e", "ж": "zh",
+    "з": "z", "и": "i", "й": "y", "к": "k", "л": "l", "м": "m", "н": "n", "о": "o",
+    "п": "p", "р": "r", "с": "s", "т": "t", "у": "u", "ф": "f", "х": "kh", "ц": "ts",
+    "ч": "ch", "ш": "sh", "щ": "shch", "ъ": "", "ы": "y", "ь": "", "э": "e", "ю": "yu", "я": "ya",
+}
+# титулы уже в ЛАТИНИЦЕ (сравнение идёт после транслитерации)
+_TITLE_WORDS = {"sudya", "zam", "gor", "prokurora", "prokuror", "pom", "rezervnyy",
+                "zashchitnik", "gorodskogo", "pomoshchnik", "zamestitel",
+                "hon", "dda", "ada", "the", "public", "defender", "counsel"}
+
+
+def _translit(s):
+    return "".join(_TRANSLIT.get(ch, _TRANSLIT.get(ch.lower(), ch)) for ch in (s or ""))
+
+
+def _name_key(s):
+    """Ключ для сравнения: транслит, убраны титулы и пунктуация."""
+    latin = _translit(s or "").lower()
+    toks = [t for t in latin.replace(".", " ").replace(",", " ").split()
+            if t and t not in _TITLE_WORDS]
+    return " ".join(toks)
+
+
+def _load_personnel():
+    path = os.path.join(os.path.dirname(PDCOMP_STORE), "court_personnel.json")
+    pools = {"judges": [], "prosecutors": [], "defenseCounsel": []}
+    data = read_json(path)
+    if isinstance(data, dict):
+        for role in pools:
+            for p in data.get(role, []):
+                nm = p.get("name")
+                if nm:
+                    pools[role].append((nm, _name_key(nm)))
+    return pools
+
+
+_PERSONNEL = None
+
+
+def _personnel():
+    global _PERSONNEL
+    if _PERSONNEL is None:
+        _PERSONNEL = _load_personnel()
+    return _PERSONNEL
+
+
+def _english_name(ru_name, role):
+    """Английское имя из court_personnel по русскому (фаззи-матч). None если не найдено."""
+    if not ru_name:
+        return None
+    pool = _personnel().get(role, [])
+    best, best_r = None, 0.0
+    key = _name_key(ru_name)
+    for en, en_key in pool:
+        r = difflib.SequenceMatcher(None, key, en_key).ratio()
+        if r > best_r:
+            best_r, best = r, en
+    return best if (best and best_r >= 0.5) else None
+
+
+def _bilingual(ru_name, role):
+    """Русское имя, а в скобках английское: 'Судья Оуэн Фелд (Hon. Owen Feld)'."""
+    if not ru_name:
+        return ru_name
+    en = _english_name(ru_name, role)
+    return f"{ru_name} ({en})" if en else ru_name
+
+
 def map_court_case(cc):
     return {
         "external_id": cc.get("Id"),
@@ -104,9 +175,9 @@ def map_court_case(cc):
         "outcome": cc.get("Outcome"),
         "sentence": cc.get("Sentence"),
         "notes": cc.get("Notes"),
-        "judge": cc.get("JudgeName"),
-        "prosecutor": cc.get("ProsecutorName"),
-        "defense": cc.get("DefenseCounsel"),
+        "judge": _bilingual(cc.get("JudgeName"), "judges"),
+        "prosecutor": _bilingual(cc.get("ProsecutorName"), "prosecutors"),
+        "defense": _bilingual(cc.get("DefenseCounsel"), "defenseCounsel"),
         "courtroom": cc.get("Courtroom"),
         "plea": cc.get("Plea"),
         "appeal_filed": cc.get("AppealFiled"),

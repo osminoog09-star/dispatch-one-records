@@ -10,6 +10,62 @@
   <span class="tag st-{{ case.status }} big">{{ case.status_ru }}</span>
 </div>
 
+<div class="doc-actions">
+  <button class="btn primary" onclick="downloadDoc()">📄 Скачать протокол картинкой (PNG)</button>
+  <span class="muted small">Картинку можно перетащить прямо в Discord.</span>
+</div>
+
+<!-- ПРОТОКОЛ АРЕСТА (рендерится в картинку) -->
+<div id="doc" class="doc">
+  <div class="doc-title">
+    <div class="doc-court">ПРОТОКОЛ АРЕСТА · ШТАТ САН-АНДРЕАС</div>
+    <div class="doc-county">ПРОТОКОЛ АРЕСТА И ОФОРМЛЕНИЯ · РАПОРТ № {{ case.arrest_no }}</div>
+  </div>
+  <div class="doc-body">
+    <div class="doc-left">
+      <table class="doc-tbl">
+        <tr><td>Задержанный</td><td><b>{{ case.suspect_name }}</b>
+          {% if case.wanted %}<span class="doc-verdict"> · В РОЗЫСКЕ</span>{% endif %}</td></tr>
+        <tr><td>Сотрудник</td><td>{{ case.officer_name or case.callsign }}</td></tr>
+        <tr><td>Дата/время</td><td>{{ case.created_fmt }}{% if case.game_time %} · игр. {{ case.game_time }}{% endif %}</td></tr>
+        <tr><td>Место</td><td>{{ case.zone or '—' }}{% if case.postal %} · {{ case.postal }}{% endif %}</td></tr>
+        {% if case.reason %}<tr><td>Причина</td><td>{{ case.reason }}</td></tr>{% endif %}
+      </table>
+
+      <div class="doc-sec-title">ИЗЪЯТО / НАЙДЕНО</div>
+      {% if case.found_items %}
+        <ul class="doc-charges">{% for it in case.found_items %}<li>{{ it }}</li>{% endfor %}</ul>
+      {% else %}<div class="doc-mut" style="font-size:12px">Ничего не изъято.</div>{% endif %}
+    </div>
+
+    <div class="doc-right">
+      <div class="doc-sec-title">ОБВИНЕНИЯ</div>
+      {% if case.charges_parsed %}
+      <table class="doc-tbl doc-charge-tbl">
+        <tr><th>КОД</th><th>ОПИСАНИЕ</th><th>КЛАСС</th></tr>
+        {% for ch in case.charges_parsed %}
+          <tr><td><b>{{ ch.code }}</b></td><td>{{ ch.desc }}</td><td class="doc-mut">{{ ch.cls }}</td></tr>
+        {% endfor %}
+      </table>
+      {% else %}<div class="doc-mut" style="font-size:12px">Обвинения не вменялись.</div>{% endif %}
+
+      {% if case.notes %}
+      <div class="doc-sec-title">ОПИСАНИЕ АРЕСТА</div>
+      <div style="font-size:12px">{{ case.notes }}</div>
+      {% endif %}
+    </div>
+  </div>
+  <div class="doc-footer">
+    <div class="doc-seal">🛡</div>
+    <div class="doc-cert" style="margin-left:46px">Настоящий протокол составлен по факту задержания и оформления указанного лица.</div>
+    <div class="doc-sign">
+      <div>_______________________<br><span class="doc-mut">Сотрудник, произведший арест</span></div>
+      <div>{{ case.created_fmt }}<br><span class="doc-mut">Дата подачи</span></div>
+    </div>
+    <div class="doc-form">ПРОТОКОЛ АРЕСТА САН-АНДРЕАС · ФОРМА SA-207</div>
+  </div>
+</div>
+
 <div class="case-grid">
   <!-- Красивая карточка (данные — кириллица работает) -->
   <section class="card report">
@@ -145,5 +201,15 @@ function copyDiscord(){
     ta.select(); document.execCommand('copy'); done();
   }
 }
+function downloadDoc(){
+  var el=document.getElementById('doc');
+  html2canvas(el,{scale:2,backgroundColor:'#f4f1e8',useCORS:true}).then(function(canvas){
+    var a=document.createElement('a');
+    a.download='{{ case.arrest_no }}_{{ case.suspect_name }}.png';
+    a.href=canvas.toDataURL('image/png');
+    a.click();
+  });
+}
 </script>
+<script src="{{ url_for('static', filename='html2canvas.min.js') }}"></script>
 {% endblock %}

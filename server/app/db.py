@@ -243,14 +243,30 @@ def _jsonlist(val):
         return [x.strip() for x in str(val).split(",") if x.strip()]
 
 
+def _parse_charge(s):
+    """'PC.1320 · Неявка в суд (Проступок)' → {code, desc, cls}."""
+    import re as _re
+    m = _re.match(r"^\s*(\S+)\s·\s(.+?)(?:\s\(([^)]+)\))?\s*$", s or "")
+    if m:
+        return {"code": m.group(1), "desc": m.group(2), "cls": m.group(3) or ""}
+    return {"code": "", "desc": s or "", "cls": ""}
+
+
 def _row_to_case(r):
     d = dict(r)
     d["wanted"] = bool(r["wanted"])
     d["status_ru"] = STATUS_RU.get(r["status"], r["status"])
     d["license_ru"] = LICENSE_RU.get(r["license_state"], r["license_state"] or "—")
     d["charges"] = [localize(x) for x in (_jsonlist(r["charges"]) if "charges" in r.keys() else [])]
+    d["charges_parsed"] = [_parse_charge(x) for x in d["charges"]]
     d["found_items"] = _jsonlist(r["found_items"]) if "found_items" in r.keys() else []
     d["created_fmt"] = fmt_dt(r["created_at"])
+    ext = r["external_id"] if "external_id" in r.keys() and r["external_id"] else str(r["id"])
+    try:
+        num = int(ext.replace("-", "")[:8], 16) % 90000000 + 10000000
+    except Exception:
+        num = 10000000 + (r["id"] or 0)
+    d["arrest_no"] = f"AR-{num}"
     d["is_test"] = bool(r["is_test"]) if "is_test" in r.keys() else False
     return d
 

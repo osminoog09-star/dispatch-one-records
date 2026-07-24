@@ -75,6 +75,38 @@ def officer_view(callsign):
                            shifts=db.list_shifts(50, officer_id=off["id"]))
 
 
+@app.route("/register", methods=["GET", "POST"])
+def register():
+    token = request.values.get("token") or None
+    if request.method == "POST":
+        callsign = (request.form.get("callsign") or "").strip()
+        nickname = (request.form.get("nickname") or "").strip()
+        discord = (request.form.get("discord") or "").strip()
+        if not callsign or not nickname:
+            flash("Заполни позывной и никнейм.", "err")
+        else:
+            if not token:
+                token = db.new_token()
+            db.register_profile(token, callsign, nickname, discord)
+            flash("Профиль сохранён. Скопируй ключ в агент.", "ok")
+            return render_template("register.html", token=token, saved=True,
+                                   callsign=callsign, nickname=nickname, discord=discord)
+    prof = db.get_profile(token) if token else None
+    return render_template("register.html", token=token,
+                           callsign=(prof or {}).get("callsign"),
+                           nickname=(prof or {}).get("nickname"),
+                           discord=(prof or {}).get("discord"))
+
+
+@app.route("/api/profile")
+def api_profile():
+    key = request.headers.get("X-Api-Key") or request.args.get("api_key")
+    prof = db.get_profile(key) if key else None
+    if not prof:
+        return jsonify({"error": "not_registered"}), 404
+    return jsonify({"callsign": prof["callsign"], "nickname": prof["nickname"]})
+
+
 @app.route("/court")
 def court():
     return render_template("court.html", cases=db.list_court_cases(200), summary=db.court_summary())

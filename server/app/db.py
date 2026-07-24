@@ -117,6 +117,14 @@ def init_db():
                 changed_at TEXT NOT NULL
             )""")
         c.execute(
+            """CREATE TABLE IF NOT EXISTS profiles (
+                token TEXT PRIMARY KEY,
+                callsign TEXT,
+                nickname TEXT,
+                discord TEXT,
+                updated_at TEXT
+            )""")
+        c.execute(
             """CREATE TABLE IF NOT EXISTS court_cases (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 external_id TEXT UNIQUE,
@@ -260,6 +268,7 @@ def _row_to_case(r):
     d["charges"] = [localize(x) for x in (_jsonlist(r["charges"]) if "charges" in r.keys() else [])]
     d["charges_parsed"] = [_parse_charge(x) for x in d["charges"]]
     d["found_items"] = _jsonlist(r["found_items"]) if "found_items" in r.keys() else []
+    d["notes"] = localize_narrative(d.get("notes"))
     d["created_fmt"] = fmt_dt(r["created_at"])
     ext = r["external_id"] if "external_id" in r.keys() and r["external_id"] else str(r["id"])
     try:
@@ -443,6 +452,32 @@ def localize(text):
     return _fix_rooms(out)
 
 
+_MONTHS = {"Jan": "января", "Feb": "февраля", "Mar": "марта", "Apr": "апреля",
+           "May": "мая", "Jun": "июня", "Jul": "июля", "Aug": "августа",
+           "Sep": "сентября", "Oct": "октября", "Nov": "ноября", "Dec": "декабря"}
+
+
+def localize_narrative(text):
+    """Перевод сгенерированного pdComp описания ареста на русский (имена не трогаем)."""
+    if not text or not isinstance(text, str):
+        return text
+    t = text
+    for en, ru in [
+        ("After investigation, probable cause was determined for the arrest.",
+         "После разбирательства установлено достаточное основание для ареста."),
+        ("following a", "по вызову"),
+        ("Officer arrested", "сотрудник задержал"),
+        ("(DOB ", "(дата рожд. "),
+    ]:
+        t = t.replace(en, ru)
+    t = t.replace(" call.", ".").replace(" call,", ",").replace(" call ", " ")
+    t = re.sub(r"\b(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+(\d{1,2})\b",
+               lambda m: m.group(2) + " " + _MONTHS[m.group(1)], t)
+    if t.startswith("On "):
+        t = t[3:]
+    return t
+
+
 # ---------- Судебный реестр (из pdComp cases.json) ----------
 COURT_OUTCOME = {0: "В ожидании", 1: "Дело прекращено", 2: "Не виновен", 3: "Осуждён"}
 COURT_OUTCOME_CLS = {0: "st-submitted", 1: "st-dismissed", 2: "st-dismissed", 3: "st-convicted"}
@@ -524,6 +559,29 @@ def get_court_case(cid):
     with get_conn() as c:
         r = c.execute("SELECT * FROM court_cases WHERE id=?", (cid,)).fetchone()
         return _row_to_court(r) if r else None
+
+
+def new_token():
+    import secrets
+    return secrets.token_hex(8)
+
+
+def register_profile(token, callsign, nickname, discord=None):
+    with get_conn() as c:
+        exists = c.execute("SELECT token FROM profiles WHERE token=?", (token,)).fetchone()
+        if exists:
+            c.execute("UPDATE profiles SET callsign=?, nickname=?, discord=?, updated_at=? WHERE token=?",
+                      (callsign, nickname, discord, _now(), token))
+        else:
+            c.execute("INSERT INTO profiles (token, callsign, nickname, discord, updated_at) VALUES (?,?,?,?,?)",
+                      (token, callsign, nickname, discord, _now()))
+    get_or_create_officer(callsign, nickname)
+
+
+def get_profile(token):
+    with get_conn() as c:
+        r = c.execute("SELECT * FROM profiles WHERE token=?", (token,)).fetchone()
+        return dict(r) if r else None
 
 
 def court_summary():

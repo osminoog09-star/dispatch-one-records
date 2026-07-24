@@ -66,7 +66,88 @@ def fix_mojibake(s):
         return s
 
 
+_PROFILE = None
+
+
+def fetch_profile():
+    """Профиль с сайта (позывной + никнейм) по ключу агента. None если не зарегистрирован."""
+    global _PROFILE
+    try:
+        req = urllib.request.Request(f"{SITE_URL}/api/profile", method="GET")
+        req.add_header("X-Api-Key", API_KEY)
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            _PROFILE = json.loads(resp.read().decode("utf-8"))
+    except urllib.error.HTTPError as e:
+        if e.code == 404:
+            _PROFILE = None
+        else:
+            print(f"[warn] профиль: HTTP {e.code}")
+    except Exception as e:
+        print(f"[warn] профиль недоступен: {e}")
+    return _PROFILE
+
+
+def _lspdfr_dir():
+    # PDCOMP_STORE = ...\LSPDFR\pdComp\data\store → LSPDFR на 3 уровня выше
+    return os.path.dirname(os.path.dirname(os.path.dirname(PDCOMP_STORE)))
+
+
+def _set_ini_value(path, key, value, section=None):
+    """Меняет key=value в ini (опц. внутри секции). True если что-то изменил."""
+    if not os.path.exists(path):
+        return False
+    import re as _re
+    try:
+        lines = open(path, "r", encoding="utf-8-sig").read().splitlines()
+    except Exception:
+        return False
+    out, cur, changed = [], "", False
+    for line in lines:
+        s = line.strip()
+        if s.startswith("[") and s.endswith("]"):
+            cur = s[1:-1].strip().lower()
+            out.append(line); continue
+        m = _re.match(r"^(\s*)([A-Za-z0-9_]+)(\s*=\s*)(.*)$", line)
+        if m and m.group(2).lower() == key.lower() and (section is None or cur == section.lower()):
+            newline = f"{m.group(1)}{m.group(2)}{m.group(3)}{value}"
+            if newline != line:
+                changed = True
+            out.append(newline)
+        else:
+            out.append(line)
+    if changed:
+        try:
+            open(path, "w", encoding="utf-8").write("\n".join(out) + "\n")
+        except Exception as e:
+            print(f"[warn] не записать {os.path.basename(path)}: {e}")
+            return False
+    return changed
+
+
+def apply_callsign_to_game(callsign, nickname):
+    """Прописывает позывной/имя во все игровые конфиги — как игрок задал на сайте."""
+    base = _lspdfr_dir()
+    targets = [
+        (os.path.join(base, "GrammarPolice", "custom.ini"), "Callsign", None),
+        (os.path.join(base, "CalloutInterface.ini"), "MDTCallsign", None),
+        (os.path.join(base, "BlueLineScanner.ini"), "VizLabel", None),
+        (os.path.join(base, "pdComp", "config.ini"), "Callsign", "Officer"),
+    ]
+    changed = False
+    for path, key, section in targets:
+        if _set_ini_value(path, key, callsign, section):
+            changed = True
+    if nickname:
+        _set_ini_value(os.path.join(base, "pdComp", "config.ini"), "Name", nickname, "Officer")
+    if changed:
+        print(f"[✓] позывной в игре обновлён на {callsign}")
+    return changed
+
+
 def map_arrest(a):
+    prof = _PROFILE or {}
+    officer_name = prof.get("nickname") or a.get("OfficerName") or "UNKNOWN"
+    callsign = prof.get("callsign") or a.get("OfficerName") or "UNKNOWN"
     charges = []
     for c in a.get("Charges", []):
         code = c.get("ChargeCode", "")
@@ -79,11 +160,10 @@ def map_arrest(a):
 
     evidence = [e.get("Description", "") for e in a.get("Evidence", []) if e.get("Description")]
 
-    officer = a.get("OfficerName") or "UNKNOWN"
     return {
         "external_id": a.get("Id"),
-        "callsign": officer,          # pdComp хранит имя офицера; используем как ключ
-        "officer_name": officer,
+        "callsign": callsign,          # позывной из игры (pdComp config.ini [Officer])
+        "officer_name": officer_name,  # имя персонажа
         "suspect_name": a.get("SubjectFullName") or "Неизвестный",
         "zone": fix_mojibake(a.get("Location")),
         "game_time": a.get("ArrestedAtWall") or a.get("ArrestedAt"),
@@ -265,6 +345,10 @@ def main():
     seen = {}
     while True:
         try:
+            # позывной/имя — с сайта (регистрация игрока) → прописать в игру
+            prof = fetch_profile()
+            if prof and prof.get("callsign"):
+                apply_callsign_to_game(prof["callsign"], prof.get("nickname"))
             for fname, fn in (("arrests.json", sync_arrests), ("cases.json", sync_court)):
                 path = os.path.join(PDCOMP_STORE, fname)
                 mtime = os.path.getmtime(path) if os.path.exists(path) else 0

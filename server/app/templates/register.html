@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Регистрация офицера{% endblock %}
+{% block content %}
+<h1>Регистрация офицера</h1>
+<p class="muted">Впиши позывной и никнейм. Агент сам пропишет их в игре и будет вести твои дела под этим профилем.</p>
+
+<div class="card" style="max-width:520px">
+  <form method="post" class="regform">
+    {% if token %}<input type="hidden" name="token" value="{{ token }}">{% endif %}
+    <label>1. Позывной<br>
+      <input name="callsign" value="{{ callsign or '' }}" placeholder="например, 1-ADAM-12" required>
+    </label>
+    <label>2. Имя персонажа<br>
+      <input name="nickname" value="{{ nickname or '' }}" placeholder="например, John Miller" required>
+    </label>
+    <label>3. Discord (обязательно)<br>
+      <input name="discord" value="{{ discord or '' }}" placeholder="ваш ник в Discord" required>
+    </label>
+    <button class="btn primary" style="margin-top:10px">Сохранить и подтвердить Discord</button>
+  </form>
+  <p class="muted small" style="margin-top:10px">
+    После сохранения нужно подтвердить Discord — вход через Discord подключим,
+    когда сайт будет на постоянном адресе (для этого нужен публичный URL).
+  </p>
+</div>
+
+{% if saved and token %}
+<div class="card" style="max-width:520px;margin-top:16px">
+  <h3>Твой ключ агента</h3>
+  <p class="muted small">Скопируй этот ключ в файл агента <code>sync-config.ini</code> в строку
+    <code>RECORDS_API_KEY</code>. По нему агент подтянет твой профиль и пропишет позывной в игре.</p>
+  <input class="dmd" readonly value="{{ token }}" onclick="this.select()" style="font-size:15px">
+</div>
+{% endif %}
+{% endblock %}

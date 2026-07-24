@@ -130,6 +130,9 @@ h3{font-size:14px;margin:0 0 .5em;color:var(--muted);text-transform:uppercase;le
 .doc-form{text-align:center;font-size:9.5px;letter-spacing:.5px;color:#6b6555;margin-top:14px}
 @media(max-width:760px){.doc-body{grid-template-columns:1fr}}
 
+.regform label{display:block;margin-bottom:12px;color:var(--muted);font-size:13px}
+.regform input{width:100%;margin-top:4px;background:var(--surface2);color:var(--text);
+  border:1px solid var(--border);border-radius:8px;padding:9px 11px;font-size:14px}
 .court-stats{grid-template-columns:repeat(4,1fr)}
 .court-list{display:flex;flex-direction:column;gap:10px}
 .court-row{display:flex;justify-content:space-between;gap:16px;background:var(--surface);border:1px solid var(--border);

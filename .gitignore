@@ -30,6 +30,9 @@ agent/dist/*.exe
 agent/dist/_test_out.txt
 *.spec
 
+# ===== Туннель (бинарь качается отдельно) =====
+host/*.exe
+
 # ===== Скретч/временное =====
 vinewood-study/
 *.log

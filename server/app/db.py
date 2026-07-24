@@ -510,7 +510,7 @@ def _row_to_court(r):
         num = int(ext.replace("-", "")[:8], 16) % 9000000 + 1000000
     except Exception:
         num = 1000000 + (r["id"] or 0)
-    d["case_no"] = f"SA-CR-{num}"
+    d["case_no"] = f"CA-CR-{num}"
     return d
 
 

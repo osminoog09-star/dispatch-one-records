@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Дела · LAPD</title>
+  <link rel="stylesheet" href="/dispatch-one-records/static/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="wrap">
+      <a class="brand" href="/dispatch-one-records/">
+        <span class="badge">★</span> LAPD <span class="sub">Records</span>
+      </a>
+      <nav>
+        <a href="/dispatch-one-records/">Главная</a>
+        <a href="/dispatch-one-records/cases">Дела</a>
+        <a href="/dispatch-one-records/court">Суд</a>
+        <a href="/dispatch-one-records/shifts">Смены</a>
+        <a href="/dispatch-one-records/register">Регистрация</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="wrap">
+    
+      
+    
+    
+<h1>Реестр дел</h1>
+
+<div class="filters">
+  <a href="/dispatch-one-records/cases" class="chip on">Все</a>
+  
+    <a href="/dispatch-one-records/cases?status=submitted" class="chip ">Подано</a>
+  
+    <a href="/dispatch-one-records/cases?status=under_review" class="chip ">На рассмотрении</a>
+  
+    <a href="/dispatch-one-records/cases?status=in_court" class="chip ">В суде</a>
+  
+    <a href="/dispatch-one-records/cases?status=convicted" class="chip ">Приговор</a>
+  
+    <a href="/dispatch-one-records/cases?status=dismissed" class="chip ">Отклонено</a>
+  
+    <a href="/dispatch-one-records/cases?status=closed" class="chip ">Закрыто</a>
+  
+</div>
+
+
+<table class="tbl">
+  <thead><tr><th>#</th><th>Подозреваемый</th><th>Район</th><th>Офицер</th><th>Создано</th><th>Статус</th></tr></thead>
+  <tbody>
+  
+    <tr onclick="location='/case/2'">
+      <td>#2</td>
+      <td>Julia Henson
+        
+        </td>
+      <td>—</td>
+      <td><span class="cs">UNKNOWN</span></td>
+      <td class="muted">2026-07-24T13:15:24</td>
+      <td><span class="tag st-submitted">Подано</span></td>
+    </tr>
+  
+    <tr onclick="location='/case/1'">
+      <td>#1</td>
+      <td>Julia Henson
+        
+        <span class="tag wanted">розыск</span></td>
+      <td>Downtown Vinewood</td>
+      <td><span class="cs">Denis Sherman</span></td>
+      <td class="muted">2026-07-23T21:30:23</td>
+      <td><span class="tag st-submitted">Подано</span></td>
+    </tr>
+  
+  </tbody>
+</table>
+
+
+  </main>
+
+  <footer class="wrap foot">Dispatch One · Records — LAPD</footer>
+</body>
+</html>

@@ -104,9 +104,11 @@ def init_db():
         for col, typ in EXTRA_COLUMNS.items():
             if col not in existing:
                 c.execute(f"ALTER TABLE cases ADD COLUMN {col} {typ}")
-        # миграция officers (статус доступности)
+        # миграция officers (статус доступности, звание, отдел, discord)
         oexisting = {r["name"] for r in c.execute("PRAGMA table_info(officers)").fetchall()}
-        for col, typ in {"current_status": "TEXT", "status_since": "TEXT"}.items():
+        for col, typ in {"current_status": "TEXT", "status_since": "TEXT",
+                         "rank": "TEXT", "department": "TEXT", "discord": "TEXT",
+                         "is_admin": "INTEGER"}.items():
             if col not in oexisting:
                 c.execute(f"ALTER TABLE officers ADD COLUMN {col} {typ}")
         c.execute(
@@ -331,11 +333,12 @@ def list_officers_with_stats():
     with get_conn() as c:
         rows = c.execute(
             """SELECT officers.id, officers.callsign, officers.name, officers.current_status,
+                      officers.rank, officers.department, officers.discord, officers.is_admin,
                       COUNT(cases.id) AS cases_count,
                       SUM(CASE WHEN cases.wanted=1 THEN 1 ELSE 0 END) AS wanted_count
                FROM officers
                LEFT JOIN cases ON cases.officer_id = officers.id AND cases.is_test=0
-               GROUP BY officers.id ORDER BY cases_count DESC""").fetchall()
+               GROUP BY officers.id ORDER BY cases_count DESC, officers.callsign""").fetchall()
         out = []
         for r in rows:
             d = dict(r)

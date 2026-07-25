@@ -2,6 +2,16 @@
 {% block title %}Сводка{% endblock %}
 {% block content %}
 
+<div class="dl-banner">
+  <div>
+    <div class="dl-title">Подключить свою игру к сайту</div>
+    <div class="muted small">Скачай установщик, впиши позывной и имя — он сам пропишет позывной в игре
+      и будет отправлять твои аресты и суды сюда.</div>
+  </div>
+  <a class="btn primary" href="https://github.com/osminoog09-star/dispatch-one-records/releases/latest/download/DispatchOne-Setup.exe">⬇ Скачать установщик</a>
+</div>
+
+
 <section class="stats">
   <div class="stat"><div class="num">{{ summary.total }}</div><div class="lbl">Всего дел</div></div>
   <div class="stat"><div class="num">{{ summary.today }}</div><div class="lbl">Сегодня</div></div>
@@ -49,12 +59,15 @@
     <h2>Офицеры</h2>
     {% if officers %}
       <table class="tbl">
-        <thead><tr><th>Позывной</th><th>Статус</th><th>Дел</th></tr></thead>
+        <thead><tr><th>Офицер</th><th>Звание / отдел</th><th>Дел</th></tr></thead>
         <tbody>
         {% for o in officers %}
           <tr onclick="location='{{ url_for('officer_view', callsign=o.callsign) }}'">
-            <td><span class="cs">{{ o.callsign }}</span> {{ o.name or '' }}</td>
-            <td><span class="status-dot {{ o.status_cls }}"></span>{{ o.status_ru }}</td>
+            <td><span class="cs">{{ o.callsign }}</span> {{ o.name or '' }}
+              {% if o.is_admin %}<span class="tag adm">админ</span>{% endif %}
+              {% if o.discord %}<div class="muted small">discord: {{ o.discord }}</div>{% endif %}</td>
+            <td>{% if o.rank %}<span class="tag rank">{{ o.rank }}</span>{% endif %}
+              {% if o.department %}<div class="muted small">{{ o.department }}</div>{% endif %}</td>
             <td>{{ o.cases_count }}</td>
           </tr>
         {% endfor %}

@@ -5,9 +5,15 @@
 
 <div class="case-head">
   <h1><span class="cs big">{{ officer.callsign }}</span> {{ officer.name or '' }}</h1>
+  {% if officer.is_admin %}<span class="tag adm">админ</span>{% endif %}
+  {% if officer.rank %}<span class="tag rank">{{ officer.rank }}</span>{% endif %}
   <span class="tag"><span class="status-dot {{ officer.status_cls }}"></span>{{ officer.status_ru }}</span>
-  {% if officer.status_since_fmt %}<span class="muted small">с {{ officer.status_since_fmt }}</span>{% endif %}
 </div>
+<p class="muted small">
+  {% if officer.department %}{{ officer.department }}{% endif %}
+  {% if officer.discord %} · Discord: <b>{{ officer.discord }}</b>{% endif %}
+  {% if officer.status_since_fmt %} · статус с {{ officer.status_since_fmt }}{% endif %}
+</p>
 
 {% if officer.status_log %}
 <h2>Журнал дежурства</h2>

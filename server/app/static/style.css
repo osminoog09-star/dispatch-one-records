@@ -58,6 +58,8 @@ h3{font-size:14px;margin:0 0 .5em;color:var(--muted);text-transform:uppercase;le
 .tag.big{font-size:13px;padding:4px 12px}
 .tag.wanted{background:#2a1616;border-color:#7a3a3a;color:#f0a0a0}
 .tag.test{background:#2a2410;border-color:#8a7420;color:#e8d68a}
+.tag.rank{background:#141d2b;border-color:#31517a;color:#9fc3f0}
+.tag.adm{background:#2a1616;border-color:#7a3a3a;color:#f0a0a0}
 .tag.ok{background:#12231a;border-color:#2f6f4f;color:#9fe0bd}
 .st-submitted{color:#9fc3f0;border-color:#31517a;background:#141d2b}
 .st-under_review{color:#e0cf9f;border-color:#7a6a31;background:#211d12}
@@ -130,6 +132,11 @@ h3{font-size:14px;margin:0 0 .5em;color:var(--muted);text-transform:uppercase;le
 .doc-form{text-align:center;font-size:9.5px;letter-spacing:.5px;color:#6b6555;margin-top:14px}
 @media(max-width:760px){.doc-body{grid-template-columns:1fr}}
 
+.dl-banner{display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap;
+  background:linear-gradient(90deg,#16233a,#1b2027);border:1px solid #2f4a75;border-radius:12px;
+  padding:16px 20px;margin-bottom:22px}
+.dl-title{font-weight:700;font-size:16px;margin-bottom:3px}
+.dl-banner .btn{white-space:nowrap}
 .regform label{display:block;margin-bottom:12px;color:var(--muted);font-size:13px}
 .regform input{width:100%;margin-top:4px;background:var(--surface2);color:var(--text);
   border:1px solid var(--border);border-radius:8px;padding:9px 11px;font-size:14px}

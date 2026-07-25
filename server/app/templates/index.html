@@ -7,10 +7,15 @@
   <div class="stat"><div class="num">{{ summary.today }}</div><div class="lbl">Сегодня</div></div>
   <div class="stat"><div class="num">{{ summary.officers }}</div><div class="lbl">Офицеров</div></div>
   <div class="stat">
-    <a class="seed" href="{{ url_for('dev_seed') }}">+ тест-дело</a>
-    {% if summary.tests %}
-      <div class="lbl" style="margin-top:8px">тестов: {{ summary.tests }} ·
-        <a href="{{ url_for('dev_clear_tests') }}" style="color:var(--wanted)">очистить</a></div>
+    {% if not static_export %}
+      <a class="seed" href="{{ url_for('dev_seed') }}">+ тест-дело</a>
+      {% if summary.tests %}
+        <div class="lbl" style="margin-top:8px">тестов: {{ summary.tests }} ·
+          <a href="{{ url_for('dev_clear_tests') }}" style="color:var(--wanted)">очистить</a></div>
+      {% endif %}
+    {% else %}
+      <div class="num" style="font-size:16px">🔄</div>
+      <div class="lbl">данные из игры</div>
     {% endif %}
   </div>
 </section>

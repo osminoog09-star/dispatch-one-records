@@ -18,7 +18,8 @@ db.init_db()
 
 @app.context_processor
 def inject_globals():
-    return {"community": config.COMMUNITY_NAME, "STATUS_RU": db.STATUS_RU}
+    return {"community": config.COMMUNITY_NAME, "STATUS_RU": db.STATUS_RU,
+            "static_export": os.environ.get("STATIC_EXPORT") == "1"}
 
 
 # ---------- Сайт ----------

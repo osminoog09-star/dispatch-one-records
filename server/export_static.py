@@ -12,6 +12,7 @@ import shutil
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+os.environ["STATIC_EXPORT"] = "1"   # скрыть dev-ссылки в публичной версии
 
 from app.main import app          # noqa: E402
 from app import db                # noqa: E402

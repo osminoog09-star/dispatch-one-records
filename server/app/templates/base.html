@@ -17,7 +17,7 @@
         <a href="{{ url_for('cases') }}">Дела</a>
         <a href="{{ url_for('court') }}">Суд</a>
         <a href="{{ url_for('shifts') }}">Смены</a>
-        <a href="{{ url_for('register') }}">Регистрация</a>
+        {% if not static_export %}<a href="{{ url_for('register') }}">Регистрация</a>{% endif %}
       </nav>
     </div>
   </header>

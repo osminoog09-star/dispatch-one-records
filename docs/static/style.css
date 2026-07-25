@@ -58,6 +58,8 @@ h3{font-size:14px;margin:0 0 .5em;color:var(--muted);text-transform:uppercase;le
 .tag.big{font-size:13px;padding:4px 12px}
 .tag.wanted{background:#2a1616;border-color:#7a3a3a;color:#f0a0a0}
 .tag.test{background:#2a2410;border-color:#8a7420;color:#e8d68a}
+.tag.rank{background:#141d2b;border-color:#31517a;color:#9fc3f0}
+.tag.adm{background:#2a1616;border-color:#7a3a3a;color:#f0a0a0}
 .tag.ok{background:#12231a;border-color:#2f6f4f;color:#9fe0bd}
 .st-submitted{color:#9fc3f0;border-color:#31517a;background:#141d2b}
 .st-under_review{color:#e0cf9f;border-color:#7a6a31;background:#211d12}

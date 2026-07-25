@@ -44,6 +44,77 @@ def index():
                            evidence=db.evidence_catalog())
 
 
+# Районы Лос-Сантоса и округа Блэйн — позиции на схеме карты (x, y, радиус)
+MAP_ZONES = [
+    ("Paleto Bay",        200,  95, 30),
+    ("Mount Chiliad",     300, 150, 34),
+    ("Grapeseed",         395, 165, 28),
+    ("Sandy Shores",      395, 250, 32),
+    ("Harmony",           300, 265, 24),
+    ("Grand Senora",      310, 330, 30),
+    ("Vinewood Hills",    250, 430, 30),
+    ("Downtown Vinewood", 315, 455, 30),
+    ("Mirror Park",       380, 480, 26),
+    ("Del Perro",         185, 505, 28),
+    ("Vespucci",          175, 560, 28),
+    ("Mission Row",       310, 530, 26),
+    ("Downtown",          270, 520, 24),
+    ("Rancho",            355, 570, 26),
+    ("El Burro Heights",  420, 560, 28),
+    ("Strawberry",        275, 590, 26),
+    ("Davis",             320, 620, 26),
+    ("Chumash",           130, 430, 26),
+    ("Puerto Del Sol",    200, 620, 26),
+    ("La Mesa",           370, 520, 24),
+]
+
+
+def _best_zone(text):
+    """Определяет район записи: берём самое длинное (точное) совпадение, чтобы
+    'Downtown Vinewood' не засчитывался ещё и в 'Downtown'."""
+    if not text:
+        return None
+    low = text.lower()
+    best = None
+    for name, *_ in MAP_ZONES:
+        if name.lower() in low and (best is None or len(name) > len(best)):
+            best = name
+    return best
+
+
+@app.route("/map")
+def game_map():
+    cases = [c for c in db.list_cases(500) if not c.get("is_test")]
+    cits = db.list_citations(500)
+
+    arr_by_zone, cit_by_zone = {}, {}
+    for c in cases:
+        z = _best_zone(c.get("zone"))
+        if z:
+            arr_by_zone[z] = arr_by_zone.get(z, 0) + 1
+    for c in cits:
+        z = _best_zone(c.get("location"))
+        if z:
+            cit_by_zone[z] = cit_by_zone.get(z, 0) + 1
+
+    zones = []
+    for name, x, y, r in MAP_ZONES:
+        arrests = arr_by_zone.get(name, 0)
+        citations_n = cit_by_zone.get(name, 0)
+        zones.append({"name": name, "x": x, "y": y, "r": r,
+                      "arrests": arrests, "citations": citations_n,
+                      "count": arrests + citations_n})
+    mx = max([z["count"] for z in zones] + [1])
+    for z in zones:
+        z["intensity"] = round(z["count"] / mx, 2) if mx else 0
+
+    top = sorted([z for z in zones if z["count"]], key=lambda z: -z["count"])[:8]
+    top_zones = [{"zone": z["name"], "count": z["count"],
+                  "pct": round(z["count"] * 100 / mx)} for z in top]
+
+    return render_template("map.html", map_districts=zones, top_zones=top_zones)
+
+
 @app.route("/staff", methods=["GET", "POST"])
 def staff():
     is_static = os.environ.get("STATIC_EXPORT") == "1"

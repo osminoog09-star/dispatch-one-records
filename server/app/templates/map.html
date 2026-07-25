@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block title %}Карта{% endblock %}
+{% block content %}
+<h1>Карта патрулирования</h1>
+<p class="muted">Районы Лос-Сантоса и округа Блэйн. Чем ярче район — тем больше там задержаний
+  и штрафов. Наведи или нажми на район, чтобы увидеть статистику.</p>
+
+<div class="map-wrap">
+  <svg viewBox="0 0 600 760" class="ls-map" xmlns="http://www.w3.org/2000/svg">
+    <!-- вода -->
+    <rect x="0" y="0" width="600" height="760" fill="var(--map-water)"/>
+    <!-- суша: остров Сан-Андреас (упрощённый силуэт) -->
+    <path d="M120,60 L300,30 L430,80 L470,180 L500,300 L480,420 L500,520 L440,620 L360,700 L260,730
+             L170,690 L120,600 L100,470 L90,330 L100,180 Z"
+          fill="var(--map-land)" stroke="var(--border)" stroke-width="2"/>
+
+    {% for d in map_districts %}
+      <g class="zone {{ 'has-data' if d.count else '' }}" data-zone="{{ d.name }}"
+         data-count="{{ d.count }}" data-arrests="{{ d.arrests }}" data-cits="{{ d.citations }}">
+        <circle cx="{{ d.x }}" cy="{{ d.y }}" r="{{ d.r }}"
+                fill="var(--map-zone)" fill-opacity="{{ 0.25 + d.intensity * 0.65 }}"
+                stroke="var(--map-stroke)" stroke-width="1.5"/>
+        {% if d.count %}
+          <circle cx="{{ d.x }}" cy="{{ d.y }}" r="{{ 6 + d.intensity * 12 }}"
+                  fill="var(--accent)" fill-opacity="0.85"/>
+          <text x="{{ d.x }}" y="{{ d.y + 4 }}" class="z-count">{{ d.count }}</text>
+        {% endif %}
+        <text x="{{ d.x }}" y="{{ d.y - d.r - 5 }}" class="z-label">{{ d.name }}</text>
+      </g>
+    {% endfor %}
+  </svg>
+
+  <aside class="map-side">
+    <div class="card" id="zone-info">
+      <h3 id="zi-name">Выбери район</h3>
+      <p class="muted small" id="zi-hint">Нажми на кружок на карте.</p>
+      <dl class="report-fields" id="zi-stats" style="display:none">
+        <div><dt>Задержаний</dt><dd id="zi-arr">0</dd></div>
+        <div><dt>Штрафов</dt><dd id="zi-cit">0</dd></div>
+        <div><dt>Всего событий</dt><dd id="zi-all">0</dd></div>
+      </dl>
+    </div>
+
+    <div class="card">
+      <h3>Топ районов</h3>
+      {% if top_zones %}
+        <div class="districts">
+          {% for d in top_zones %}
+            <div class="district">
+              <div class="d-head"><span class="d-name">{{ d.zone }}</span><span class="d-num">{{ d.count }}</span></div>
+              <div class="d-bar"><div class="d-fill" style="width: {{ d.pct }}%"></div></div>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p class="muted small">Пока нет данных — появятся после игры.</p>
+      {% endif %}
+    </div>
+  </aside>
+</div>
+
+<script>
+document.querySelectorAll('.zone').forEach(function(g){
+  g.addEventListener('click', function(){
+    document.querySelectorAll('.zone').forEach(function(z){ z.classList.remove('sel'); });
+    g.classList.add('sel');
+    document.getElementById('zi-name').textContent = g.dataset.zone;
+    document.getElementById('zi-hint').style.display = 'none';
+    document.getElementById('zi-stats').style.display = '';
+    document.getElementById('zi-arr').textContent = g.dataset.arrests;
+    document.getElementById('zi-cit').textContent = g.dataset.cits;
+    document.getElementById('zi-all').textContent = g.dataset.count;
+  });
+});
+</script>
+{% endblock %}

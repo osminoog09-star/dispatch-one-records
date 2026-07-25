@@ -1,35 +1,64 @@
 {% extends "base.html" %}
-{% block title %}Регистрация офицера{% endblock %}
+{% block title %}Регистрация{% endblock %}
 {% block content %}
+
 <h1>Регистрация офицера</h1>
-<p class="muted">Впиши позывной и никнейм. Агент сам пропишет их в игре и будет вести твои дела под этим профилем.</p>
+<p class="muted">Регистрация проходит прямо в установщике: он запишет твой позывной в игру
+  и подключит её к сайту. Ничего вручную настраивать не нужно.</p>
 
-<div class="card" style="max-width:520px">
-  <form method="post" class="regform">
-    {% if token %}<input type="hidden" name="token" value="{{ token }}">{% endif %}
-    <label>1. Позывной<br>
-      <input name="callsign" value="{{ callsign or '' }}" placeholder="например, 1-ADAM-12" required>
-    </label>
-    <label>2. Имя персонажа<br>
-      <input name="nickname" value="{{ nickname or '' }}" placeholder="например, John Miller" required>
-    </label>
-    <label>3. Discord (обязательно)<br>
-      <input name="discord" value="{{ discord or '' }}" placeholder="ваш ник в Discord" required>
-    </label>
-    <button class="btn primary" style="margin-top:10px">Сохранить и подтвердить Discord</button>
-  </form>
-  <p class="muted small" style="margin-top:10px">
-    После сохранения нужно подтвердить Discord — вход через Discord подключим,
-    когда сайт будет на постоянном адресе (для этого нужен публичный URL).
-  </p>
+<div class="dl-banner" style="margin-top:18px">
+  <div>
+    <div class="dl-title">Установщик {{ community }} Records</div>
+    <div class="muted small">Windows · ~19 МБ · Python не нужен</div>
+  </div>
+  <a class="btn primary" href="https://github.com/osminoog09-star/dispatch-one-records/releases/latest/download/DispatchOne-Setup.exe">⬇ Скачать установщик</a>
 </div>
 
-{% if saved and token %}
-<div class="card" style="max-width:520px;margin-top:16px">
-  <h3>Твой ключ агента</h3>
-  <p class="muted small">Скопируй этот ключ в файл агента <code>sync-config.ini</code> в строку
-    <code>RECORDS_API_KEY</code>. По нему агент подтянет твой профиль и пропишет позывной в игре.</p>
-  <input class="dmd" readonly value="{{ token }}" onclick="this.select()" style="font-size:15px">
+<h2>Как всё сделать (4 шага)</h2>
+<ol class="steps">
+  <li>
+    <b>Скачай и запусти установщик.</b>
+    <div class="muted small">Windows может спросить разрешение администратора — согласись.
+      Права нужны, чтобы прописать позывной в файлы игры (она стоит в Program Files).
+      Если антивирус ругается — это ложное срабатывание, добавь в исключения.</div>
+  </li>
+  <li>
+    <b>Заполни свои данные:</b>
+    <div class="muted small">
+      <b>Позывной</b> — например <span class="cs">1-ADAM-12</span>, в формате «номер-СЛОВО-номер».<br>
+      <b>Имя персонажа</b> — как зовут твоего офицера в игре (например John Miller).<br>
+      <b>Discord</b> — обязательно: по нему выдаются звания, отделы и доступы.<br>
+      <b>Ключ сообщества и адрес</b> — выдаёт администратор.
+    </div>
+  </li>
+  <li>
+    <b>Нажми «Установить».</b>
+    <div class="muted small">Установщик сам: найдёт игру, пропишет позывной во все нужные файлы
+      (pdComp, Grammar Police, MDT, сканер), поставит агент синхронизации,
+      создаст ярлык и включит автозапуск.</div>
+  </li>
+  <li>
+    <b>Играй.</b>
+    <div class="muted small">Агент работает в фоне: твои аресты, штрафы и судебные дела
+      попадают на сайт автоматически. Ничего нажимать не надо.</div>
+  </li>
+</ol>
+
+<h2>Что появится на сайте</h2>
+<ul class="steps plain">
+  <li>Твоё <b>личное дело</b> — аресты, штрафы, смены, статистика.</li>
+  <li>Протоколы задержаний и судебные дела — их можно скачать картинкой для Discord.</li>
+  <li><b>Звание и отдел</b> — назначает руководство по твоему Discord.</li>
+</ul>
+
+<h2>Частые вопросы</h2>
+<div class="faq">
+  <p><b>Позывной сменился в игре сам?</b> Так и должно быть — установщик приводит его к твоему
+    зарегистрированному. Так во всех системах ты один и тот же офицер.</p>
+  <p><b>Нужно ли что-то запускать каждый раз?</b> Нет. Агент стартует вместе с Windows.
+    Если выключил — запусти ярлык «Dispatch One» с рабочего стола.</p>
+  <p><b>Как сменить позывной или имя?</b> Запусти установщик ещё раз и впиши новые данные.</p>
+  <p><b>Мои данные видны другим?</b> На сайте видно служебное: позывной, имя офицера, задержания,
+    штрафы и статистику. Личных данных сайт не собирает.</p>
 </div>
-{% endif %}
 {% endblock %}

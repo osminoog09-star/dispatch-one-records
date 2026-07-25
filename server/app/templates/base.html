@@ -16,8 +16,9 @@
         <a href="{{ url_for('index') }}">Главная</a>
         <a href="{{ url_for('cases') }}">Дела</a>
         <a href="{{ url_for('court') }}">Суд</a>
+        <a href="{{ url_for('citations') }}">Штрафы</a>
         <a href="{{ url_for('shifts') }}">Смены</a>
-        {% if not static_export %}<a href="{{ url_for('register') }}">Регистрация</a>{% endif %}
+        <a href="{{ url_for('register') }}">Регистрация</a>
       </nav>
     </div>
   </header>
@@ -31,6 +32,6 @@
     {% block content %}{% endblock %}
   </main>
 
-  <footer class="wrap foot">Dispatch One · Records — {{ community }}</footer>
+  <footer class="wrap foot">{{ community }} Records · данные синхронизируются из игры</footer>
 </body>
 </html>

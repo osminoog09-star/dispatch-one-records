@@ -6,37 +6,26 @@
   <div>
     <div class="dl-title">Подключить свою игру к сайту</div>
     <div class="muted small">Скачай установщик, впиши позывной и имя — он сам пропишет позывной в игре
-      и будет отправлять твои аресты и суды сюда.</div>
+      и будет отправлять твои аресты, штрафы и суды сюда.</div>
   </div>
-  <a class="btn primary" href="https://github.com/osminoog09-star/dispatch-one-records/releases/latest/download/DispatchOne-Setup.exe">⬇ Скачать установщик</a>
+  <a class="btn primary" href="{{ url_for('register') }}">Как подключиться →</a>
 </div>
 
-
-<section class="stats">
-  <div class="stat"><div class="num">{{ summary.total }}</div><div class="lbl">Всего дел</div></div>
-  <div class="stat"><div class="num">{{ summary.today }}</div><div class="lbl">Сегодня</div></div>
+<section class="stats stats-6">
+  <div class="stat"><div class="num">{{ summary.total }}</div><div class="lbl">Задержаний</div></div>
+  <div class="stat"><div class="num">{{ cit.count }}</div><div class="lbl">Штрафов</div></div>
+  <div class="stat"><div class="num">${{ cit.total_fine }}</div><div class="lbl">Сумма штрафов</div></div>
+  <div class="stat"><div class="num">{{ court.total }}</div><div class="lbl">Судебных дел</div></div>
+  <div class="stat"><div class="num">{{ court.closed }}</div><div class="lbl">Закрыто судом</div></div>
   <div class="stat"><div class="num">{{ summary.officers }}</div><div class="lbl">Офицеров</div></div>
-  <div class="stat">
-    {% if not static_export %}
-      <a class="seed" href="{{ url_for('dev_seed') }}">+ тест-дело</a>
-      {% if summary.tests %}
-        <div class="lbl" style="margin-top:8px">тестов: {{ summary.tests }} ·
-          <a href="{{ url_for('dev_clear_tests') }}" style="color:var(--wanted)">очистить</a></div>
-      {% endif %}
-    {% else %}
-      <div class="num" style="font-size:16px">🔄</div>
-      <div class="lbl">данные из игры</div>
-    {% endif %}
-  </div>
 </section>
-<p class="muted small" style="margin:-12px 0 20px">Счётчики учитывают только реальные дела. Тестовые помечены и в статистику не входят.</p>
 
 <div class="cols">
   <section class="col">
-    <h2>Последние дела</h2>
+    <h2>Последние задержания</h2>
     {% if cases %}
       <table class="tbl">
-        <thead><tr><th>#</th><th>Подозреваемый</th><th>Офицер</th><th>Статус</th></tr></thead>
+        <thead><tr><th>#</th><th>Подозреваемый</th><th>Район</th><th>Офицер</th></tr></thead>
         <tbody>
         {% for c in cases %}
           <tr onclick="location='{{ url_for('case_view', cid=c.id) }}'">
@@ -44,19 +33,33 @@
             <td>{{ c.suspect_name }}
               {% if c.is_test %}<span class="tag test">ТЕСТ</span>{% endif %}
               {% if c.wanted %}<span class="tag wanted">розыск</span>{% endif %}</td>
+            <td>{{ c.zone or '—' }}</td>
             <td><span class="cs">{{ c.callsign }}</span></td>
-            <td><span class="tag st-{{ c.status }}">{{ c.status_ru }}</span></td>
           </tr>
         {% endfor %}
         </tbody>
       </table>
     {% else %}
-      <p class="empty">Дел пока нет. Нажми «+ тест-дело», чтобы проверить.</p>
+      <p class="empty">Задержаний пока нет — появятся после игры.</p>
+    {% endif %}
+
+    <h2>Статистика по районам</h2>
+    {% if districts %}
+      <div class="districts">
+        {% for d in districts %}
+          <div class="district">
+            <div class="d-head"><span class="d-name">{{ d.zone }}</span><span class="d-num">{{ d.count }}</span></div>
+            <div class="d-bar"><div class="d-fill" style="width: {{ d.pct }}%"></div></div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p class="empty">Данных по районам пока нет.</p>
     {% endif %}
   </section>
 
   <section class="col">
-    <h2>Офицеры</h2>
+    <h2>Личный состав</h2>
     {% if officers %}
       <table class="tbl">
         <thead><tr><th>Офицер</th><th>Звание / отдел</th><th>Дел</th></tr></thead>
@@ -75,6 +78,18 @@
       </table>
     {% else %}
       <p class="empty">Офицеров пока нет.</p>
+    {% endif %}
+
+    {% if evidence %}
+      <h2>Картотека изъятого</h2>
+      <table class="tbl">
+        <thead><tr><th>Предмет</th><th>Раз изъято</th></tr></thead>
+        <tbody>
+          {% for item, n in evidence[:12] %}
+            <tr><td>{{ item }}</td><td>{{ n }}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
     {% endif %}
   </section>
 </div>

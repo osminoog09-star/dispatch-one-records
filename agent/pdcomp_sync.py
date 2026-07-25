@@ -281,6 +281,33 @@ def post_json(url, payload, api_key):
         return e.code, {"error": e.read().decode("utf-8", "ignore")[:200]}
 
 
+def map_citation(ct):
+    prof = _PROFILE or {}
+    charges, fine = [], 0.0
+    for c in (ct.get("Lines") or ct.get("Charges") or []):
+        if isinstance(c, dict):
+            code = c.get("ChargeCode") or c.get("Code") or ""
+            desc = c.get("Description") or ""
+            charges.append(f"{code} · {desc}".strip(" ·"))
+            fine += float(c.get("Fine") or 0)
+        else:
+            charges.append(str(c))
+    officer = ct.get("OfficerName") or "UNKNOWN"
+    # штраф свой (наш профиль) или чужой — из игровых данных
+    mine = prof.get("nickname") and officer == prof.get("nickname")
+    return {
+        "external_id": ct.get("Id"),
+        "callsign": prof.get("callsign") if mine else officer,
+        "officer_name": officer,
+        "subject_name": ct.get("SubjectFullName") or ct.get("Subject") or "Неизвестный",
+        "issued_at": ct.get("IssuedAtWall") or ct.get("IssuedAt") or ct.get("CreatedAt"),
+        "location": fix_mojibake(ct.get("Location")),
+        "charges": charges,
+        "fine": int(round(fine)),
+        "notes": ct.get("Narrative") or ct.get("Notes"),
+    }
+
+
 def read_json(path):
     if not os.path.exists(path):
         return None

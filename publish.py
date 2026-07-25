@@ -36,7 +36,14 @@ def sync_from_game():
         if created:
             new_court += 1
 
-    return new_arrests, new_court, len(arrests), len(cases)
+    new_cit = 0
+    cits = agent.read_json(os.path.join(agent.PDCOMP_STORE, "citations.json")) or []
+    for ct in cits:
+        _, created = db.upsert_citation(agent.map_citation(ct))
+        if created:
+            new_cit += 1
+
+    return new_arrests, new_court, len(arrests), len(cases), new_cit, len(cits)
 
 
 def run(cmd, cwd=ROOT):
@@ -45,8 +52,8 @@ def run(cmd, cwd=ROOT):
 
 def main():
     print("1) Читаю данные из игры (pdComp)...")
-    na, nc, ta, tc = sync_from_game()
-    print(f"   аресты: всего {ta}, новых {na} | суд: всего {tc}, новых {nc}")
+    na, nc, ta, tc, ncit, tcit = sync_from_game()
+    print(f"   аресты: {ta} (новых {na}) | суд: {tc} (новых {nc}) | штрафы: {tcit} (новых {ncit})")
 
     print("2) Собираю сайт...")
     r = run([sys.executable, os.path.join(ROOT, "server", "export_static.py")])

@@ -119,6 +119,18 @@ def init_db():
                 changed_at TEXT NOT NULL
             )""")
         c.execute(
+            """CREATE TABLE IF NOT EXISTS citations (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                external_id TEXT UNIQUE,
+                officer_id INTEGER,
+                subject_name TEXT,
+                issued_at TEXT,
+                location TEXT,
+                charges TEXT,
+                fine INTEGER DEFAULT 0,
+                notes TEXT
+            )""")
+        c.execute(
             """CREATE TABLE IF NOT EXISTS profiles (
                 token TEXT PRIMARY KEY,
                 callsign TEXT,
@@ -331,6 +343,8 @@ def mark_discord_sent(case_id):
 def list_officers_with_stats():
     # Статистика ЧЕСТНАЯ — тестовые дела (is_test=1) в подсчёт не идут.
     with get_conn() as c:
+        # Личный состав = только зарегистрированные офицеры (есть профиль).
+        # Имена из игровых записей (чужие штрафы/аресты) в состав не попадают.
         rows = c.execute(
             """SELECT officers.id, officers.callsign, officers.name, officers.current_status,
                       officers.rank, officers.department, officers.discord, officers.is_admin,
@@ -338,6 +352,7 @@ def list_officers_with_stats():
                       SUM(CASE WHEN cases.wanted=1 THEN 1 ELSE 0 END) AS wanted_count
                FROM officers
                LEFT JOIN cases ON cases.officer_id = officers.id AND cases.is_test=0
+               WHERE officers.callsign IN (SELECT callsign FROM profiles)
                GROUP BY officers.id ORDER BY cases_count DESC, officers.callsign""").fetchall()
         out = []
         for r in rows:
@@ -562,6 +577,66 @@ def get_court_case(cid):
     with get_conn() as c:
         r = c.execute("SELECT * FROM court_cases WHERE id=?", (cid,)).fetchone()
         return _row_to_court(r) if r else None
+
+
+def upsert_citation(data):
+    """Штраф из игры (pdComp citations.json)."""
+    officer_id = get_or_create_officer(data.get("callsign", "UNKNOWN"), data.get("officer_name"))
+    ext = data.get("external_id")
+    charges = json.dumps(data.get("charges") or [], ensure_ascii=False)
+    with get_conn() as c:
+        if ext and c.execute("SELECT id FROM citations WHERE external_id=?", (ext,)).fetchone():
+            return None, False
+        cur = c.execute(
+            """INSERT INTO citations (external_id, officer_id, subject_name, issued_at,
+               location, charges, fine, notes) VALUES (?,?,?,?,?,?,?,?)""",
+            (ext, officer_id, data.get("subject_name"), data.get("issued_at"),
+             data.get("location"), charges, int(data.get("fine") or 0), data.get("notes")))
+        return cur.lastrowid, True
+
+
+def _row_to_citation(r):
+    d = dict(r)
+    d["charges"] = [localize(x) for x in _jsonlist(r["charges"])]
+    d["issued_fmt"] = fmt_dt(r["issued_at"]) if r["issued_at"] else "—"
+    return d
+
+
+def list_citations(limit=200, officer_id=None):
+    q = """SELECT citations.*, officers.callsign, officers.name AS officer_name
+           FROM citations LEFT JOIN officers ON officers.id = citations.officer_id"""
+    params = []
+    if officer_id:
+        q += " WHERE citations.officer_id=?"; params.append(officer_id)
+    q += " ORDER BY citations.id DESC LIMIT ?"; params.append(limit)
+    with get_conn() as c:
+        return [_row_to_citation(r) for r in c.execute(q, params).fetchall()]
+
+
+def citations_summary(officer_id=None):
+    with get_conn() as c:
+        if officer_id:
+            r = c.execute("SELECT COUNT(*), COALESCE(SUM(fine),0) FROM citations WHERE officer_id=?",
+                          (officer_id,)).fetchone()
+        else:
+            r = c.execute("SELECT COUNT(*), COALESCE(SUM(fine),0) FROM citations").fetchone()
+        return {"count": r[0], "total_fine": r[1]}
+
+
+def evidence_catalog(officer_id=None):
+    """Картотека изъятого: что и сколько раз изымали."""
+    q = "SELECT found_items FROM cases WHERE is_test=0"
+    params = []
+    if officer_id:
+        q += " AND officer_id=?"; params.append(officer_id)
+    counts = {}
+    with get_conn() as c:
+        for r in c.execute(q, params):
+            for item in _jsonlist(r["found_items"]):
+                key = str(item).strip()
+                if key:
+                    counts[key] = counts.get(key, 0) + 1
+    return sorted(counts.items(), key=lambda kv: -kv[1])
 
 
 def new_token():

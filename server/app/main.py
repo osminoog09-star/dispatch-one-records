@@ -25,10 +25,29 @@ def inject_globals():
 # ---------- Сайт ----------
 @app.route("/")
 def index():
+    cases_all = db.list_cases(500)
+    zones = {}
+    for c in cases_all:
+        if not c.get("is_test") and c.get("zone"):
+            zones[c["zone"]] = zones.get(c["zone"], 0) + 1
+    top = sorted(zones.items(), key=lambda kv: -kv[1])[:10]
+    mx = top[0][1] if top else 1
+    districts = [{"zone": z, "count": n, "pct": round(n * 100 / mx)} for z, n in top]
+
     return render_template("index.html",
                            summary=db.summary_counts(),
                            cases=db.list_cases(limit=8),
-                           officers=db.list_officers_with_stats())
+                           officers=db.list_officers_with_stats(),
+                           cit=db.citations_summary(),
+                           court=db.court_summary(),
+                           districts=districts,
+                           evidence=db.evidence_catalog())
+
+
+@app.route("/citations")
+def citations():
+    return render_template("citations.html", citations=db.list_citations(300),
+                           summary=db.citations_summary())
 
 
 @app.route("/cases")
@@ -71,13 +90,20 @@ def officer_view(callsign):
     off = db.get_officer(callsign)
     if not off:
         abort(404)
+    shifts = db.list_shifts(50, officer_id=off["id"])
+    hours = round(sum(s.get("duration_min") or 0 for s in shifts) / 60, 1)
     return render_template("officer.html", officer=off,
                            cases=db.list_cases(200, officer_id=off["id"]),
-                           shifts=db.list_shifts(50, officer_id=off["id"]))
+                           citations=db.list_citations(200, officer_id=off["id"]),
+                           cit=db.citations_summary(off["id"]),
+                           evidence=db.evidence_catalog(off["id"]),
+                           shifts=shifts, hours=hours)
 
 
 @app.route("/register", methods=["GET", "POST"])
 def register():
+    if os.environ.get("STATIC_EXPORT") == "1" or request.method == "GET":
+        return render_template("register.html")
     token = request.values.get("token") or None
     if request.method == "POST":
         callsign = (request.form.get("callsign") or "").strip()

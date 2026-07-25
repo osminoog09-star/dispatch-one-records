@@ -1,53 +1,37 @@
 {% extends "base.html" %}
-{% block title %}Офицер {{ officer.callsign }}{% endblock %}
+{% block title %}Личное дело — {{ officer.callsign }}{% endblock %}
 {% block content %}
 <a class="back" href="{{ url_for('index') }}">← на главную</a>
 
-<div class="case-head">
-  <h1><span class="cs big">{{ officer.callsign }}</span> {{ officer.name or '' }}</h1>
-  {% if officer.is_admin %}<span class="tag adm">админ</span>{% endif %}
-  {% if officer.rank %}<span class="tag rank">{{ officer.rank }}</span>{% endif %}
-  <span class="tag"><span class="status-dot {{ officer.status_cls }}"></span>{{ officer.status_ru }}</span>
+<div class="officer-card">
+  <div class="off-avatar">{{ (officer.name or officer.callsign)[0]|upper }}</div>
+  <div class="off-main">
+    <h1><span class="cs big">{{ officer.callsign }}</span> {{ officer.name or '' }}</h1>
+    <div class="off-tags">
+      {% if officer.rank %}<span class="tag rank">{{ officer.rank }}</span>{% endif %}
+      {% if officer.is_admin %}<span class="tag adm">админ</span>{% endif %}
+      <span class="tag"><span class="status-dot {{ officer.status_cls }}"></span>{{ officer.status_ru }}</span>
+    </div>
+    <div class="muted small" style="margin-top:6px">
+      {% if officer.department %}{{ officer.department }}{% endif %}
+      {% if officer.discord %} · Discord: <b>{{ officer.discord }}</b>{% endif %}
+      {% if officer.status_since_fmt %} · статус с {{ officer.status_since_fmt }}{% endif %}
+    </div>
+  </div>
 </div>
-<p class="muted small">
-  {% if officer.department %}{{ officer.department }}{% endif %}
-  {% if officer.discord %} · Discord: <b>{{ officer.discord }}</b>{% endif %}
-  {% if officer.status_since_fmt %} · статус с {{ officer.status_since_fmt }}{% endif %}
-</p>
 
-{% if officer.status_log %}
-<h2>Журнал дежурства</h2>
-<ul class="dutylog">
-  {% for e in officer.status_log %}
-    <li><span class="status-dot {{ e.cls }}"></span> {{ e.status_ru }} <span class="muted small">— {{ e.at }}</span></li>
-  {% endfor %}
-</ul>
-{% endif %}
+<section class="stats stats-5">
+  <div class="stat"><div class="num">{{ cases|length }}</div><div class="lbl">Задержаний</div></div>
+  <div class="stat"><div class="num">{{ cit.count }}</div><div class="lbl">Штрафов</div></div>
+  <div class="stat"><div class="num">${{ cit.total_fine }}</div><div class="lbl">Сумма штрафов</div></div>
+  <div class="stat"><div class="num">{{ shifts|length }}</div><div class="lbl">Смен</div></div>
+  <div class="stat"><div class="num">{{ hours }}</div><div class="lbl">Часов на службе</div></div>
+</section>
 
-{% if shifts %}
-<h2>Смены</h2>
-<table class="tbl">
-  <thead><tr><th>#</th><th>Тип</th><th>Длит.</th><th>Задерж.</th><th>Остан.</th><th>Погони</th><th>Начало</th></tr></thead>
-  <tbody>
-  {% for s in shifts %}
-    <tr onclick="location='{{ url_for('shift_view', sid=s.id) }}'">
-      <td>#{{ s.id }}</td>
-      <td>{{ s.type_ru }}{% if s.is_test %} <span class="tag test">ТЕСТ</span>{% endif %}</td>
-      <td>{{ s.duration_h }}</td>
-      <td>{{ s.arrests }}</td>
-      <td>{{ s.traffic_stops }}</td>
-      <td>{{ s.pursuits }}</td>
-      <td class="muted">{{ s.started_fmt }}</td>
-    </tr>
-  {% endfor %}
-  </tbody>
-</table>
-{% endif %}
-
-<h2>Дела офицера</h2>
+<h2>Задержания</h2>
 {% if cases %}
 <table class="tbl">
-  <thead><tr><th>#</th><th>Подозреваемый</th><th>Район</th><th>Создано</th><th>Статус</th></tr></thead>
+  <thead><tr><th>#</th><th>Подозреваемый</th><th>Район</th><th>Когда</th><th>Статус</th></tr></thead>
   <tbody>
   {% for c in cases %}
     <tr onclick="location='{{ url_for('case_view', cid=c.id) }}'">
@@ -56,13 +40,57 @@
         {% if c.is_test %}<span class="tag test">ТЕСТ</span>{% endif %}
         {% if c.wanted %}<span class="tag wanted">розыск</span>{% endif %}</td>
       <td>{{ c.zone or '—' }}</td>
-      <td class="muted">{{ c.created_at }}</td>
+      <td class="muted">{{ c.created_fmt }}</td>
       <td><span class="tag st-{{ c.status }}">{{ c.status_ru }}</span></td>
     </tr>
   {% endfor %}
   </tbody>
 </table>
-{% else %}
-  <p class="empty">У офицера пока нет дел.</p>
+{% else %}<p class="empty">Задержаний нет.</p>{% endif %}
+
+<h2>Штрафы</h2>
+{% if citations %}
+<table class="tbl">
+  <thead><tr><th>Нарушитель</th><th>Нарушение</th><th>Сумма</th><th>Когда</th></tr></thead>
+  <tbody>
+  {% for c in citations %}
+    <tr><td>{{ c.subject_name }}</td>
+      <td>{% if c.charges %}{{ c.charges[0] }}{% else %}—{% endif %}</td>
+      <td><b>${{ c.fine }}</b></td><td class="muted">{{ c.issued_fmt }}</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% else %}<p class="empty">Штрафов нет.</p>{% endif %}
+
+{% if evidence %}
+<h2>Что изымал</h2>
+<table class="tbl">
+  <thead><tr><th>Предмет</th><th>Раз</th></tr></thead>
+  <tbody>{% for item, n in evidence %}<tr><td>{{ item }}</td><td>{{ n }}</td></tr>{% endfor %}</tbody>
+</table>
+{% endif %}
+
+{% if shifts %}
+<h2>Смены</h2>
+<table class="tbl">
+  <thead><tr><th>#</th><th>Тип</th><th>Длит.</th><th>Задерж.</th><th>Остан.</th><th>Начало</th></tr></thead>
+  <tbody>
+  {% for s in shifts %}
+    <tr onclick="location='{{ url_for('shift_view', sid=s.id) }}'">
+      <td>#{{ s.id }}</td><td>{{ s.type_ru }}</td><td>{{ s.duration_h }}</td>
+      <td>{{ s.arrests }}</td><td>{{ s.traffic_stops }}</td><td class="muted">{{ s.started_fmt }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endif %}
+
+{% if officer.status_log %}
+<h2>Журнал дежурства</h2>
+<ul class="dutylog">
+  {% for e in officer.status_log[:10] %}
+    <li><span class="status-dot {{ e.cls }}"></span> {{ e.status_ru }} <span class="muted small">— {{ e.at }}</span></li>
+  {% endfor %}
+</ul>
 {% endif %}
 {% endblock %}

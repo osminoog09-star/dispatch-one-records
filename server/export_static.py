@@ -42,7 +42,7 @@ def main():
         shutil.rmtree(OUT)
     os.makedirs(OUT, exist_ok=True)
 
-    urls = ["/", "/cases", "/court", "/shifts", "/citations", "/register"]
+    urls = ["/", "/cases", "/court", "/shifts", "/citations", "/register", "/staff"]
     for c in db.list_cases(500):
         urls.append(f"/case/{c['id']}")
     for c in db.list_court_cases(500):

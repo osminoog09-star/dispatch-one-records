@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}Личный состав{% endblock %}
+{% block content %}
+<h1>Личный состав</h1>
+
+{% if static_export %}
+  <p class="muted">Список офицеров департамента. Звания и отделы назначает руководство.</p>
+{% else %}
+  <p class="muted">Админка: меняй звания, отделы и доступы. После правок нажми
+    <b>«Обновить сайт.bat»</b> — изменения появятся на публичном сайте.</p>
+{% endif %}
+
+{% if officers %}
+<div class="staff-list">
+  {% for o in officers %}
+  <div class="staff-row">
+    <div class="staff-who">
+      <a href="{{ url_for('officer_view', callsign=o.callsign) }}"><span class="cs">{{ o.callsign }}</span></a>
+      <b>{{ o.name or '' }}</b>
+      {% if o.is_admin %}<span class="tag adm">админ</span>{% endif %}
+      {% if not o.registered %}<span class="tag">из игровых записей</span>{% endif %}
+      <div class="muted small">
+        {% if o.discord %}discord: {{ o.discord }} · {% endif %}
+        задержаний: {{ o.cases_count }} · штрафов: {{ o.cit_count }}
+      </div>
+    </div>
+
+    {% if static_export %}
+      <div class="staff-meta">
+        {% if o.rank %}<span class="tag rank">{{ o.rank }}</span>{% endif %}
+        <div class="muted small">{{ o.department or '—' }}</div>
+      </div>
+    {% else %}
+      <form method="post" class="staff-form">
+        <input type="hidden" name="officer_id" value="{{ o.id }}">
+        <select name="rank">
+          <option value="">— звание —</option>
+          {% for r in ranks %}<option value="{{ r }}" {{ 'selected' if o.rank==r }}>{{ r }}</option>{% endfor %}
+          {% if o.rank and o.rank not in ranks %}<option value="{{ o.rank }}" selected>{{ o.rank }}</option>{% endif %}
+        </select>
+        <select name="department">
+          <option value="">— отдел —</option>
+          {% for d in departments %}<option value="{{ d }}" {{ 'selected' if o.department==d }}>{{ d }}</option>{% endfor %}
+          {% if o.department and o.department not in departments %}<option value="{{ o.department }}" selected>{{ o.department }}</option>{% endif %}
+        </select>
+        <input name="discord" value="{{ o.discord or '' }}" placeholder="discord" size="12">
+        <label class="chk"><input type="checkbox" name="is_admin" {{ 'checked' if o.is_admin }}> админ</label>
+        <button class="btn">Сохранить</button>
+        {% if not o.cases_count and not o.cit_count %}
+          <button class="btn del" name="action" value="delete"
+                  onclick="return confirm('Удалить офицера {{ o.callsign }}?')">✕</button>
+        {% endif %}
+      </form>
+    {% endif %}
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+  <p class="empty">Офицеров пока нет.</p>
+{% endif %}
+{% endblock %}

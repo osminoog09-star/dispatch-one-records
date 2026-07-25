@@ -44,6 +44,26 @@ def index():
                            evidence=db.evidence_catalog())
 
 
+@app.route("/staff", methods=["GET", "POST"])
+def staff():
+    is_static = os.environ.get("STATIC_EXPORT") == "1"
+    if request.method == "POST" and not is_static:
+        oid = request.form.get("officer_id", type=int)
+        if request.form.get("action") == "delete":
+            flash("Офицер удалён." if db.delete_officer(oid) else "Нельзя удалить: есть записи.",
+                  "ok" if db.delete_officer(oid) else "err")
+        else:
+            db.update_officer_meta(oid,
+                                   rank=request.form.get("rank"),
+                                   department=request.form.get("department"),
+                                   discord=request.form.get("discord"),
+                                   is_admin=bool(request.form.get("is_admin")))
+            flash("Сохранено.", "ok")
+        return redirect(url_for("staff"))
+    return render_template("staff.html", officers=db.list_all_officers(),
+                           ranks=db.RANKS, departments=db.DEPARTMENTS)
+
+
 @app.route("/citations")
 def citations():
     return render_template("citations.html", citations=db.list_citations(300),

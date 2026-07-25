@@ -639,6 +639,60 @@ def evidence_catalog(officer_id=None):
     return sorted(counts.items(), key=lambda kv: -kv[1])
 
 
+# Звания и отделы LAPD (для выпадающих списков в админке)
+RANKS = ["Officer I", "Officer II", "Officer III", "Detective I", "Detective II", "Detective III",
+         "Sergeant I", "Sergeant II", "Lieutenant", "Watch Commander", "Captain", "Commander",
+         "Deputy Chief", "Chief of Police"]
+DEPARTMENTS = ["Patrol Division", "Traffic Division", "Detective Bureau", "Gang Unit",
+               "Air Support", "K-9 Unit", "SWAT", "Internal Affairs", "Командование"]
+
+
+def list_all_officers():
+    """Полный список офицеров (для страницы персонала)."""
+    with get_conn() as c:
+        rows = c.execute(
+            """SELECT officers.*,
+                      (SELECT COUNT(*) FROM cases WHERE cases.officer_id=officers.id AND cases.is_test=0) AS cases_count,
+                      (SELECT COUNT(*) FROM citations WHERE citations.officer_id=officers.id) AS cit_count,
+                      (SELECT COUNT(*) FROM profiles WHERE profiles.callsign=officers.callsign) AS registered
+               FROM officers ORDER BY officers.is_admin DESC, officers.callsign""").fetchall()
+        out = []
+        for r in rows:
+            d = dict(r)
+            si = status_info(d.get("current_status"))
+            d["status_ru"], d["status_cls"] = si["ru"], si["cls"]
+            d["registered"] = bool(d.get("registered"))
+            out.append(d)
+        return out
+
+
+def update_officer_meta(officer_id, rank=None, department=None, is_admin=None, discord=None):
+    with get_conn() as c:
+        sets, params = [], []
+        for col, val in (("rank", rank), ("department", department), ("discord", discord)):
+            if val is not None:
+                sets.append(f"{col}=?"); params.append(val)
+        if is_admin is not None:
+            sets.append("is_admin=?"); params.append(1 if is_admin else 0)
+        if not sets:
+            return False
+        params.append(officer_id)
+        c.execute(f"UPDATE officers SET {', '.join(sets)} WHERE id=?", params)
+        return True
+
+
+def delete_officer(officer_id):
+    """Удалить офицера, если у него нет записей (чистка мусорных имён из игровых данных)."""
+    with get_conn() as c:
+        n = c.execute("SELECT COUNT(*) FROM cases WHERE officer_id=?", (officer_id,)).fetchone()[0]
+        n += c.execute("SELECT COUNT(*) FROM citations WHERE officer_id=?", (officer_id,)).fetchone()[0]
+        if n:
+            return False
+        c.execute("DELETE FROM status_history WHERE officer_id=?", (officer_id,))
+        c.execute("DELETE FROM officers WHERE id=?", (officer_id,))
+        return True
+
+
 def new_token():
     import secrets
     return secrets.token_hex(8)

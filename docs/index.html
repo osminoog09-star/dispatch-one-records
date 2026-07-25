@@ -17,7 +17,7 @@
         <a href="/dispatch-one-records/cases">Дела</a>
         <a href="/dispatch-one-records/court">Суд</a>
         <a href="/dispatch-one-records/shifts">Смены</a>
-        <a href="/dispatch-one-records/register">Регистрация</a>
+        
       </nav>
     </div>
   </header>
@@ -29,9 +29,9 @@
     
 
 <section class="stats">
-  <div class="stat"><div class="num">2</div><div class="lbl">Всего дел</div></div>
+  <div class="stat"><div class="num">0</div><div class="lbl">Всего дел</div></div>
   <div class="stat"><div class="num">0</div><div class="lbl">Сегодня</div></div>
-  <div class="stat"><div class="num">5</div><div class="lbl">Офицеров</div></div>
+  <div class="stat"><div class="num">2</div><div class="lbl">Офицеров</div></div>
   <div class="stat">
     
       <div class="num" style="font-size:16px">🔄</div>
@@ -45,30 +45,7 @@
   <section class="col">
     <h2>Последние дела</h2>
     
-      <table class="tbl">
-        <thead><tr><th>#</th><th>Подозреваемый</th><th>Офицер</th><th>Статус</th></tr></thead>
-        <tbody>
-        
-          <tr onclick="location='/case/2'">
-            <td>#2</td>
-            <td>Julia Henson
-              
-              </td>
-            <td><span class="cs">UNKNOWN</span></td>
-            <td><span class="tag st-submitted">Подано</span></td>
-          </tr>
-        
-          <tr onclick="location='/case/1'">
-            <td>#1</td>
-            <td>Julia Henson
-              
-              <span class="tag wanted">розыск</span></td>
-            <td><span class="cs">Denis Sherman</span></td>
-            <td><span class="tag st-submitted">Подано</span></td>
-          </tr>
-        
-        </tbody>
-      </table>
+      <p class="empty">Дел пока нет. Нажми «+ тест-дело», чтобы проверить.</p>
     
   </section>
 
@@ -79,26 +56,8 @@
         <thead><tr><th>Позывной</th><th>Статус</th><th>Дел</th></tr></thead>
         <tbody>
         
-          <tr onclick="location='/officer/Denis%20Sherman'">
-            <td><span class="cs">Denis Sherman</span> Denis Sherman</td>
-            <td><span class="status-dot off"></span>Не на службе</td>
-            <td>1</td>
-          </tr>
-        
-          <tr onclick="location='/officer/UNKNOWN'">
-            <td><span class="cs">UNKNOWN</span> </td>
-            <td><span class="status-dot off"></span>Не на службе</td>
-            <td>1</td>
-          </tr>
-        
           <tr onclick="location='/officer/7-WILLIAM-24'">
             <td><span class="cs">7-WILLIAM-24</span> Denis Sherman</td>
-            <td><span class="status-dot off"></span>Не на службе</td>
-            <td>0</td>
-          </tr>
-        
-          <tr onclick="location='/officer/7-WILLIAM-1'">
-            <td><span class="cs">7-WILLIAM-1</span> Denis Sherman</td>
             <td><span class="status-dot off"></span>Не на службе</td>
             <td>0</td>
           </tr>

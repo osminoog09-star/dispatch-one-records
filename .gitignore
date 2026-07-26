@@ -1,7 +1,9 @@
-# ===== Секреты и локальные данные =====
+# ===== Секреты =====
 .env
 *.env
-server/data.db
+
+# База данных ХРАНИТСЯ в репозитории — из неё GitHub Actions пересобирает сайт 24/7.
+# (server/data.db намеренно НЕ игнорируется)
 server/screenshots/*
 !server/screenshots/.gitkeep
 

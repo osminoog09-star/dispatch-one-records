@@ -1,0 +1,52 @@
+name: Сборка сайта LAPD Records
+
+# Запускается сам: при изменении данных, по расписанию и вручную.
+on:
+  push:
+    paths:
+      - "server/data.db"
+      - "server/inbox/**"
+      - "server/app/**"
+  schedule:
+    - cron: "*/30 * * * *"      # каждые 30 минут — подхватить данные игроков
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: build-site
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Забрать репозиторий
+        uses: actions/checkout@v4
+
+      - name: Поставить Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Установить зависимости
+        run: pip install --quiet flask requests
+
+      - name: Принять данные игроков из inbox
+        run: python server/import_inbox.py
+
+      - name: Собрать сайт
+        run: python server/export_static.py
+
+      - name: Опубликовать изменения
+        run: |
+          git config user.name  "LAPD Records Bot"
+          git config user.email "actions@github.com"
+          git add docs server/data.db server/inbox
+          if git diff --staged --quiet; then
+            echo "Изменений нет."
+          else
+            git commit -m "Автосборка сайта: новые данные из игры"
+            git push
+          fi

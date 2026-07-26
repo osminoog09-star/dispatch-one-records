@@ -424,6 +424,45 @@ def auto_publish():
         print(f"[publish] не удалось: {e}")
 
 
+def upload_to_github():
+    """Игрок: отправить свои записи прямо в GitHub (без хостинга)."""
+    if _setting("UPLOAD_MODE", "").lower() != "github":
+        return
+    try:
+        import github_upload
+    except Exception as e:
+        print(f"[github] модуль недоступен: {e}")
+        return
+
+    profile = {
+        "callsign": _setting("CALLSIGN", ""),
+        "nickname": _setting("NICKNAME", ""),
+        "discord": _setting("DISCORD", ""),
+    }
+    if not profile["callsign"]:
+        print("[github] не задан позывной в настройках")
+        return
+
+    mine = (profile["nickname"] or "").strip().lower()
+    generic = {"", "officer", "unknown"}
+
+    def ours(rec):
+        nm = (rec.get("OfficerName") or "").strip().lower()
+        return nm in generic or (mine and nm == mine)
+
+    arrests = [a for a in (read_json(os.path.join(PDCOMP_STORE, "arrests.json")) or []) if ours(a)]
+    cits = [c for c in (read_json(os.path.join(PDCOMP_STORE, "citations.json")) or []) if ours(c)]
+    our_ids = {r.get("Id") for r in arrests + cits if r.get("Id")}
+    cases = [c for c in (read_json(os.path.join(PDCOMP_STORE, "cases.json")) or [])
+             if (c.get("CitationId") or c.get("ArrestReportId")) in our_ids]
+
+    print("[github] отправляю данные...")
+    ok, msg = github_upload.upload_records(
+        _setting("GITHUB_REPO", ""), _setting("GITHUB_TOKEN", ""),
+        profile, arrests, cits, cases)
+    print(("[github] " if ok else "[github] ошибка: ") + msg)
+
+
 def watch_game():
     """Режим ожидания игры: спим, пока игра не запущена; синхронизируем во время игры;
     после выхода из игры — публикуем на сайт."""
@@ -459,7 +498,8 @@ def watch_game():
 
             if was_running and not running:
                 print("Игра закрыта.")
-                auto_publish()
+                upload_to_github()   # игрок: отправка данных в GitHub
+                auto_publish()       # владелец: сборка и публикация сайта
                 print("Жду следующего запуска игры...")
 
             was_running = running

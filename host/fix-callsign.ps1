@@ -1,6 +1,6 @@
 # Прописывает позывной и имя офицера во все игровые конфиги (нужны права администратора).
 param(
-    [string]$Callsign = "7-WILLIAM-24",
+    [string]$Callsign = "7-WILLIAM-1",
     [string]$OfficerName = "Denis Sherman"
 )
 

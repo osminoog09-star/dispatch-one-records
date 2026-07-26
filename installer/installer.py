@@ -103,21 +103,35 @@ class Installer(tk.Tk):
     def __init__(self):
         super().__init__()
         self.title(f"{APP_NAME} — установка")
-        self.geometry("520x520")
-        self.resizable(False, False)
+        self.geometry("520x700")
+        self.minsize(520, 620)
+        self.resizable(False, True)
         self.configure(bg="#12151a")
+        # окно с правами админа часто открывается позади — выводим вперёд
+        self.after(80, self._bring_to_front)
 
-        self._label("Dispatch One", 18, "#e8ecf1").pack(pady=(22, 2))
+        # ---- кнопка внизу: крепим ПЕРВОЙ, чтобы её никогда не срезало ----
+        bottom = tk.Frame(self, bg="#12151a")
+        bottom.pack(side="bottom", fill="x", pady=(6, 16))
+        tk.Button(bottom, text="Установить", command=self.install,
+                  bg="#3b82f6", fg="white", font=("Segoe UI", 12, "bold"),
+                  relief="flat", padx=30, pady=11, cursor="hand2").pack()
+        self.status = tk.Label(bottom, text="", bg="#12151a", fg="#98a1ac",
+                               font=("Segoe UI", 9))
+        self.status.pack(pady=(8, 0))
+
+        self._label("Dispatch One", 18, "#e8ecf1").pack(pady=(20, 2))
         self._label("Синхронизация игры с сайтом сообщества", 10, "#98a1ac").pack()
 
         frm = tk.Frame(self, bg="#12151a")
-        frm.pack(fill="x", padx=36, pady=18)
+        frm.pack(fill="x", padx=36, pady=14)
 
         self.callsign = self._field(frm, "Позывной", "например, 1-ADAM-12")
         self.nickname = self._field(frm, "Имя персонажа", "например, John Miller")
         self.discord = self._field(frm, "Discord (обязательно)", "ваш ник в Discord")
-        self.key = self._field(frm, "Ключ сообщества", "выдаёт админ")
-        self.url = self._field(frm, "Адрес сервера данных", "http://адрес:8000")
+        self.key = self._field(frm, "Ключ сообщества", "выдаёт админ", "dev-key")
+        self.url = self._field(frm, "Адрес сервера данных", "http://адрес:8000",
+                               "http://localhost:8000")
 
         self.autostart = tk.BooleanVar(value=True)
         tk.Checkbutton(self, text="Запускать вместе с Windows", variable=self.autostart,
@@ -125,24 +139,27 @@ class Installer(tk.Tk):
                        activebackground="#12151a", activeforeground="#e8ecf1",
                        font=("Segoe UI", 9)).pack(anchor="w", padx=36)
 
-        self.status = self._label("", 9, "#98a1ac")
-        self.status.pack(pady=(10, 0))
-
-        tk.Button(self, text="Установить", command=self.install,
-                  bg="#3b82f6", fg="white", font=("Segoe UI", 11, "bold"),
-                  relief="flat", padx=30, pady=9, cursor="hand2").pack(pady=14)
+    def _bring_to_front(self):
+        try:
+            self.attributes("-topmost", True)
+            self.lift()
+            self.focus_force()
+            self.after(600, lambda: self.attributes("-topmost", False))
+        except Exception:
+            pass
 
     def _label(self, text, size, color):
         return tk.Label(self, text=text, bg="#12151a", fg=color,
                         font=("Segoe UI", size, "bold" if size > 12 else "normal"))
 
-    def _field(self, parent, label, placeholder):
+    def _field(self, parent, label, placeholder, default=""):
         tk.Label(parent, text=label, bg="#12151a", fg="#98a1ac",
                  font=("Segoe UI", 9)).pack(anchor="w", pady=(8, 2))
         e = tk.Entry(parent, bg="#1b2027", fg="#e8ecf1", insertbackground="#e8ecf1",
                      relief="flat", font=("Segoe UI", 10))
         e.pack(fill="x", ipady=6)
-        e.insert(0, "")
+        if default:
+            e.insert(0, default)
         e.placeholder = placeholder
         return e
 

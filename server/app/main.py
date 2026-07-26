@@ -160,6 +160,14 @@ def citations():
                            summary=db.citations_summary())
 
 
+@app.route("/citation/<int:cid>")
+def citation_view(cid):
+    cit = db.get_citation(cid)
+    if not cit:
+        abort(404)
+    return render_template("citation.html", cit=cit)
+
+
 @app.route("/cases")
 def cases():
     status = request.args.get("status") or None

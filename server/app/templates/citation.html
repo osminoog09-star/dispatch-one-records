@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block title %}Штраф {{ cit.cit_no }}{% endblock %}
+{% block content %}
+<a class="back" href="{{ url_for('citations') }}">← к списку штрафов</a>
+
+<div class="case-head">
+  <h1>Квитанция о штрафе · {{ cit.subject_name }}</h1>
+  <span class="tag big">${{ cit.fine }}</span>
+</div>
+
+<div class="doc-actions">
+  <button class="btn primary" onclick="downloadDoc()">📄 Скачать квитанцию картинкой (PNG)</button>
+  <span class="muted small">Картинку можно перетащить прямо в Discord.</span>
+</div>
+
+<div id="doc" class="doc">
+  <div class="doc-title">
+    <div class="doc-court">КВИТАНЦИЯ О НАРУШЕНИИ · ШТАТ КАЛИФОРНИЯ</div>
+    <div class="doc-county">ДОРОЖНОЕ / АДМИНИСТРАТИВНОЕ НАРУШЕНИЕ · № {{ cit.cit_no }}</div>
+  </div>
+
+  <div class="doc-body">
+    <div class="doc-left">
+      <table class="doc-tbl">
+        <tr><td>Нарушитель</td><td><b>{{ cit.subject_name }}</b></td></tr>
+        <tr><td>Сотрудник</td><td>{{ cit.officer_name or cit.callsign or '—' }}</td></tr>
+        <tr><td>Позывной</td><td>{{ cit.callsign or '—' }}</td></tr>
+        <tr><td>Дата и время</td><td>{{ cit.issued_fmt }}</td></tr>
+        <tr><td>Место</td><td>{{ cit.location or '—' }}</td></tr>
+      </table>
+
+      <div class="doc-sec-title">К ОПЛАТЕ</div>
+      <div class="fine-box">
+        <div class="fine-sum">${{ cit.fine }}</div>
+        <div class="doc-mut" style="font-size:11px">общая сумма штрафа</div>
+      </div>
+    </div>
+
+    <div class="doc-right">
+      <div class="doc-sec-title">НАРУШЕНИЯ</div>
+      {% if cit.charges_parsed %}
+        <table class="doc-tbl doc-charge-tbl">
+          <tr><th>КОД</th><th>ОПИСАНИЕ</th></tr>
+          {% for ch in cit.charges_parsed %}
+            <tr><td><b>{{ ch.code }}</b></td><td>{{ ch.desc }}</td></tr>
+          {% endfor %}
+        </table>
+      {% else %}
+        <div class="doc-mut" style="font-size:12px">Нарушения не указаны.</div>
+      {% endif %}
+
+      {% if cit.notes %}
+        <div class="doc-sec-title">ПРИМЕЧАНИЕ</div>
+        <div style="font-size:12px">{{ cit.notes }}</div>
+      {% endif %}
+
+      <div class="doc-sec-title">ПОРЯДОК ОПЛАТЫ</div>
+      <div style="font-size:11.5px" class="doc-mut">
+        Оплатить в течение 30 дней либо явиться в суд для обжалования.
+        Неуплата влечёт приостановку водительских прав.
+      </div>
+    </div>
+  </div>
+
+  <div class="doc-footer">
+    <div class="doc-seal">🚔</div>
+    <div class="doc-cert" style="margin-left:46px">
+      Подтверждаю, что нарушение зафиксировано мной лично при исполнении служебных обязанностей.
+    </div>
+    <div class="doc-sign">
+      <div>_______________________<br><span class="doc-mut">Сотрудник, выписавший штраф</span></div>
+      <div>{{ cit.issued_fmt }}<br><span class="doc-mut">Дата выдачи</span></div>
+    </div>
+    <div class="doc-form">ДОРОЖНАЯ КВИТАНЦИЯ КАЛИФОРНИЯ · ФОРМА CA-TC-105</div>
+  </div>
+</div>
+
+<script src="{{ url_for('static', filename='html2canvas.min.js') }}"></script>
+<script>
+function downloadDoc(){
+  html2canvas(document.getElementById('doc'),{scale:2,backgroundColor:'#f4f1e8'}).then(function(c){
+    var a=document.createElement('a');
+    a.download='{{ cit.cit_no }}_{{ cit.subject_name }}.png';
+    a.href=c.toDataURL('image/png'); a.click();
+  });
+}
+</script>
+{% endblock %}

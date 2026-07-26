@@ -117,6 +117,8 @@ h3{font-size:14px;margin:0 0 .5em;color:var(--muted);text-transform:uppercase;le
 .doc-tbl{width:100%;border-collapse:collapse;font-size:12.5px;margin-bottom:6px}
 .doc-tbl td{padding:4px 6px;border-bottom:1px solid #ddd6c2;vertical-align:top}
 .doc-tbl td:first-child{color:#6b6555;width:38%;text-transform:uppercase;font-size:10.5px;letter-spacing:.3px}
+.fine-box{background:#ede8d8;border:2px solid #1a1a1a;border-radius:4px;padding:12px;text-align:center;margin-top:6px}
+.fine-sum{font-size:30px;font-weight:700;letter-spacing:-1px}
 .doc-charge-tbl th{text-align:left;font-size:9.5px;color:#6b6555;text-transform:uppercase;
   letter-spacing:.3px;border-bottom:1px solid #999;padding:3px 6px}
 .doc-charge-tbl td:first-child{width:auto;text-transform:none;font-size:12px;color:#1a1a1a}

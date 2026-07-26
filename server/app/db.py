@@ -656,6 +656,25 @@ def list_citations(limit=200, officer_id=None):
         return [_row_to_citation(r) for r in c.execute(q, params).fetchall()]
 
 
+def get_citation(cit_id):
+    with get_conn() as c:
+        r = c.execute(
+            """SELECT citations.*, officers.callsign, officers.name AS officer_name
+               FROM citations LEFT JOIN officers ON officers.id = citations.officer_id
+               WHERE citations.id=?""", (cit_id,)).fetchone()
+        if not r:
+            return None
+        d = _row_to_citation(r)
+        d["charges_parsed"] = [_parse_charge(x) for x in d["charges"]]
+        ext = r["external_id"] or str(r["id"])
+        try:
+            num = int(ext.replace("-", "")[:8], 16) % 9000000 + 1000000
+        except Exception:
+            num = 1000000 + (r["id"] or 0)
+        d["cit_no"] = f"CA-TC-{num}"
+        return d
+
+
 def citations_summary(officer_id=None):
     with get_conn() as c:
         if officer_id:

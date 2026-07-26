@@ -23,9 +23,16 @@ OUT = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 
 
 
 def rewrite(html):
-    """Абсолютные ссылки → с префиксом репозитория; /path → /path/ (папочные index.html)."""
-    if BASE:
-        html = re.sub(r'((?:href|src)=")/(?!/)', r'\1' + BASE + '/', html)
+    """Все внутренние ссылки → с префиксом репозитория.
+    Важно: помимо href/src нужно чинить переходы через JavaScript (onclick location=...),
+    иначе клик по строке таблицы уводит на несуществующий адрес."""
+    if not BASE:
+        return html
+    # href="/..."  и  src="/..."
+    html = re.sub(r'((?:href|src)=")/(?!/)', r'\1' + BASE + '/', html)
+    # onclick="location='/case/7'"  и  location.href='/...'
+    html = re.sub(r"(location(?:\.href)?\s*=\s*')/(?!/)", r"\1" + BASE + "/", html)
+    html = re.sub(r'(location(?:\.href)?\s*=\s*")/(?!/)', r'\1' + BASE + '/', html)
     return html
 
 
@@ -49,6 +56,8 @@ def main():
         urls.append(f"/court/{c['id']}")
     for s in db.list_shifts(500):
         urls.append(f"/shift/{s['id']}")
+    for ct in db.list_citations(500):
+        urls.append(f"/citation/{ct['id']}")
     for o in db.list_officers_with_stats():
         urls.append(f"/officer/{o['callsign']}")
 

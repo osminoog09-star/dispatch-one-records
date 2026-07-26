@@ -13,7 +13,7 @@
   <thead><tr><th>#</th><th>Нарушитель</th><th>Нарушение</th><th>Район</th><th>Офицер</th><th>Сумма</th><th>Когда</th></tr></thead>
   <tbody>
   {% for c in citations %}
-    <tr>
+    <tr onclick="location='{{ url_for('citation_view', cid=c.id) }}'">
       <td>#{{ c.id }}</td>
       <td>{{ c.subject_name }}</td>
       <td>{% if c.charges %}{{ c.charges[0] }}{% if c.charges|length > 1 %}

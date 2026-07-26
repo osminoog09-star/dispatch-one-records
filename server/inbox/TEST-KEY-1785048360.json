@@ -1,0 +1,22 @@
+{
+ "profile": {
+  "callsign": "TEST-KEY",
+  "nickname": "Проверка ключа",
+  "discord": ""
+ },
+ "arrests": [
+  {
+   "Id": "key-check-1",
+   "ArrestedAt": "2026-07-26T12:00:00Z",
+   "OfficerName": "Officer",
+   "SubjectFullName": "Проверка Ключа",
+   "Location": "Mission Row",
+   "Charges": [],
+   "Evidence": [],
+   "Narrative": "key test"
+  }
+ ],
+ "citations": [],
+ "cases": [],
+ "sent_at": "2026-07-26T09:46:00"
+}

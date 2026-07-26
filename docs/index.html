@@ -41,12 +41,12 @@
 </div>
 
 <section class="stats stats-6">
-  <div class="stat"><div class="num">2</div><div class="lbl">Задержаний</div></div>
+  <div class="stat"><div class="num">3</div><div class="lbl">Задержаний</div></div>
   <div class="stat"><div class="num">1</div><div class="lbl">Штрафов</div></div>
   <div class="stat"><div class="num">$80</div><div class="lbl">Сумма штрафов</div></div>
   <div class="stat"><div class="num">2</div><div class="lbl">Судебных дел</div></div>
   <div class="stat"><div class="num">2</div><div class="lbl">Закрыто судом</div></div>
-  <div class="stat"><div class="num">2</div><div class="lbl">Офицеров</div></div>
+  <div class="stat"><div class="num">3</div><div class="lbl">Офицеров</div></div>
 </section>
 
 <div class="cols">
@@ -56,6 +56,15 @@
       <table class="tbl">
         <thead><tr><th>#</th><th>Подозреваемый</th><th>Район</th><th>Офицер</th></tr></thead>
         <tbody>
+        
+          <tr onclick="location='/case/10'">
+            <td>#10</td>
+            <td>Проверка Ключа
+              
+              </td>
+            <td>Mission Row</td>
+            <td><span class="cs">TEST-KEY</span></td>
+          </tr>
         
           <tr onclick="location='/case/9'">
             <td>#9</td>
@@ -82,6 +91,11 @@
     <h2>Статистика по районам</h2>
     
       <div class="districts">
+        
+          <div class="district">
+            <div class="d-head"><span class="d-name">Mission Row</span><span class="d-num">1</span></div>
+            <div class="d-bar"><div class="d-fill" style="width: 100%"></div></div>
+          </div>
         
           <div class="district">
             <div class="d-head"><span class="d-name">Downtown Vinewood</span><span class="d-num">1</span></div>
@@ -119,6 +133,15 @@
               <div class="muted small">discord: osminoowka</div></td>
             <td><span class="tag rank">Detective I</span>
               <div class="muted small">Patrol Division</div></td>
+            <td>1</td>
+          </tr>
+        
+          <tr onclick="location='/officer/TEST-KEY'">
+            <td><span class="cs">TEST-KEY</span> Проверка ключа
+              
+              </td>
+            <td>
+              </td>
             <td>1</td>
           </tr>
         

@@ -30,25 +30,39 @@
       
     
     
-<h1>Карта патрулирования</h1>
-<p class="muted">Схема острова Сан-Андреас: Лос-Сантос на юге, округ Блэйн на севере.
-  Кружок — район, число в нём — сколько там задержаний и штрафов. Нажми на район для статистики.</p>
+<h1>Карта · зоны патрулирования</h1>
+<p class="muted">Деление по зонам из игры (Los Santos City, Los Santos County, Blaine County).
+  Чем ярче зона — тем больше там нарушений. Нажми на зону для статистики.</p>
+
+<section class="stats" style="grid-template-columns:repeat(3,1fr)">
+  
+    <div class="stat">
+      <div class="num">0</div>
+      <div class="lbl">Округ Блэйн</div>
+      <div class="muted small">задерж. 0 · штраф. 0</div>
+    </div>
+  
+    <div class="stat">
+      <div class="num">0</div>
+      <div class="lbl">Округ Лос-Сантос</div>
+      <div class="muted small">задерж. 0 · штраф. 0</div>
+    </div>
+  
+    <div class="stat">
+      <div class="num">0</div>
+      <div class="lbl">Лос-Сантос</div>
+      <div class="muted small">задерж. 0 · штраф. 0</div>
+    </div>
+  
+</section>
 
 <div class="map-wrap">
   <div class="map-box">
     <svg viewBox="0 0 640 800" class="ls-map" preserveAspectRatio="xMidYMid meet"
          xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <linearGradient id="landg" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stop-color="#243449"/>
-          <stop offset="55%" stop-color="#1e2c3e"/>
-          <stop offset="100%" stop-color="#28374b"/>
-        </linearGradient>
-      </defs>
-
       <rect x="0" y="0" width="640" height="800" fill="#0b1420"/>
 
-      <!-- Остров Сан-Андреас: север — горы и пустыня, юг — Лос-Сантос -->
+      <!-- контур острова -->
       <path d="M232,44 C300,26 372,34 424,68 C470,98 498,150 512,208
                C524,258 520,306 508,352 C498,392 500,430 514,466
                C532,512 540,560 528,606 C514,660 476,704 424,732
@@ -56,206 +70,284 @@
                C96,626 92,572 100,518 C106,476 104,436 92,398
                C78,352 74,304 86,256 C100,198 132,142 174,100
                C192,80 212,58 232,44 Z"
-            fill="url(#landg)" stroke="#3d5875" stroke-width="2"/>
+            fill="#182335" stroke="#3d5875" stroke-width="2"/>
 
-      <!-- Озеро Аламо (север-центр) -->
-      <path d="M300,214 C334,198 380,202 404,224 C424,244 420,276 396,292
-               C368,310 322,308 300,288 C282,270 282,230 300,214 Z"
-            fill="#0e2233" stroke="#2c4e6b" stroke-width="1.5"/>
-      <text x="352" y="258" class="geo-label">Аламо</text>
-
-      <!-- Гора Чилиад (северо-запад) -->
-      <path d="M150,150 L188,96 L228,150 Z" fill="#31445c" stroke="#44607f" stroke-width="1.5"/>
-      <text x="188" y="168" class="geo-label">Чилиад</text>
-
-      <!-- Граница: округ Блэйн / Лос-Сантос -->
+      <!-- граница округов -->
       <path d="M96,468 C180,452 300,448 400,456 C450,460 490,464 516,470"
             stroke="#44607f" stroke-width="1.5" stroke-dasharray="7 6" fill="none"/>
-      <text x="140" y="444" class="geo-region">ОКРУГ БЛЭЙН</text>
-      <text x="140" y="492" class="geo-region">ЛОС-САНТОС</text>
-
-      <!-- Океан (подпись) -->
-      <text x="58" y="640" class="geo-label sea">Тихий океан</text>
+      <text x="126" y="440" class="geo-region">ОКРУГ БЛЭЙН</text>
+      <text x="126" y="492" class="geo-region">ЛОС-САНТОС</text>
+      <text x="52" y="650" class="geo-label sea">Тихий океан</text>
 
       
-        <g class="zone " data-zone="Paleto Bay"
+        <g class="zone reg-blaine "
+           data-code="PALETO" data-name="Paleto Bay" data-ru="Палето-Бэй"
            data-count="0" data-arrests="0" data-cits="0">
-          <circle cx="246" cy="92" r="26"
-                  fill="#4a6fa5" fill-opacity="0.18"
-                  stroke="#5f86bd" stroke-width="1.2"/>
+          <polygon points="196,60 292,52 316,96 288,132 214,132 180,102" fill-opacity="0.3"/>
           
-          <text x="246" y="62" class="z-label">Paleto Bay</text>
+            <text x="247.66666666666666" y="98.66666666666667" class="z-label">Палето-Бэй</text>
+          
         </g>
       
-        <g class="zone " data-zone="Mount Chiliad"
+        <g class="zone reg-blaine "
+           data-code="MTCHIL" data-name="Mount Chiliad" data-ru="Гора Чилиад"
            data-count="0" data-arrests="0" data-cits="0">
-          <circle cx="188" cy="150" r="24"
-                  fill="#4a6fa5" fill-opacity="0.18"
-                  stroke="#5f86bd" stroke-width="1.2"/>
+          <polygon points="140,120 214,132 236,186 186,216 130,190 116,150" fill-opacity="0.3"/>
           
-          <text x="188" y="122" class="z-label">Mount Chiliad</text>
+            <text x="170.33333333333334" y="168.66666666666666" class="z-label">Гора Чилиад</text>
+          
         </g>
       
-        <g class="zone " data-zone="Grapeseed"
+        <g class="zone reg-blaine "
+           data-code="PALFOR" data-name="Paleto Forest" data-ru="Лес Палето"
            data-count="0" data-arrests="0" data-cits="0">
-          <circle cx="432" cy="176" r="26"
-                  fill="#4a6fa5" fill-opacity="0.18"
-                  stroke="#5f86bd" stroke-width="1.2"/>
+          <polygon points="236,186 300,150 336,186 316,232 250,236" fill-opacity="0.3"/>
           
-          <text x="432" y="146" class="z-label">Grapeseed</text>
+            <text x="287.6" y="201.0" class="z-label">Лес Палето</text>
+          
         </g>
       
-        <g class="zone " data-zone="Sandy Shores"
+        <g class="zone reg-blaine "
+           data-code="GRAPES" data-name="Grapeseed" data-ru="Грейпсид"
            data-count="0" data-arrests="0" data-cits="0">
-          <circle cx="432" cy="268" r="27"
-                  fill="#4a6fa5" fill-opacity="0.18"
-                  stroke="#5f86bd" stroke-width="1.2"/>
+          <polygon points="392,128 468,146 486,200 440,224 388,196" fill-opacity="0.3"/>
           
-          <text x="432" y="237" class="z-label">Sandy Shores</text>
+            <text x="434.8" y="181.8" class="z-label">Грейпсид</text>
+          
         </g>
       
-        <g class="zone " data-zone="Harmony"
+        <g class="zone reg-blaine "
+           data-code="SANDY" data-name="Sandy Shores" data-ru="Сэнди-Шорс"
            data-count="0" data-arrests="0" data-cits="0">
-          <circle cx="286" cy="320" r="22"
-                  fill="#4a6fa5" fill-opacity="0.18"
-                  stroke="#5f86bd" stroke-width="1.2"/>
+          <polygon points="420,232 486,220 508,272 470,312 412,296" fill-opacity="0.3"/>
           
-          <text x="286" y="294" class="z-label">Harmony</text>
+            <text x="459.2" y="269.4" class="z-label">Сэнди-Шорс</text>
+          
         </g>
       
-        <g class="zone " data-zone="Grand Senora"
+        <g class="zone reg-blaine "
+           data-code="ALAMO" data-name="Alamo Sea" data-ru="Озеро Аламо"
            data-count="0" data-arrests="0" data-cits="0">
-          <circle cx="368" cy="352" r="26"
-                  fill="#4a6fa5" fill-opacity="0.18"
-                  stroke="#5f86bd" stroke-width="1.2"/>
+          <polygon points="306,214 396,206 424,250 396,296 314,290 288,250" fill-opacity="0.3"/>
           
-          <text x="368" y="322" class="z-label">Grand Senora</text>
+            <text x="354.0" y="254.0" class="z-label">Озеро Аламо</text>
+          
         </g>
       
-        <g class="zone " data-zone="Chumash"
+        <g class="zone reg-blaine "
+           data-code="HARMO" data-name="Harmony" data-ru="Хармони"
            data-count="0" data-arrests="0" data-cits="0">
-          <circle cx="132" cy="372" r="24"
-                  fill="#4a6fa5" fill-opacity="0.18"
-                  stroke="#5f86bd" stroke-width="1.2"/>
+          <polygon points="250,264 306,258 314,306 262,318 236,290" fill-opacity="0.3"/>
           
-          <text x="132" y="344" class="z-label">Chumash</text>
+            <text x="273.6" y="290.2" class="z-label">Хармони</text>
+          
         </g>
       
-        <g class="zone " data-zone="Vinewood Hills"
+        <g class="zone reg-blaine "
+           data-code="GRANDSEN" data-name="Grand Senora Desert" data-ru="Пустыня Гранд-Сенора"
            data-count="0" data-arrests="0" data-cits="0">
-          <circle cx="286" cy="502" r="26"
-                  fill="#4a6fa5" fill-opacity="0.18"
-                  stroke="#5f86bd" stroke-width="1.2"/>
+          <polygon points="314,306 412,300 442,352 396,392 320,380 296,340" fill-opacity="0.3"/>
           
-          <text x="286" y="472" class="z-label">Vinewood Hills</text>
+            <text x="363.3333333333333" y="348.0" class="z-label">Пустыня Гранд-Сенора</text>
+          
         </g>
       
-        <g class="zone " data-zone="Downtown Vinewood"
+        <g class="zone reg-blaine "
+           data-code="ARMYB" data-name="Fort Zancudo" data-ru="Форт-Занкудо"
            data-count="0" data-arrests="0" data-cits="0">
-          <circle cx="360" cy="512" r="26"
-                  fill="#4a6fa5" fill-opacity="0.18"
-                  stroke="#5f86bd" stroke-width="1.2"/>
+          <polygon points="150,300 226,306 238,356 172,368 140,340" fill-opacity="0.3"/>
           
-          <text x="360" y="482" class="z-label">Downtown Vinewood</text>
+            <text x="185.2" y="337.0" class="z-label">Форт-Занкудо</text>
+          
         </g>
       
-        <g class="zone " data-zone="Mirror Park"
+        <g class="zone reg-county "
+           data-code="CHU" data-name="Chumash" data-ru="Чумаш"
            data-count="0" data-arrests="0" data-cits="0">
-          <circle cx="424" cy="546" r="24"
-                  fill="#4a6fa5" fill-opacity="0.18"
-                  stroke="#5f86bd" stroke-width="1.2"/>
+          <polygon points="104,352 168,368 178,420 116,436 92,396" fill-opacity="0.3"/>
           
-          <text x="424" y="518" class="z-label">Mirror Park</text>
+            <text x="131.6" y="397.4" class="z-label">Чумаш</text>
+          
         </g>
       
-        <g class="zone " data-zone="Del Perro"
+        <g class="zone reg-county "
+           data-code="TONGVAH" data-name="Tongva Hills" data-ru="Холмы Тонгва"
            data-count="0" data-arrests="0" data-cits="0">
-          <circle cx="186" cy="552" r="24"
-                  fill="#4a6fa5" fill-opacity="0.18"
-                  stroke="#5f86bd" stroke-width="1.2"/>
+          <polygon points="196,376 268,368 288,414 232,440 190,420" fill-opacity="0.3"/>
           
-          <text x="186" y="524" class="z-label">Del Perro</text>
+            <text x="234.8" y="406.6" class="z-label">Холмы Тонгва</text>
+          
         </g>
       
-        <g class="zone " data-zone="Downtown"
+        <g class="zone reg-county "
+           data-code="BANHAMC" data-name="Banham Canyon" data-ru="Каньон Бэнхэм"
            data-count="0" data-arrests="0" data-cits="0">
-          <circle cx="318" cy="566" r="24"
-                  fill="#4a6fa5" fill-opacity="0.18"
-                  stroke="#5f86bd" stroke-width="1.2"/>
+          <polygon points="150,430 216,440 226,486 162,498 138,466" fill-opacity="0.3"/>
           
-          <text x="318" y="538" class="z-label">Downtown</text>
+            <text x="178.4" y="467.0" class="z-label">Каньон Бэнхэм</text>
+          
         </g>
       
-        <g class="zone " data-zone="Mission Row"
+        <g class="zone reg-county "
+           data-code="PALHIGH" data-name="Palomino Highlands" data-ru="Паломино"
            data-count="0" data-arrests="0" data-cits="0">
-          <circle cx="360" cy="592" r="24"
-                  fill="#4a6fa5" fill-opacity="0.18"
-                  stroke="#5f86bd" stroke-width="1.2"/>
+          <polygon points="396,392 470,384 494,436 436,462 392,438" fill-opacity="0.3"/>
           
-          <text x="360" y="564" class="z-label">Mission Row</text>
+            <text x="437.6" y="425.4" class="z-label">Паломино</text>
+          
         </g>
       
-        <g class="zone " data-zone="La Mesa"
+        <g class="zone reg-county "
+           data-code="DAVIS_Q" data-name="Davis Quartz" data-ru="Дэвис-Кварц"
            data-count="0" data-arrests="0" data-cits="0">
-          <circle cx="420" cy="596" r="22"
-                  fill="#4a6fa5" fill-opacity="0.18"
-                  stroke="#5f86bd" stroke-width="1.2"/>
+          <polygon points="320,380 392,392 396,438 330,450 306,414" fill-opacity="0.3"/>
           
-          <text x="420" y="570" class="z-label">La Mesa</text>
+            <text x="348.8" y="417.8" class="z-label">Дэвис-Кварц</text>
+          
         </g>
       
-        <g class="zone " data-zone="Vespucci"
+        <g class="zone reg-city "
+           data-code="DTVINE" data-name="Downtown Vinewood" data-ru="Даунтаун Вайнвуд"
            data-count="0" data-arrests="0" data-cits="0">
-          <circle cx="176" cy="606" r="24"
-                  fill="#4a6fa5" fill-opacity="0.18"
-                  stroke="#5f86bd" stroke-width="1.2"/>
+          <polygon points="306,470 380,464 396,506 330,520 300,502" fill-opacity="0.3"/>
           
-          <text x="176" y="578" class="z-label">Vespucci</text>
+            <text x="342.4" y="495.4" class="z-label">Даунтаун Вайнвуд</text>
+          
         </g>
       
-        <g class="zone " data-zone="El Burro Heights"
+        <g class="zone reg-city "
+           data-code="VINE" data-name="Vinewood Hills" data-ru="Холмы Вайнвуд"
            data-count="0" data-arrests="0" data-cits="0">
-          <circle cx="456" cy="640" r="24"
-                  fill="#4a6fa5" fill-opacity="0.18"
-                  stroke="#5f86bd" stroke-width="1.2"/>
+          <polygon points="232,452 306,470 300,506 236,516 216,486" fill-opacity="0.3"/>
           
-          <text x="456" y="612" class="z-label">El Burro Heights</text>
+            <text x="258.0" y="489.0" class="z-label">Холмы Вайнвуд</text>
+          
         </g>
       
-        <g class="zone " data-zone="Strawberry"
+        <g class="zone reg-city "
+           data-code="MIRR" data-name="Mirror Park" data-ru="Миррор-Парк"
            data-count="0" data-arrests="0" data-cits="0">
-          <circle cx="306" cy="638" r="24"
-                  fill="#4a6fa5" fill-opacity="0.18"
-                  stroke="#5f86bd" stroke-width="1.2"/>
+          <polygon points="396,506 452,498 468,540 410,552 390,530" fill-opacity="0.3"/>
           
-          <text x="306" y="610" class="z-label">Strawberry</text>
+            <text x="423.2" y="528.2" class="z-label">Миррор-Парк</text>
+          
         </g>
       
-        <g class="zone " data-zone="Rancho"
+        <g class="zone reg-city "
+           data-code="DELPE" data-name="Del Perro" data-ru="Дель-Перро"
            data-count="0" data-arrests="0" data-cits="0">
-          <circle cx="378" cy="656" r="22"
-                  fill="#4a6fa5" fill-opacity="0.18"
-                  stroke="#5f86bd" stroke-width="1.2"/>
+          <polygon points="152,506 216,498 228,544 168,558 142,534" fill-opacity="0.3"/>
           
-          <text x="378" y="630" class="z-label">Rancho</text>
+            <text x="181.2" y="531.0" class="z-label">Дель-Перро</text>
+          
         </g>
       
-        <g class="zone " data-zone="Davis"
+        <g class="zone reg-city "
+           data-code="DOWNT" data-name="Downtown" data-ru="Даунтаун"
            data-count="0" data-arrests="0" data-cits="0">
-          <circle cx="330" cy="690" r="24"
-                  fill="#4a6fa5" fill-opacity="0.18"
-                  stroke="#5f86bd" stroke-width="1.2"/>
+          <polygon points="300,520 366,516 380,558 316,570 292,548" fill-opacity="0.3"/>
           
-          <text x="330" y="662" class="z-label">Davis</text>
+            <text x="330.8" y="545.4" class="z-label">Даунтаун</text>
+          
         </g>
       
-        <g class="zone " data-zone="Puerto Del Sol"
+        <g class="zone reg-city "
+           data-code="MISSION" data-name="Mission Row" data-ru="Мишн-Роу"
            data-count="0" data-arrests="0" data-cits="0">
-          <circle cx="214" cy="664" r="24"
-                  fill="#4a6fa5" fill-opacity="0.18"
-                  stroke="#5f86bd" stroke-width="1.2"/>
+          <polygon points="366,556 424,550 436,590 378,602 360,580" fill-opacity="0.3"/>
           
-          <text x="214" y="636" class="z-label">Puerto Del Sol</text>
+            <text x="392.8" y="578.6" class="z-label">Мишн-Роу</text>
+          
+        </g>
+      
+        <g class="zone reg-city "
+           data-code="VESP" data-name="Vespucci Beach" data-ru="Пляж Веспуччи"
+           data-count="0" data-arrests="0" data-cits="0">
+          <polygon points="140,560 200,552 212,600 154,614 128,588" fill-opacity="0.3"/>
+          
+            <text x="166.8" y="585.8" class="z-label">Пляж Веспуччи</text>
+          
+        </g>
+      
+        <g class="zone reg-city "
+           data-code="LMESA" data-name="La Mesa" data-ru="Ла-Меса"
+           data-count="0" data-arrests="0" data-cits="0">
+          <polygon points="424,548 480,542 494,584 436,596 418,574" fill-opacity="0.3"/>
+          
+            <text x="450.4" y="571.8" class="z-label">Ла-Меса</text>
+          
+        </g>
+      
+        <g class="zone reg-city "
+           data-code="STRAW" data-name="Strawberry" data-ru="Строберри"
+           data-count="0" data-arrests="0" data-cits="0">
+          <polygon points="268,578 336,570 348,614 284,626 258,602" fill-opacity="0.3"/>
+          
+            <text x="298.8" y="601.0" class="z-label">Строберри</text>
+          
+        </g>
+      
+        <g class="zone reg-city "
+           data-code="RANCHO" data-name="Rancho" data-ru="Ранчо"
+           data-count="0" data-arrests="0" data-cits="0">
+          <polygon points="348,606 410,598 424,640 360,652 340,630" fill-opacity="0.3"/>
+          
+            <text x="376.4" y="628.2" class="z-label">Ранчо</text>
+          
+        </g>
+      
+        <g class="zone reg-city "
+           data-code="EBURO" data-name="El Burro Heights" data-ru="Эль-Бурро-Хайтс"
+           data-count="0" data-arrests="0" data-cits="0">
+          <polygon points="440,596 502,588 516,632 456,646 432,622" fill-opacity="0.3"/>
+          
+            <text x="469.2" y="619.8" class="z-label">Эль-Бурро-Хайтс</text>
+          
+        </g>
+      
+        <g class="zone reg-city "
+           data-code="DAVIS" data-name="Davis" data-ru="Дэвис"
+           data-count="0" data-arrests="0" data-cits="0">
+          <polygon points="290,626 354,618 366,662 302,674 278,650" fill-opacity="0.3"/>
+          
+            <text x="318.0" y="649.0" class="z-label">Дэвис</text>
+          
+        </g>
+      
+        <g class="zone reg-city "
+           data-code="LOSPUER" data-name="Puerto Del Sol" data-ru="Пуэрто-Дель-Соль"
+           data-count="0" data-arrests="0" data-cits="0">
+          <polygon points="180,614 244,606 258,650 196,664 170,640" fill-opacity="0.3"/>
+          
+            <text x="209.6" y="637.8" class="z-label">Пуэрто-Дель-Соль</text>
+          
+        </g>
+      
+        <g class="zone reg-city "
+           data-code="AIRP" data-name="LS International Airport" data-ru="Аэропорт"
+           data-count="0" data-arrests="0" data-cits="0">
+          <polygon points="232,656 316,648 330,700 246,712 216,684" fill-opacity="0.3"/>
+          
+            <text x="268.0" y="683.0" class="z-label">Аэропорт</text>
+          
+        </g>
+      
+        <g class="zone reg-city "
+           data-code="ELYSIAN" data-name="Elysian Island" data-ru="Остров Элизиан"
+           data-count="0" data-arrests="0" data-cits="0">
+          <polygon points="330,690 400,682 414,726 344,738 320,714" fill-opacity="0.3"/>
+          
+            <text x="361.6" y="713.0" class="z-label">Остров Элизиан</text>
+          
+        </g>
+      
+        <g class="zone reg-city "
+           data-code="BANNING" data-name="Banning" data-ru="Бэннинг"
+           data-count="0" data-arrests="0" data-cits="0">
+          <polygon points="258,644 320,638 330,678 268,690 246,668" fill-opacity="0.3"/>
+          
+            <text x="284.4" y="666.6" class="z-label">Бэннинг</text>
+          
         </g>
       
     </svg>
@@ -263,20 +355,30 @@
 
   <aside class="map-side">
     <div class="card">
-      <h3 id="zi-name">Выбери район</h3>
-      <p class="muted small" id="zi-hint">Нажми на кружок на карте.</p>
-      <dl class="report-fields" id="zi-stats" style="display:none">
-        <div><dt>Задержаний</dt><dd id="zi-arr">0</dd></div>
-        <div><dt>Штрафов</dt><dd id="zi-cit">0</dd></div>
-        <div><dt>Всего событий</dt><dd id="zi-all">0</dd></div>
-      </dl>
+      <h3 id="zi-name">Выбери зону</h3>
+      <p class="muted small" id="zi-hint">Нажми на любую зону на карте.</p>
+      <div id="zi-body" style="display:none">
+        <p class="muted small" id="zi-sub"></p>
+        <dl class="report-fields">
+          <div><dt>Задержаний</dt><dd id="zi-arr">0</dd></div>
+          <div><dt>Штрафов</dt><dd id="zi-cit">0</dd></div>
+          <div><dt>Всего</dt><dd id="zi-all">0</dd></div>
+        </dl>
+      </div>
     </div>
 
     <div class="card">
-      <h3>Топ районов</h3>
+      <h3>Топ зон по нарушениям</h3>
       
         <p class="muted small">Пока нет данных — появятся после игры.</p>
       
+    </div>
+
+    <div class="card">
+      <h3>Обозначения</h3>
+      <div class="legend"><span class="lg lg-city"></span> Лос-Сантос (город)</div>
+      <div class="legend"><span class="lg lg-county"></span> Округ Лос-Сантос</div>
+      <div class="legend"><span class="lg lg-blaine"></span> Округ Блэйн</div>
     </div>
   </aside>
 </div>
@@ -286,9 +388,10 @@ document.querySelectorAll('.zone').forEach(function(g){
   g.addEventListener('click', function(){
     document.querySelectorAll('.zone').forEach(function(z){ z.classList.remove('sel'); });
     g.classList.add('sel');
-    document.getElementById('zi-name').textContent = g.dataset.zone;
+    document.getElementById('zi-name').textContent = g.dataset.ru;
+    document.getElementById('zi-sub').textContent = g.dataset.name + ' · код ' + g.dataset.code;
     document.getElementById('zi-hint').style.display = 'none';
-    document.getElementById('zi-stats').style.display = '';
+    document.getElementById('zi-body').style.display = '';
     document.getElementById('zi-arr').textContent = g.dataset.arrests;
     document.getElementById('zi-cit').textContent = g.dataset.cits;
     document.getElementById('zi-all').textContent = g.dataset.count;

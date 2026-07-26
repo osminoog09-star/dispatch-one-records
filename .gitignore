@@ -1,6 +1,11 @@
 # ===== Секреты =====
 .env
 *.env
+# конфиги агента содержат ключ доступа — в публичный репозиторий не кладём
+agent/sync-config.ini
+agent/dist/sync-config.ini
+installer/sync-config.ini
+!agent/sync-config.example.ini
 
 # База данных ХРАНИТСЯ в репозитории — из неё GitHub Actions пересобирает сайт 24/7.
 # (server/data.db намеренно НЕ игнорируется)

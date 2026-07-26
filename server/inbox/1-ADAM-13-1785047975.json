@@ -1,0 +1,28 @@
+{
+ "profile": {
+  "callsign": "1-ADAM-13",
+  "nickname": "Tim Bredford",
+  "discord": "ree1111"
+ },
+ "arrests": [
+  {
+   "Id": "e2e-test-001",
+   "ArrestedAt": "2026-07-26T11:00:00Z",
+   "OfficerName": "Officer",
+   "SubjectFullName": "Сквозная Проверка",
+   "Location": "Downtown Vinewood",
+   "Charges": [
+    {
+     "ChargeCode": "VC.2800.1",
+     "Description": "Уклонение от полиции",
+     "LegalClass": "Misdemeanor"
+    }
+   ],
+   "Evidence": [],
+   "Narrative": "End-to-end test"
+  }
+ ],
+ "citations": [],
+ "cases": [],
+ "sent_at": "2026-07-26T09:39:35"
+}

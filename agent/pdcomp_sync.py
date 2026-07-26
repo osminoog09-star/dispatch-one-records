@@ -384,7 +384,102 @@ def sync_court():
     return new, upd
 
 
+GAME_PROCESSES = ["GTA5.exe", "GTA5_Enhanced.exe", "RAGEPluginHook.exe",
+                  "RAGEPluginHook64.exe", "PlayGTAV.exe"]
+
+# режим владельца сайта: публикуем сами, сервер не нужен
+OWNER_MODE = _setting("AUTO_PUBLISH", "0") in ("1", "true", "yes", "on")
+
+
+def is_game_running():
+    """Игра/RagePluginHook запущены?"""
+    import subprocess
+    try:
+        out = subprocess.run(["tasklist", "/FO", "CSV", "/NH"],
+                             capture_output=True, text=True, timeout=15,
+                             creationflags=0x08000000)  # без окна консоли
+        low = (out.stdout or "").lower()
+        return any(p.lower() in low for p in GAME_PROCESSES)
+    except Exception:
+        return False
+
+
+def auto_publish():
+    """После выхода из игры — опубликовать данные на сайт (если включено)."""
+    if _setting("AUTO_PUBLISH", "0") not in ("1", "true", "yes", "on"):
+        return
+    import subprocess
+    root = os.path.dirname(_base_dir())          # ...\AIDispatcher
+    script = os.path.join(root, "publish.py")
+    if not os.path.exists(script):
+        return
+    print("[publish] публикую данные на сайт...")
+    try:
+        r = subprocess.run(["py", script], cwd=root, capture_output=True,
+                           text=True, timeout=600, creationflags=0x08000000)
+        tail = [l for l in (r.stdout or "").splitlines() if l.strip()][-2:]
+        for l in tail:
+            print("   " + l)
+    except Exception as e:
+        print(f"[publish] не удалось: {e}")
+
+
+def watch_game():
+    """Режим ожидания игры: спим, пока игра не запущена; синхронизируем во время игры;
+    после выхода из игры — публикуем на сайт."""
+    print("Режим автозапуска: жду запуска игры...")
+    was_running = False
+    seen = {}
+    while True:
+        try:
+            running = is_game_running()
+
+            if running and not was_running:
+                print("Игра запущена — слежу за данными.")
+                seen = {}
+                # профиль: с сайта, а если владелец/сайт недоступен — из локального конфига
+                prof = None if OWNER_MODE else fetch_profile()
+                if not prof:
+                    prof = _CONFIG_PROFILE
+                if prof.get("callsign"):
+                    apply_callsign_to_game(prof["callsign"], prof.get("nickname"))
+
+            # В режиме владельца (AUTO_PUBLISH) сервер не нужен: publish.py читает
+            # игровые файлы напрямую. Не долбим сеть и не сыпем ошибками.
+            if running and not OWNER_MODE:
+                for fname, fn in (("arrests.json", sync_arrests),
+                                  ("cases.json", sync_court)):
+                    path = os.path.join(PDCOMP_STORE, fname)
+                    mtime = os.path.getmtime(path) if os.path.exists(path) else 0
+                    if mtime != seen.get(fname):
+                        a, b = fn()
+                        if a:
+                            print(f"    {fname}: новых {a}")
+                        seen[fname] = mtime
+
+            if was_running and not running:
+                print("Игра закрыта.")
+                auto_publish()
+                print("Жду следующего запуска игры...")
+
+            was_running = running
+            time.sleep(POLL_SECONDS if running else 20)
+        except KeyboardInterrupt:
+            print("\nВыход.")
+            break
+        except Exception as e:
+            print(f"[err] цикл: {e}")
+            time.sleep(20)
+
+
 def main():
+    if _setting("WATCH_GAME", "1") in ("1", "true", "yes", "on"):
+        print("Dispatch One sync-агент запущен.")
+        print(f"  pdComp store: {PDCOMP_STORE}")
+        print(f"  сайт: {SITE_URL}\n")
+        watch_game()
+        return
+
     print(f"Dispatch One sync-агент запущен.")
     print(f"  pdComp store: {PDCOMP_STORE}")
     print(f"  сайт: {SITE_URL}")

@@ -129,9 +129,12 @@ class Installer(tk.Tk):
         self.callsign = self._field(frm, "Позывной", "например, 1-ADAM-12")
         self.nickname = self._field(frm, "Имя персонажа", "например, John Miller")
         self.discord = self._field(frm, "Discord (обязательно)", "ваш ник в Discord")
-        self.key = self._field(frm, "Ключ сообщества", "выдаёт админ", "dev-key")
-        self.url = self._field(frm, "Адрес сервера данных", "http://адрес:8000",
-                               "http://localhost:8000")
+        self.key = self._field(frm, "Ключ сообщества (выдаёт админ)", "например, a1b2c3d4")
+        self.url = self._field(frm, "Адрес сервера сообщества (выдаёт админ)",
+                               "например, https://xxxx.trycloudflare.com")
+        tk.Label(frm, text="Ключ и адрес спроси у руководства — без них данные никуда не уйдут.",
+                 bg="#12151a", fg="#6b7684", font=("Segoe UI", 8), wraplength=440,
+                 justify="left").pack(anchor="w", pady=(4, 0))
 
         self.autostart = tk.BooleanVar(value=True)
         tk.Checkbutton(self, text="Запускать вместе с Windows", variable=self.autostart,
@@ -171,6 +174,20 @@ class Installer(tk.Tk):
             messagebox.showwarning(APP_NAME, "Заполни позывной, имя персонажа и Discord.")
             return
 
+        url = self.url.get().strip()
+        if not url or not self.key.get().strip():
+            messagebox.showwarning(
+                APP_NAME,
+                "Нужны адрес сервера сообщества и ключ — их выдаёт руководство.\n\n"
+                "Без них твои данные никуда не отправятся.")
+            return
+        if "localhost" in url or "127.0.0.1" in url:
+            messagebox.showwarning(
+                APP_NAME,
+                "Адрес localhost указывает на ТВОЙ компьютер — данные не дойдут до сообщества.\n\n"
+                "Впиши адрес, который дал админ.")
+            return
+
         try:
             os.makedirs(INSTALL_DIR, exist_ok=True)
             src = resource(AGENT_EXE)
@@ -181,11 +198,13 @@ class Installer(tk.Tk):
             store = (os.path.join(game, "plugins", "LSPDFR", "pdComp", "data", "store")
                      if game else "")
             write_config(os.path.join(INSTALL_DIR, "sync-config.ini"), {
-                "SITE_URL": self.url.get().strip() or SITE_URL_DEFAULT,
-                "RECORDS_API_KEY": self.key.get().strip() or "dev-key",
+                "SITE_URL": url,
+                "RECORDS_API_KEY": self.key.get().strip(),
                 "CALLSIGN": cs,
                 "NICKNAME": nick,
                 "DISCORD": dis,
+                "WATCH_GAME": "1",      # работать только во время игры
+                "AUTO_PUBLISH": "0",    # публикует только владелец сайта
                 "POLL_SECONDS": "8",
                 **({"PDCOMP_STORE": store} if store else {}),
             })

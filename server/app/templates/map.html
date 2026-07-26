@@ -1,25 +1,27 @@
 {% extends "base.html" %}
 {% block title %}Карта{% endblock %}
 {% block content %}
-<h1>Карта патрулирования</h1>
-<p class="muted">Схема острова Сан-Андреас: Лос-Сантос на юге, округ Блэйн на севере.
-  Кружок — район, число в нём — сколько там задержаний и штрафов. Нажми на район для статистики.</p>
+<h1>Карта · зоны патрулирования</h1>
+<p class="muted">Деление по зонам из игры (Los Santos City, Los Santos County, Blaine County).
+  Чем ярче зона — тем больше там нарушений. Нажми на зону для статистики.</p>
+
+<section class="stats" style="grid-template-columns:repeat({{ regions|length }},1fr)">
+  {% for r in regions %}
+    <div class="stat">
+      <div class="num">{{ r.count }}</div>
+      <div class="lbl">{{ r.ru }}</div>
+      <div class="muted small">задерж. {{ r.arrests }} · штраф. {{ r.citations }}</div>
+    </div>
+  {% endfor %}
+</section>
 
 <div class="map-wrap">
   <div class="map-box">
     <svg viewBox="0 0 640 800" class="ls-map" preserveAspectRatio="xMidYMid meet"
          xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <linearGradient id="landg" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stop-color="#243449"/>
-          <stop offset="55%" stop-color="#1e2c3e"/>
-          <stop offset="100%" stop-color="#28374b"/>
-        </linearGradient>
-      </defs>
-
       <rect x="0" y="0" width="640" height="800" fill="#0b1420"/>
 
-      <!-- Остров Сан-Андреас: север — горы и пустыня, юг — Лос-Сантос -->
+      <!-- контур острова -->
       <path d="M232,44 C300,26 372,34 424,68 C470,98 498,150 512,208
                C524,258 520,306 508,352 C498,392 500,430 514,466
                C532,512 540,560 528,606 C514,660 476,704 424,732
@@ -27,39 +29,27 @@
                C96,626 92,572 100,518 C106,476 104,436 92,398
                C78,352 74,304 86,256 C100,198 132,142 174,100
                C192,80 212,58 232,44 Z"
-            fill="url(#landg)" stroke="#3d5875" stroke-width="2"/>
+            fill="#182335" stroke="#3d5875" stroke-width="2"/>
 
-      <!-- Озеро Аламо (север-центр) -->
-      <path d="M300,214 C334,198 380,202 404,224 C424,244 420,276 396,292
-               C368,310 322,308 300,288 C282,270 282,230 300,214 Z"
-            fill="#0e2233" stroke="#2c4e6b" stroke-width="1.5"/>
-      <text x="352" y="258" class="geo-label">Аламо</text>
-
-      <!-- Гора Чилиад (северо-запад) -->
-      <path d="M150,150 L188,96 L228,150 Z" fill="#31445c" stroke="#44607f" stroke-width="1.5"/>
-      <text x="188" y="168" class="geo-label">Чилиад</text>
-
-      <!-- Граница: округ Блэйн / Лос-Сантос -->
+      <!-- граница округов -->
       <path d="M96,468 C180,452 300,448 400,456 C450,460 490,464 516,470"
             stroke="#44607f" stroke-width="1.5" stroke-dasharray="7 6" fill="none"/>
-      <text x="140" y="444" class="geo-region">ОКРУГ БЛЭЙН</text>
-      <text x="140" y="492" class="geo-region">ЛОС-САНТОС</text>
+      <text x="126" y="440" class="geo-region">ОКРУГ БЛЭЙН</text>
+      <text x="126" y="492" class="geo-region">ЛОС-САНТОС</text>
+      <text x="52" y="650" class="geo-label sea">Тихий океан</text>
 
-      <!-- Океан (подпись) -->
-      <text x="58" y="640" class="geo-label sea">Тихий океан</text>
-
-      {% for d in map_districts %}
-        <g class="zone {{ 'has-data' if d.count else '' }}" data-zone="{{ d.name }}"
-           data-count="{{ d.count }}" data-arrests="{{ d.arrests }}" data-cits="{{ d.citations }}">
-          <circle cx="{{ d.x }}" cy="{{ d.y }}" r="{{ d.r }}"
-                  fill="#4a6fa5" fill-opacity="{{ 0.18 + d.intensity * 0.6 }}"
-                  stroke="#5f86bd" stroke-width="1.2"/>
-          {% if d.count %}
-            <circle cx="{{ d.x }}" cy="{{ d.y }}" r="{{ 9 + d.intensity * 9 }}"
-                    fill="var(--accent)" fill-opacity="0.9"/>
-            <text x="{{ d.x }}" y="{{ d.y + 4 }}" class="z-count">{{ d.count }}</text>
+      {% for z in zones %}
+        <g class="zone reg-{{ z.region }} {{ 'has-data' if z.count else '' }}"
+           data-code="{{ z.code }}" data-name="{{ z.name }}" data-ru="{{ z.ru }}"
+           data-count="{{ z.count }}" data-arrests="{{ z.arrests }}" data-cits="{{ z.citations }}">
+          <polygon points="{{ z.poly }}" fill-opacity="{{ 0.3 + z.intensity * 0.6 }}"/>
+          {% if z.count %}
+            <circle cx="{{ z.cx }}" cy="{{ z.cy }}" r="{{ 9 + z.intensity * 8 }}"
+                    fill="var(--accent)" fill-opacity="0.92"/>
+            <text x="{{ z.cx }}" y="{{ z.cy + 4 }}" class="z-count">{{ z.count }}</text>
+          {% else %}
+            <text x="{{ z.cx }}" y="{{ z.cy + 3 }}" class="z-label">{{ z.ru }}</text>
           {% endif %}
-          <text x="{{ d.x }}" y="{{ d.y - d.r - 4 }}" class="z-label">{{ d.name }}</text>
         </g>
       {% endfor %}
     </svg>
@@ -67,17 +57,20 @@
 
   <aside class="map-side">
     <div class="card">
-      <h3 id="zi-name">Выбери район</h3>
-      <p class="muted small" id="zi-hint">Нажми на кружок на карте.</p>
-      <dl class="report-fields" id="zi-stats" style="display:none">
-        <div><dt>Задержаний</dt><dd id="zi-arr">0</dd></div>
-        <div><dt>Штрафов</dt><dd id="zi-cit">0</dd></div>
-        <div><dt>Всего событий</dt><dd id="zi-all">0</dd></div>
-      </dl>
+      <h3 id="zi-name">Выбери зону</h3>
+      <p class="muted small" id="zi-hint">Нажми на любую зону на карте.</p>
+      <div id="zi-body" style="display:none">
+        <p class="muted small" id="zi-sub"></p>
+        <dl class="report-fields">
+          <div><dt>Задержаний</dt><dd id="zi-arr">0</dd></div>
+          <div><dt>Штрафов</dt><dd id="zi-cit">0</dd></div>
+          <div><dt>Всего</dt><dd id="zi-all">0</dd></div>
+        </dl>
+      </div>
     </div>
 
     <div class="card">
-      <h3>Топ районов</h3>
+      <h3>Топ зон по нарушениям</h3>
       {% if top_zones %}
         <div class="districts">
           {% for d in top_zones %}
@@ -91,6 +84,13 @@
         <p class="muted small">Пока нет данных — появятся после игры.</p>
       {% endif %}
     </div>
+
+    <div class="card">
+      <h3>Обозначения</h3>
+      <div class="legend"><span class="lg lg-city"></span> Лос-Сантос (город)</div>
+      <div class="legend"><span class="lg lg-county"></span> Округ Лос-Сантос</div>
+      <div class="legend"><span class="lg lg-blaine"></span> Округ Блэйн</div>
+    </div>
   </aside>
 </div>
 
@@ -99,9 +99,10 @@ document.querySelectorAll('.zone').forEach(function(g){
   g.addEventListener('click', function(){
     document.querySelectorAll('.zone').forEach(function(z){ z.classList.remove('sel'); });
     g.classList.add('sel');
-    document.getElementById('zi-name').textContent = g.dataset.zone;
+    document.getElementById('zi-name').textContent = g.dataset.ru;
+    document.getElementById('zi-sub').textContent = g.dataset.name + ' · код ' + g.dataset.code;
     document.getElementById('zi-hint').style.display = 'none';
-    document.getElementById('zi-stats').style.display = '';
+    document.getElementById('zi-body').style.display = '';
     document.getElementById('zi-arr').textContent = g.dataset.arrests;
     document.getElementById('zi-cit').textContent = g.dataset.cits;
     document.getElementById('zi-all').textContent = g.dataset.count;

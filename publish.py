@@ -34,13 +34,27 @@ def sync_from_game():
     Записи чужих/демонстрационных офицеров пропускаются — статистика честная."""
     db.init_db()
     known = known_officers()
+
+    # профиль владельца (из регистрации) — под ним пишутся записи локального игрока
+    with db.get_conn() as c:
+        row = c.execute("SELECT callsign, nickname FROM profiles ORDER BY updated_at LIMIT 1").fetchone()
+    if row:
+        agent._PROFILE = {"callsign": row["callsign"], "nickname": row["nickname"]}
+        print(f"   профиль: {row['callsign']} ({row['nickname']})")
     new_arrests = new_court = 0
     skipped = 0
 
+    # pdComp пишет "Officer" (или пусто), если имя офицера не задано в его настройках —
+    # это записи локального игрока, то есть наши.
+    GENERIC = {"", "officer", "unknown", "n/a", "-"}
+
     def is_ours(officer_name):
+        nm = (officer_name or "").strip().lower()
+        if nm in GENERIC:
+            return True
         if not known:
             return True
-        return (officer_name or "").strip().lower() in known
+        return nm in known
 
     arrests = agent.read_json(os.path.join(agent.PDCOMP_STORE, "arrests.json")) or []
     for a in arrests:

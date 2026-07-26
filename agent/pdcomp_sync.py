@@ -144,10 +144,26 @@ def apply_callsign_to_game(callsign, nickname):
     return changed
 
 
+GENERIC_OFFICER = {"", "officer", "unknown", "n/a", "-"}
+
+
+def _resolve_officer(raw_name, profile=None):
+    """Имя офицера из игры → (позывной, имя). Обезличенное 'Officer' считаем своим."""
+    prof = profile or _PROFILE or _CONFIG_PROFILE
+    raw = (raw_name or "").strip()
+    if raw.lower() in GENERIC_OFFICER:
+        return (prof.get("callsign") or "UNKNOWN", prof.get("nickname") or raw or "UNKNOWN")
+    if prof.get("nickname") and raw.lower() == prof["nickname"].strip().lower():
+        return (prof.get("callsign") or raw, raw)
+    return (raw, raw)          # чужой офицер — как есть
+
+
+# профиль из локального конфига (если сайт недоступен)
+_CONFIG_PROFILE = {"callsign": _setting("CALLSIGN", ""), "nickname": _setting("NICKNAME", "")}
+
+
 def map_arrest(a):
-    prof = _PROFILE or {}
-    officer_name = prof.get("nickname") or a.get("OfficerName") or "UNKNOWN"
-    callsign = prof.get("callsign") or a.get("OfficerName") or "UNKNOWN"
+    callsign, officer_name = _resolve_officer(a.get("OfficerName"))
     charges = []
     for c in a.get("Charges", []):
         code = c.get("ChargeCode", "")
@@ -292,12 +308,10 @@ def map_citation(ct):
             fine += float(c.get("Fine") or 0)
         else:
             charges.append(str(c))
-    officer = ct.get("OfficerName") or "UNKNOWN"
-    # штраф свой (наш профиль) или чужой — из игровых данных
-    mine = prof.get("nickname") and officer == prof.get("nickname")
+    callsign, officer = _resolve_officer(ct.get("OfficerName"))
     return {
         "external_id": ct.get("Id"),
-        "callsign": prof.get("callsign") if mine else officer,
+        "callsign": callsign,
         "officer_name": officer,
         "subject_name": ct.get("SubjectFullName") or ct.get("Subject") or "Неизвестный",
         "issued_at": ct.get("IssuedAtWall") or ct.get("IssuedAt") or ct.get("CreatedAt"),

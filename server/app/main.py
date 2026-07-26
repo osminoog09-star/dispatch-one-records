@@ -8,6 +8,7 @@ from flask import (Flask, render_template, request, redirect, url_for,
 
 import config
 from app import db, discord_post
+from app import zones as zones_data
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("RECORDS_SECRET", "records-dev-secret")
@@ -72,16 +73,22 @@ MAP_ZONES = [
 
 
 def _best_zone(text):
-    """Определяет район записи: берём самое длинное (точное) совпадение, чтобы
-    'Downtown Vinewood' не засчитывался ещё и в 'Downtown'."""
+    """Определяет зону записи по адресу: самое длинное (точное) совпадение,
+    чтобы 'Downtown Vinewood' не засчитывался ещё и в 'Downtown'."""
     if not text:
         return None
     low = text.lower()
-    best = None
-    for name, *_ in MAP_ZONES:
-        if name.lower() in low and (best is None or len(name) > len(best)):
-            best = name
+    best, best_len = None, 0
+    for code, name, ru, region, poly in zones_data.ZONES:
+        for candidate in (name, ru):
+            if candidate and candidate.lower() in low and len(candidate) > best_len:
+                best, best_len = code, len(candidate)
     return best
+
+
+def _poly_center(poly):
+    pts = [tuple(map(float, p.split(","))) for p in poly.split()]
+    return (sum(p[0] for p in pts) / len(pts), sum(p[1] for p in pts) / len(pts))
 
 
 @app.route("/map")
@@ -89,32 +96,42 @@ def game_map():
     cases = [c for c in db.list_cases(500) if not c.get("is_test")]
     cits = db.list_citations(500)
 
-    arr_by_zone, cit_by_zone = {}, {}
+    arr, cit = {}, {}
     for c in cases:
         z = _best_zone(c.get("zone"))
         if z:
-            arr_by_zone[z] = arr_by_zone.get(z, 0) + 1
+            arr[z] = arr.get(z, 0) + 1
     for c in cits:
         z = _best_zone(c.get("location"))
         if z:
-            cit_by_zone[z] = cit_by_zone.get(z, 0) + 1
+            cit[z] = cit.get(z, 0) + 1
 
     zones = []
-    for name, x, y, r in MAP_ZONES:
-        arrests = arr_by_zone.get(name, 0)
-        citations_n = cit_by_zone.get(name, 0)
-        zones.append({"name": name, "x": x, "y": y, "r": r,
-                      "arrests": arrests, "citations": citations_n,
-                      "count": arrests + citations_n})
+    for code, name, ru, region, poly in zones_data.ZONES:
+        a, ct = arr.get(code, 0), cit.get(code, 0)
+        cx, cy = _poly_center(poly)
+        zones.append({"code": code, "name": name, "ru": ru, "region": region,
+                      "poly": poly, "cx": cx, "cy": cy,
+                      "arrests": a, "citations": ct, "count": a + ct})
+
     mx = max([z["count"] for z in zones] + [1])
     for z in zones:
-        z["intensity"] = round(z["count"] / mx, 2) if mx else 0
+        z["intensity"] = round(z["count"] / mx, 2)
 
     top = sorted([z for z in zones if z["count"]], key=lambda z: -z["count"])[:8]
-    top_zones = [{"zone": z["name"], "count": z["count"],
+    top_zones = [{"zone": z["ru"], "count": z["count"],
                   "pct": round(z["count"] * 100 / mx)} for z in top]
 
-    return render_template("map.html", map_districts=zones, top_zones=top_zones)
+    # сводка по округам
+    regions = []
+    for key, meta in zones_data.REGIONS.items():
+        rz = [z for z in zones if z["region"] == key]
+        regions.append({"key": key, "ru": meta["ru"],
+                        "arrests": sum(z["arrests"] for z in rz),
+                        "citations": sum(z["citations"] for z in rz),
+                        "count": sum(z["count"] for z in rz)})
+
+    return render_template("map.html", zones=zones, top_zones=top_zones, regions=regions)
 
 
 @app.route("/staff", methods=["GET", "POST"])

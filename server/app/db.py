@@ -449,6 +449,44 @@ _PHRASES = [
     ("Infraction", "Нарушение"),
     ("Misdemeanor", "Проступок"),
     ("Felony", "Тяжкое"),
+    # --- приговоры и предписания суда ---
+    ("state prison", "тюрьма штата"),
+    ("county jail", "окружная тюрьма"),
+    ("traffic school or community service ordered",
+     "предписаны курсы ПДД или общественные работы"),
+    ("traffic school or community service", "курсы ПДД или общественные работы"),
+    ("license suspended", "права приостановлены"),
+    ("license revoked", "права аннулированы"),
+    ("DUI program ordered", "предписана программа для пьяных водителей"),
+    ("DUI program", "программа для пьяных водителей"),
+    ("ignition interlock ordered", "предписан алкозамок в машину"),
+    ("ignition interlock", "алкозамок"),
+    ("probation ordered", "назначен испытательный срок"),
+    ("probation", "испытательный срок"),
+    ("community service", "общественные работы"),
+    ("restitution ordered", "предписано возмещение ущерба"),
+    ("restitution", "возмещение ущерба"),
+    ("counseling ordered", "предписаны консультации"),
+    ("mandatory appearance tracked", "обязательная явка учтена"),
+    ("mandatory appearance", "обязательная явка"),
+    ("(strike prior)", "(с учётом прежней судимости)"),
+    ("(concurrent)", "(одновременно)"),
+    ("(consecutive)", "(последовательно)"),
+    ("stayed PC 654", "приостановлено по статье PC 654"),
+    ("suspended sentence", "условный срок"),
+    ("time served", "срок отбыт"),
+    (" months", " мес."),
+    (" month", " мес."),
+    (" years", " года"),
+    (" year", " год"),
+    (" days jail", " дн. тюрьмы"),
+    (" day jail", " дн. тюрьмы"),
+    (" days", " дн."),
+    (" day", " дн."),
+    ("jail", "тюрьма"),
+    ("prison", "тюрьма"),
+    ("ordered", "предписано"),
+    ("No sentence assessed", "Наказание не назначено"),
 ]
 # кириллические заглавные → латинские двойники (для номеров залов/отделов)
 _CYR2LAT = {"А": "A", "Б": "B", "В": "B", "Г": "G", "Д": "D", "Е": "E", "Ж": "J", "З": "Z",
@@ -544,6 +582,11 @@ def _row_to_court(r):
         ch["Sentence"] = localize(ch.get("Sentence"))
         ch["CourtNote"] = localize(ch.get("CourtNote"))
         ch["Severity"] = localize(ch.get("Severity"))
+        ch["LegalClass"] = localize(ch.get("LegalClass"))
+        # не показывать одно и то же дважды: «Проступок · Проступок»
+        if ch.get("LegalClass") and ch.get("Severity") and \
+           ch["LegalClass"].strip().lower() == ch["Severity"].strip().lower():
+            ch["Severity"] = ""
     d["charges"] = charges
 
     timeline = _jsonlist(r["timeline"]) if "timeline" in r.keys() else []

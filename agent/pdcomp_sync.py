@@ -254,11 +254,18 @@ def _english_name(ru_name, role):
 
 
 def _bilingual(ru_name, role):
-    """Русское имя, а в скобках английское: 'Судья Оуэн Фелд (Hon. Owen Feld)'."""
+    """Русское имя, а в скобках английское: 'Судья Оуэн Фелд (Hon. Owen Feld)'.
+    Если имя уже английское (совпадает) — не дублируем."""
     if not ru_name:
         return ru_name
     en = _english_name(ru_name, role)
-    return f"{ru_name} ({en})" if en else ru_name
+    if not en:
+        return ru_name
+    if en.strip().lower() == ru_name.strip().lower():
+        return ru_name                      # одно и то же имя — показываем один раз
+    if not any("а" <= ch.lower() <= "я" for ch in ru_name):
+        return ru_name                      # имя и так на латинице
+    return f"{ru_name} ({en})"
 
 
 def map_court_case(cc):

@@ -6,6 +6,8 @@ agent/sync-config.ini
 agent/dist/sync-config.ini
 installer/sync-config.ini
 !agent/sync-config.example.ini
+# ключ, вшиваемый в установщик при сборке — в репозиторий не попадает
+installer/embedded_token.py
 
 # База данных ХРАНИТСЯ в репозитории — из неё GitHub Actions пересобирает сайт 24/7.
 # (server/data.db намеренно НЕ игнорируется)

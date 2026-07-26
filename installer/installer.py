@@ -16,6 +16,15 @@ GITHUB_REPO = "osminoog09-star/dispatch-one-records"
 AGENT_EXE = "pdcomp_sync.exe"
 
 
+def get_embedded_token():
+    """Ключ подключения, вшитый при сборке (в исходниках его нет)."""
+    try:
+        import embedded_token
+        return embedded_token.get_token()
+    except Exception:
+        return ""
+
+
 def resource(name):
     """Файл, вшитый в установщик (PyInstaller) или лежащий рядом."""
     base = getattr(sys, "_MEIPASS", os.path.dirname(os.path.abspath(__file__)))
@@ -130,11 +139,10 @@ class Installer(tk.Tk):
         self.callsign = self._field(frm, "Позывной", "например, 1-ADAM-12")
         self.nickname = self._field(frm, "Имя персонажа", "например, John Miller")
         self.discord = self._field(frm, "Discord (обязательно)", "ваш ник в Discord")
-        self.key = self._field(frm, "Ключ доступа (выдаёт руководство)", "github_pat_...")
-        tk.Label(frm, text="Ключ спроси у руководства LAPD. Без него твои данные\n"
-                           "не попадут на сайт департамента.",
+        tk.Label(frm, text="Больше ничего вводить не нужно — подключение к сайту\n"
+                           "департамента уже настроено.",
                  bg="#12151a", fg="#6b7684", font=("Segoe UI", 8), wraplength=440,
-                 justify="left").pack(anchor="w", pady=(4, 0))
+                 justify="left").pack(anchor="w", pady=(10, 0))
 
         self.autostart = tk.BooleanVar(value=True)
         tk.Checkbutton(self, text="Запускать вместе с Windows", variable=self.autostart,
@@ -174,12 +182,12 @@ class Installer(tk.Tk):
             messagebox.showwarning(APP_NAME, "Заполни позывной, имя персонажа и Discord.")
             return
 
-        key = self.key.get().strip()
+        key = get_embedded_token()
         if not key:
-            messagebox.showwarning(
+            messagebox.showerror(
                 APP_NAME,
-                "Нужен ключ доступа — его выдаёт руководство LAPD.\n\n"
-                "Без него твои данные не попадут на сайт департамента.")
+                "В установщике нет ключа подключения.\n\n"
+                "Скачай установщик заново с сайта департамента.")
             return
 
         try:

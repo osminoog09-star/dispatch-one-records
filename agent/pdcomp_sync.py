@@ -26,6 +26,16 @@ def _load_config_file():
     """Читает sync-config.ini рядом с программой (key=value). Возвращает dict."""
     cfg = {}
     path = os.path.join(_base_dir(), "sync-config.ini")
+    # если настроек нет — создаём из шаблона, чтобы агент не остался без конфигурации
+    if not os.path.exists(path):
+        example = os.path.join(_base_dir(), "sync-config.example.ini")
+        if os.path.exists(example):
+            try:
+                import shutil
+                shutil.copyfile(example, path)
+                print("[config] создан sync-config.ini из шаблона — впиши свои данные")
+            except Exception:
+                pass
     if os.path.exists(path):
         try:
             for line in open(path, "r", encoding="utf-8-sig"):

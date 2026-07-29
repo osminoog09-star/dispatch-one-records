@@ -23,6 +23,33 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(
 from app import db                    # noqa: E402
 
 INBOX = os.path.join(os.path.dirname(os.path.abspath(__file__)), "inbox")
+PENDING = os.path.join(INBOX, "pending")
+ROSTER = os.path.join(os.path.dirname(os.path.abspath(__file__)), "roster.json")
+
+
+def load_roster():
+    """Одобренные офицеры. Ключи — discord и позывной (нижний регистр)."""
+    try:
+        data = json.load(open(ROSTER, encoding="utf-8"))
+    except Exception:
+        return {}
+    approved = {}
+    for key, info in (data.get("approved") or {}).items():
+        approved[key.strip().lower()] = info
+        cs = (info.get("callsign") or "").strip().lower()
+        if cs:
+            approved[cs] = info
+    return approved
+
+
+def is_approved(roster, callsign, discord):
+    """Офицер одобрен, если его discord ИЛИ позывной есть в ростере."""
+    if not roster:
+        return True   # ростер пуст — приём открыт (первичная настройка)
+    for key in ((discord or "").strip().lower(), (callsign or "").strip().lower()):
+        if key and key in roster:
+            return True
+    return False
 
 
 def _map_arrest(a, callsign, nickname):
@@ -103,7 +130,10 @@ def main():
         return
 
     db.init_db()
+    roster = load_roster()
+    os.makedirs(PENDING, exist_ok=True)
     total_a = total_c = total_ct = 0
+    parked = 0
 
     for fname in files:
         path = os.path.join(INBOX, fname)
@@ -116,8 +146,16 @@ def main():
         prof = data.get("profile") or {}
         callsign = (prof.get("callsign") or "").strip()
         nickname = (prof.get("nickname") or "").strip()
+        discord = (prof.get("discord") or "").strip()
         if not callsign:
             print(f"[пропуск] {fname}: нет позывного")
+            continue
+
+        # МОДЕРАЦИЯ: неодобренный офицер → в pending, не в статистику
+        if not is_approved(roster, callsign, discord):
+            os.replace(path, os.path.join(PENDING, fname))
+            parked += 1
+            print(f"[на модерацию] {fname} — {callsign} (discord: {discord or '—'}) не в ростере")
             continue
 
         db.register_profile(f"inbox-{callsign}", callsign, nickname or callsign,
@@ -140,6 +178,8 @@ def main():
         print(f"[принято] {fname} — офицер {callsign}")
 
     print(f"Итого принято: задержаний {total_a}, штрафов {total_ct}, судебных дел {total_c}")
+    if parked:
+        print(f"На модерации (неизвестные офицеры): {parked} — одобри их в разделе «Персонал»")
 
 
 if __name__ == "__main__":

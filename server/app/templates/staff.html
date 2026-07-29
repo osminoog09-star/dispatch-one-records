@@ -10,6 +10,32 @@
     <b>«Обновить сайт.bat»</b> — изменения появятся на публичном сайте.</p>
 {% endif %}
 
+{% if pending and not static_export %}
+<div class="card" style="border-color:#8a7420;margin-bottom:18px">
+  <h2 style="margin-top:0">⚠️ Заявки на модерации ({{ pending|length }})</h2>
+  <p class="muted small">Эти офицеры прислали данные, но их нет в ростере.
+    Одобри — их записи попадут в статистику; отклони — данные удалятся.</p>
+  {% for p in pending %}
+    <form method="post" class="staff-row" style="border-color:#8a7420">
+      <input type="hidden" name="file" value="{{ p.file }}">
+      <input type="hidden" name="callsign" value="{{ p.callsign }}">
+      <input type="hidden" name="nickname" value="{{ p.nickname }}">
+      <input type="hidden" name="discord" value="{{ p.discord }}">
+      <div class="staff-who">
+        <span class="cs">{{ p.callsign }}</span> <b>{{ p.nickname }}</b>
+        <div class="muted small">discord: {{ p.discord }} ·
+          задержаний: {{ p.arrests }} · штрафов: {{ p.citations }} · суд: {{ p.cases }}</div>
+      </div>
+      <div class="staff-form">
+        <button class="btn" name="action" value="approve">✓ Одобрить</button>
+        <button class="btn del" name="action" value="reject"
+                onclick="return confirm('Отклонить и удалить данные {{ p.callsign }}?')">✕ Отклонить</button>
+      </div>
+    </form>
+  {% endfor %}
+</div>
+{% endif %}
+
 {% if officers %}
 <div class="staff-list">
   {% for o in officers %}

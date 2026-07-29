@@ -43,7 +43,7 @@ jobs:
         run: |
           git config user.name  "LAPD Records Bot"
           git config user.email "actions@github.com"
-          git add docs server/data.db server/inbox
+          git add docs server/data.db server/inbox server/roster.json
           if git diff --staged --quiet; then
             echo "Изменений нет."
           else

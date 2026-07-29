@@ -1,0 +1,15 @@
+{
+  "_comment": "Одобренные офицеры LAPD. Только их данные попадают в статистику. Остальные — на модерацию. Ключ — Discord (в нижнем регистре) ИЛИ позывной.",
+  "approved": {
+    "ree1111": {
+      "callsign": "1-ADAM-13",
+      "name": "Tim Bredford",
+      "admin": true
+    },
+    "osminoowka": {
+      "callsign": "7-WILLIAM-1",
+      "name": "Denis Sherman",
+      "admin": true
+    }
+  }
+}

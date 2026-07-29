@@ -1,5 +1,6 @@
 """Flask-приложение Records: приём дел от мода (авто) + сайт + постинг в Discord по кнопке."""
 import os
+import json
 import time
 import random
 
@@ -134,9 +135,73 @@ def game_map():
     return render_template("map.html", zones=zones, top_zones=top_zones, regions=regions)
 
 
+def _server_dir():
+    # .../server/app/main.py → .../server
+    return os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+
+def _pending_requests():
+    """Заявки на модерации: неодобренные офицеры из inbox/pending."""
+    pending_dir = os.path.join(_server_dir(), "inbox", "pending")
+    out = []
+    if not os.path.isdir(pending_dir):
+        return out
+    for f in sorted(os.listdir(pending_dir)):
+        if not f.endswith(".json"):
+            continue
+        try:
+            data = json.load(open(os.path.join(pending_dir, f), encoding="utf-8"))
+            prof = data.get("profile") or {}
+            out.append({
+                "file": f,
+                "callsign": prof.get("callsign", "—"),
+                "nickname": prof.get("nickname", "—"),
+                "discord": prof.get("discord", "—"),
+                "arrests": len(data.get("arrests", [])),
+                "citations": len(data.get("citations", [])),
+                "cases": len(data.get("cases", [])),
+            })
+        except Exception:
+            continue
+    return out
+
+
+def _roster_path():
+    return os.path.join(_server_dir(), "roster.json")
+
+
+def _approve_officer(callsign, nickname, discord):
+    """Добавить офицера в ростер (roster.json)."""
+    path = _roster_path()
+    try:
+        data = json.load(open(path, encoding="utf-8"))
+    except Exception:
+        data = {"approved": {}}
+    key = (discord or callsign or "").strip().lower()
+    if key:
+        data.setdefault("approved", {})[key] = {"callsign": callsign, "name": nickname}
+    json.dump(data, open(path, "w", encoding="utf-8"), ensure_ascii=False, indent=2)
+
+
 @app.route("/staff", methods=["GET", "POST"])
 def staff():
     is_static = os.environ.get("STATIC_EXPORT") == "1"
+    if request.method == "POST" and not is_static and request.form.get("action") in ("approve", "reject"):
+        pending_dir = os.path.join(_server_dir(), "inbox", "pending")
+        fname = os.path.basename(request.form.get("file", ""))
+        fpath = os.path.join(pending_dir, fname)
+        if os.path.isfile(fpath):
+            if request.form.get("action") == "approve":
+                _approve_officer(request.form.get("callsign"), request.form.get("nickname"),
+                                 request.form.get("discord"))
+                # переносим обратно в inbox — примется при следующей сборке
+                os.replace(fpath, os.path.join(os.path.dirname(pending_dir), fname))
+                flash(f"Офицер {request.form.get('callsign')} одобрен.", "ok")
+            else:
+                os.remove(fpath)
+                flash("Заявка отклонена.", "ok")
+        return redirect(url_for("staff"))
+
     if request.method == "POST" and not is_static:
         oid = request.form.get("officer_id", type=int)
         if request.form.get("action") == "delete":
@@ -151,7 +216,8 @@ def staff():
             flash("Сохранено.", "ok")
         return redirect(url_for("staff"))
     return render_template("staff.html", officers=db.list_all_officers(),
-                           ranks=db.RANKS, departments=db.DEPARTMENTS)
+                           ranks=db.RANKS, departments=db.DEPARTMENTS,
+                           pending=_pending_requests())
 
 
 @app.route("/citations")

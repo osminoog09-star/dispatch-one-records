@@ -434,14 +434,50 @@ def auto_publish():
         print(f"[publish] не удалось: {e}")
 
 
+def _gh_upload_records(repo, token, profile, arrests, citations, cases):
+    """Кладёт данные игрока в inbox репозитория через GitHub API. (repo/token, ok, msg).
+    Встроено в агент, чтобы ничего не терялось при сборке .exe."""
+    import base64
+    if not repo or not token:
+        return False, "не заданы репозиторий/ключ"
+    payload = {"profile": profile, "arrests": arrests or [],
+               "citations": citations or [], "cases": cases or [],
+               "sent_at": time.strftime("%Y-%m-%dT%H:%M:%S")}
+    if not (payload["arrests"] or payload["citations"] or payload["cases"]):
+        return True, "новых данных нет"
+    safe = "".join(ch for ch in (profile.get("callsign") or "unknown")
+                   if ch.isalnum() or ch in "-_")
+    path = f"server/inbox/{safe}-{int(time.time())}.json"
+    content = base64.b64encode(
+        json.dumps(payload, ensure_ascii=False, indent=1).encode("utf-8")).decode("ascii")
+    body = json.dumps({"message": f"Данные офицера {profile.get('callsign')}",
+                       "content": content}).encode("utf-8")
+    req = urllib.request.Request(
+        f"https://api.github.com/repos/{repo}/contents/{path}", data=body, method="PUT")
+    req.add_header("Authorization", f"Bearer {token}")
+    req.add_header("Accept", "application/vnd.github+json")
+    req.add_header("User-Agent", "dispatch-one-agent")
+    req.add_header("Content-Type", "application/json")
+    try:
+        with urllib.request.urlopen(req, timeout=30) as r:
+            if r.status in (200, 201):
+                return True, (f"отправлено ({len(payload['arrests'])} задерж., "
+                              f"{len(payload['citations'])} штраф., {len(payload['cases'])} суд.)")
+            return False, f"GitHub вернул {r.status}"
+    except urllib.error.HTTPError as e:
+        detail = e.read().decode("utf-8", "ignore")[:160]
+        if e.code == 401:
+            return False, "неверный ключ доступа (401) — обратись к руководству"
+        if e.code == 404:
+            return False, "репозиторий не найден или нет доступа (404)"
+        return False, f"GitHub {e.code}: {detail}"
+    except Exception as e:
+        return False, f"нет связи с GitHub: {e}"
+
+
 def upload_to_github():
     """Игрок: отправить свои записи прямо в GitHub (без хостинга)."""
     if _setting("UPLOAD_MODE", "").lower() != "github":
-        return
-    try:
-        import github_upload
-    except Exception as e:
-        print(f"[github] модуль недоступен: {e}")
         return
 
     profile = {
@@ -467,7 +503,7 @@ def upload_to_github():
              if (c.get("CitationId") or c.get("ArrestReportId")) in our_ids]
 
     print("[github] отправляю данные...")
-    ok, msg = github_upload.upload_records(
+    ok, msg = _gh_upload_records(
         _setting("GITHUB_REPO", ""), _setting("GITHUB_TOKEN", ""),
         profile, arrests, cits, cases)
     print(("[github] " if ok else "[github] ошибка: ") + msg)

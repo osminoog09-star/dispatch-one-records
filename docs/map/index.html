@@ -49,9 +49,9 @@
     </div>
   
     <div class="stat">
-      <div class="num">0</div>
+      <div class="num">1</div>
       <div class="lbl">Лос-Сантос</div>
-      <div class="muted small">задерж. 0 · штраф. 0</div>
+      <div class="muted small">задерж. 1 · штраф. 0</div>
     </div>
   
 </section>
@@ -260,12 +260,14 @@
           
         </g>
       
-        <g class="zone reg-city "
+        <g class="zone reg-city has-data"
            data-code="VESP" data-name="Vespucci Beach" data-ru="Пляж Веспуччи"
-           data-count="0" data-arrests="0" data-cits="0">
-          <polygon points="140,560 200,552 212,600 154,614 128,588" fill-opacity="0.3"/>
+           data-count="1" data-arrests="1" data-cits="0">
+          <polygon points="140,560 200,552 212,600 154,614 128,588" fill-opacity="0.8999999999999999"/>
           
-            <text x="166.8" y="585.8" class="z-label">Пляж Веспуччи</text>
+            <circle cx="166.8" cy="582.8" r="17.0"
+                    fill="var(--accent)" fill-opacity="0.92"/>
+            <text x="166.8" y="586.8" class="z-count">1</text>
           
         </g>
       
@@ -370,7 +372,14 @@
     <div class="card">
       <h3>Топ зон по нарушениям</h3>
       
-        <p class="muted small">Пока нет данных — появятся после игры.</p>
+        <div class="districts">
+          
+            <div class="district">
+              <div class="d-head"><span class="d-name">Пляж Веспуччи</span><span class="d-num">1</span></div>
+              <div class="d-bar"><div class="d-fill" style="width: 100%"></div></div>
+            </div>
+          
+        </div>
       
     </div>
 

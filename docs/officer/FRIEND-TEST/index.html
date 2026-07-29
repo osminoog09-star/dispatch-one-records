@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Дела · LAPD</title>
+  <title>Личное дело — FRIEND-TEST · LAPD</title>
   <link rel="stylesheet" href="/dispatch-one-records/static/style.css">
 </head>
 <body>
@@ -30,28 +30,37 @@
       
     
     
-<h1>Реестр дел</h1>
+<a class="back" href="/dispatch-one-records/">← на главную</a>
 
-<div class="filters">
-  <a href="/dispatch-one-records/cases" class="chip on">Все</a>
-  
-    <a href="/dispatch-one-records/cases?status=submitted" class="chip ">Подано</a>
-  
-    <a href="/dispatch-one-records/cases?status=under_review" class="chip ">На рассмотрении</a>
-  
-    <a href="/dispatch-one-records/cases?status=in_court" class="chip ">В суде</a>
-  
-    <a href="/dispatch-one-records/cases?status=convicted" class="chip ">Приговор</a>
-  
-    <a href="/dispatch-one-records/cases?status=dismissed" class="chip ">Отклонено</a>
-  
-    <a href="/dispatch-one-records/cases?status=closed" class="chip ">Закрыто</a>
-  
+<div class="officer-card">
+  <div class="off-avatar">Д</div>
+  <div class="off-main">
+    <h1><span class="cs big">FRIEND-TEST</span> Друг Тестовый</h1>
+    <div class="off-tags">
+      
+      
+      <span class="tag"><span class="status-dot off"></span>Не на службе</span>
+    </div>
+    <div class="muted small" style="margin-top:6px">
+      
+      
+      
+    </div>
+  </div>
 </div>
 
+<section class="stats stats-5">
+  <div class="stat"><div class="num">1</div><div class="lbl">Задержаний</div></div>
+  <div class="stat"><div class="num">0</div><div class="lbl">Штрафов</div></div>
+  <div class="stat"><div class="num">$0</div><div class="lbl">Сумма штрафов</div></div>
+  <div class="stat"><div class="num">0</div><div class="lbl">Смен</div></div>
+  <div class="stat"><div class="num">0.0</div><div class="lbl">Часов на службе</div></div>
+</section>
+
+<h2>Задержания</h2>
 
 <table class="tbl">
-  <thead><tr><th>#</th><th>Подозреваемый</th><th>Район</th><th>Офицер</th><th>Создано</th><th>Статус</th></tr></thead>
+  <thead><tr><th>#</th><th>Подозреваемый</th><th>Район</th><th>Когда</th><th>Статус</th></tr></thead>
   <tbody>
   
     <tr onclick="location='/dispatch-one-records/case/11'">
@@ -60,24 +69,21 @@
         
         </td>
       <td>Vespucci Beach</td>
-      <td><span class="cs">FRIEND-TEST</span></td>
-      <td class="muted">2026-07-29T21:56:36</td>
-      <td><span class="tag st-submitted">Подано</span></td>
-    </tr>
-  
-    <tr onclick="location='/dispatch-one-records/case/7'">
-      <td>#7</td>
-      <td>Chloe Sock
-        
-        </td>
-      <td>Взлетная полоса 1, Los Santos International</td>
-      <td><span class="cs">7-WILLIAM-1</span></td>
-      <td class="muted">2026-07-26T08:59:21</td>
+      <td class="muted">29.07.2026 21:56</td>
       <td><span class="tag st-submitted">Подано</span></td>
     </tr>
   
   </tbody>
 </table>
+
+
+<h2>Штрафы</h2>
+<p class="empty">Штрафов нет.</p>
+
+
+
+
+
 
 
   </main>

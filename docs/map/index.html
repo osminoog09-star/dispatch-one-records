@@ -49,9 +49,9 @@
     </div>
   
     <div class="stat">
-      <div class="num">0</div>
+      <div class="num">2</div>
       <div class="lbl">Лос-Сантос</div>
-      <div class="muted small">задерж. 0 · штраф. 0</div>
+      <div class="muted small">задерж. 1 · штраф. 1</div>
     </div>
   
 </section>
@@ -305,12 +305,14 @@
           
         </g>
       
-        <g class="zone reg-city "
+        <g class="zone reg-city has-data"
            data-code="DAVIS" data-name="Davis" data-ru="Дэвис"
-           data-count="0" data-arrests="0" data-cits="0">
-          <polygon points="290,626 354,618 366,662 302,674 278,650" fill-opacity="0.3"/>
+           data-count="2" data-arrests="1" data-cits="1">
+          <polygon points="290,626 354,618 366,662 302,674 278,650" fill-opacity="0.8999999999999999"/>
           
-            <text x="318.0" y="649.0" class="z-label">Дэвис</text>
+            <circle cx="318.0" cy="646.0" r="17.0"
+                    fill="var(--accent)" fill-opacity="0.92"/>
+            <text x="318.0" y="650.0" class="z-count">2</text>
           
         </g>
       
@@ -370,7 +372,14 @@
     <div class="card">
       <h3>Топ зон по нарушениям</h3>
       
-        <p class="muted small">Пока нет данных — появятся после игры.</p>
+        <div class="districts">
+          
+            <div class="district">
+              <div class="d-head"><span class="d-name">Дэвис</span><span class="d-num">2</span></div>
+              <div class="d-bar"><div class="d-fill" style="width: 100%"></div></div>
+            </div>
+          
+        </div>
       
     </div>
 

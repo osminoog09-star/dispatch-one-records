@@ -50,19 +50,63 @@
 </div>
 
 <section class="stats stats-5">
-  <div class="stat"><div class="num">0</div><div class="lbl">Задержаний</div></div>
-  <div class="stat"><div class="num">0</div><div class="lbl">Штрафов</div></div>
-  <div class="stat"><div class="num">$0</div><div class="lbl">Сумма штрафов</div></div>
+  <div class="stat"><div class="num">2</div><div class="lbl">Задержаний</div></div>
+  <div class="stat"><div class="num">1</div><div class="lbl">Штрафов</div></div>
+  <div class="stat"><div class="num">$120</div><div class="lbl">Сумма штрафов</div></div>
   <div class="stat"><div class="num">0</div><div class="lbl">Смен</div></div>
   <div class="stat"><div class="num">0.0</div><div class="lbl">Часов на службе</div></div>
 </section>
 
 <h2>Задержания</h2>
-<p class="empty">Задержаний нет.</p>
+
+<table class="tbl">
+  <thead><tr><th>#</th><th>Подозреваемый</th><th>Район</th><th>Когда</th><th>Статус</th></tr></thead>
+  <tbody>
+  
+    <tr onclick="location='/dispatch-one-records/case/16'">
+      <td>#16</td>
+      <td>Dawnenzio Autista
+        
+        </td>
+      <td>Гроув-стрит, Davis</td>
+      <td class="muted">30.07.2026 07:08</td>
+      <td><span class="tag st-submitted">Подано</span></td>
+    </tr>
+  
+    <tr onclick="location='/dispatch-one-records/case/15'">
+      <td>#15</td>
+      <td>Kian Domingo
+        
+        </td>
+      <td>Альта-стрит, Pillbox Hill</td>
+      <td class="muted">30.07.2026 07:08</td>
+      <td><span class="tag st-submitted">Подано</span></td>
+    </tr>
+  
+  </tbody>
+</table>
+
 
 <h2>Штрафы</h2>
-<p class="empty">Штрафов нет.</p>
 
+<table class="tbl">
+  <thead><tr><th>Нарушитель</th><th>Нарушение</th><th>Сумма</th><th>Когда</th></tr></thead>
+  <tbody>
+  
+    <tr><td>Dawnenzio Autista</td>
+      <td>VC.21955 · Переход вне перехода, где запрещено</td>
+      <td><b>$120</b></td><td class="muted">30.07.2026 09:19</td></tr>
+  
+  </tbody>
+</table>
+
+
+
+<h2>Что изымал</h2>
+<table class="tbl">
+  <thead><tr><th>Предмет</th><th>Раз</th></tr></thead>
+  <tbody><tr><td>бутылек с раствором PCP</td><td>1</td></tr><tr><td>шприц в подстаканнике</td><td>1</td></tr><tr><td>Pistol</td><td>1</td></tr></tbody>
+</table>
 
 
 

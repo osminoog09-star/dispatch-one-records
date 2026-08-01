@@ -34,6 +34,8 @@ jobs:
         run: pip install --quiet flask requests
 
       - name: Принять данные игроков из inbox
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
         run: python server/import_inbox.py
 
       - name: Собрать сайт

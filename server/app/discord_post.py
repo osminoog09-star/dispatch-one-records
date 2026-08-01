@@ -125,6 +125,70 @@ def build_shift_markdown(s):
     return "\n".join(L)
 
 
+def _clean_charge(text):
+    """'VC.2800.1 · Уклонение (Misdemeanor)' → 'VC.2800.1 Уклонение'."""
+    if not text:
+        return ""
+    t = text.replace("·", " ")
+    # убрать класс в скобках в конце
+    if "(" in t and t.rstrip().endswith(")"):
+        t = t[:t.rfind("(")]
+    return " ".join(t.split())
+
+
+def _feed_time(record):
+    """Время в формате ДД/ММ/ГГГГ ЧЧ:ММ."""
+    import datetime
+    raw = (record.get("game_time") or record.get("issued_at")
+           or record.get("created_fmt") or record.get("issued_fmt") or "")
+    for fmt in ("%Y-%m-%dT%H:%M:%S", "%Y-%m-%dT%H:%M", "%d.%m.%Y %H:%M",
+                "%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M"):
+        try:
+            return datetime.datetime.strptime(raw[:19], fmt).strftime("%d/%m/%Y %H:%M")
+        except (ValueError, TypeError):
+            continue
+    return raw
+
+
+def build_feed(record, kind):
+    """Лента событий в фиксированном формате:
+       <событие>
+       <офицер>
+       <нарушитель>
+       <место>
+       Статьи: <код описание>
+       <дата время>
+    """
+    event = "Произошло задержание" if kind == "arrest" else "Выдан штраф"
+    officer = record.get("officer_name") or record.get("callsign") or "—"
+    who = record.get("suspect_name") or record.get("subject_name") or "—"
+    where = record.get("zone") or record.get("location") or "—"
+    charges = [_clean_charge(c) for c in (record.get("charges") or []) if _clean_charge(c)]
+
+    lines = [event, officer, who, where]
+    if charges:
+        lines.append("Статьи: " + charges[0])
+        lines.extend(charges[1:])   # остальные статьи — отдельными строками
+    else:
+        lines.append("Статьи: —")
+    lines.append(_feed_time(record))
+    return "\n".join(lines)
+
+
+def send_feed(record, kind, webhook=None):
+    """Отправить событие в ленту Discord. (ok, message)."""
+    url = webhook or config.DISCORD_WEBHOOK_URL
+    if not url:
+        return False, "Webhook не задан"
+    try:
+        r = requests.post(url, json={"content": build_feed(record, kind)}, timeout=15)
+        if r.status_code in (200, 204):
+            return True, "отправлено в ленту"
+        return False, f"Discord вернул {r.status_code}"
+    except Exception as e:
+        return False, f"ошибка: {e}"
+
+
 def send_case(case):
     """Возвращает (ok, message). Скрин прикладывается файлом, если есть на диске."""
     if not config.DISCORD_WEBHOOK_URL:

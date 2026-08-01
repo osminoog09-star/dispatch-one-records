@@ -64,6 +64,7 @@ def sync_from_game():
         data = agent.map_arrest(a)
         if not db.case_exists_external(data.get("external_id")):
             db.create_case(data)
+            _feed_event(data, "arrest")
             new_arrests += 1
 
     # Судебные дела берём только по нашим арестам/штрафам
@@ -93,11 +94,22 @@ def sync_from_game():
         if not is_ours(ct.get("OfficerName")):
             skipped += 1
             continue
-        _, created = db.upsert_citation(agent.map_citation(ct))
+        cit_data = agent.map_citation(ct)
+        _, created = db.upsert_citation(cit_data)
         if created:
+            _feed_event(cit_data, "citation")
             new_cit += 1
 
     return new_arrests, new_court, len(arrests), len(cases), new_cit, len(cits), skipped
+
+
+def _feed_event(rec, kind):
+    """Отправить событие в ленту Discord, если задан вебхук."""
+    try:
+        from app import discord_post
+        discord_post.send_feed(rec, kind)
+    except Exception:
+        pass
 
 
 def run(cmd, cwd=ROOT):

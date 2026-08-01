@@ -52,3 +52,5 @@ vinewood-study/
 .vscode/
 Thumbs.db
 Desktop.ini
+launcher/embedded_token.py
+launcher/pdcomp_sync.exe

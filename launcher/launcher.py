@@ -158,56 +158,94 @@ def apply_identity(game, callsign, name):
 
 # ─────────────────────── ОБНОВЛЕНИЯ ───────────────────────
 
-def check_update():
-    """Смотрит последний релиз на GitHub. Возвращает (есть_новее, тег, url_agent)."""
-    url = f"https://api.github.com/repos/{GITHUB_REPO}/releases/latest"
+MANIFEST_URL = f"https://raw.githubusercontent.com/{GITHUB_REPO}/main/version.json"
+
+
+def _ver_tuple(v):
     try:
-        req = urllib.request.Request(url, headers={"User-Agent": "lapd-launcher"})
+        return tuple(int(x) for x in str(v).strip().split("."))
+    except Exception:
+        return (0,)
+
+
+def check_update():
+    """Читает version.json из репозитория. Возвращает dict:
+       {launcher_new, agent_new, manifest} — что новее установленного."""
+    try:
+        req = urllib.request.Request(MANIFEST_URL, headers={"User-Agent": "lapd-launcher"})
         with urllib.request.urlopen(req, timeout=15) as r:
-            data = json.load(r)
-        tag = data.get("tag_name", "")
-        agent_url = ""
-        for a in data.get("assets", []):
-            if a["name"] == AGENT_EXE:
-                agent_url = a["browser_download_url"]
-        cur = read_config().get("AGENT_VERSION", "")
-        return (tag and tag != cur, tag, agent_url)
+            m = json.load(r)
     except Exception:
         log_exc("check_update")
-        return (False, "", "")
+        return {"launcher_new": False, "agent_new": False, "manifest": {}}
+
+    cfg = read_config()
+    agent_cur = cfg.get("AGENT_VERSION", "0")
+    return {
+        "launcher_new": _ver_tuple(m.get("launcher", "0")) > _ver_tuple(VERSION),
+        "agent_new": _ver_tuple(m.get("agent", "0")) > _ver_tuple(agent_cur),
+        "manifest": m,
+    }
 
 
-def download_update(agent_url, tag, on_progress=None):
+def _download(url, dst, on_progress=None):
+    req = urllib.request.Request(url, headers={"User-Agent": "lapd-launcher"})
+    with urllib.request.urlopen(req, timeout=180) as r, open(dst, "wb") as f:
+        total = int(r.headers.get("Content-Length", 0))
+        got = 0
+        while True:
+            chunk = r.read(65536)
+            if not chunk:
+                break
+            f.write(chunk)
+            got += len(chunk)
+            if on_progress and total:
+                on_progress(got / total)
+
+
+def update_agent(manifest, on_progress=None):
     """Скачивает новый агент, заменяет старый."""
     try:
         os.makedirs(INSTALL_DIR, exist_ok=True)
         tmp = os.path.join(INSTALL_DIR, AGENT_EXE + ".new")
-        req = urllib.request.Request(agent_url, headers={"User-Agent": "lapd-launcher"})
-        with urllib.request.urlopen(req, timeout=120) as r, open(tmp, "wb") as f:
-            total = int(r.headers.get("Content-Length", 0))
-            got = 0
-            while True:
-                chunk = r.read(65536)
-                if not chunk:
-                    break
-                f.write(chunk)
-                got += len(chunk)
-                if on_progress and total:
-                    on_progress(got / total)
-        dst = os.path.join(INSTALL_DIR, AGENT_EXE)
-        # заменяем (если агент запущен — останавливаем)
+        _download(manifest.get("agent_url"), tmp, on_progress)
         subprocess.run(["taskkill", "/F", "/IM", AGENT_EXE], capture_output=True,
                        creationflags=0x08000000)
         time.sleep(1)
-        os.replace(tmp, dst)
+        os.replace(tmp, os.path.join(INSTALL_DIR, AGENT_EXE))
         cfg = read_config()
-        cfg["AGENT_VERSION"] = tag
+        cfg["AGENT_VERSION"] = manifest.get("agent", "")
         write_config(cfg)
-        log(f"обновление установлено: {tag}")
-        return True, f"Обновлено до {tag}"
+        log(f"агент обновлён до {manifest.get('agent')}")
+        return True, f"Агент обновлён до {manifest.get('agent')}"
     except Exception as e:
-        log_exc("download_update")
-        return False, f"Ошибка обновления: {e}"
+        log_exc("update_agent")
+        return False, f"Ошибка обновления агента: {e}"
+
+
+def update_launcher(manifest, on_progress=None):
+    """Самообновление: качает новый лаунчер и подменяет себя через bat."""
+    try:
+        cur = sys.executable  # путь к текущему .exe (в собранном виде)
+        if not cur.lower().endswith(".exe"):
+            return False, "самообновление только в собранной версии"
+        new = cur + ".new"
+        _download(manifest.get("launcher_url"), new, on_progress)
+        # bat: ждёт закрытия, подменяет exe, запускает новый
+        bat = os.path.join(INSTALL_DIR, "_update.bat")
+        os.makedirs(INSTALL_DIR, exist_ok=True)
+        with open(bat, "w", encoding="utf-8") as f:
+            f.write("@echo off\r\n")
+            f.write("ping 127.0.0.1 -n 3 >nul\r\n")
+            f.write(f'move /Y "{new}" "{cur}" >nul\r\n')
+            f.write(f'start "" "{cur}"\r\n')
+            f.write('del "%~f0"\r\n')
+        log(f"самообновление до {manifest.get('launcher')}")
+        subprocess.Popen(["cmd", "/c", bat], creationflags=0x08000000)
+        return True, "restart"
+    except Exception as e:
+        log_exc("update_launcher")
+        return False, f"Ошибка обновления лаунчера: {e}"
 
 
 # ─────────────────────── ЗАПУСК ───────────────────────
@@ -238,6 +276,10 @@ def ensure_agent_installed():
             os.makedirs(INSTALL_DIR, exist_ok=True)
             import shutil
             shutil.copy2(src, exe)
+            # вшитый агент = версия этого лаунчера
+            cfg = read_config()
+            cfg.setdefault("AGENT_VERSION", VERSION)
+            write_config(cfg)
             log("агент установлен из комплекта")
         except Exception:
             log_exc("ensure_agent_installed")
@@ -387,30 +429,41 @@ class Launcher(tk.Tk):
             self._set_status("Сохранено. Игра не найдена — позывной не прописан.", "#e0a0a0")
 
     def _check_update_async(self):
-        has, tag, url = check_update()
-        self._pending_update = (tag, url) if has else None
+        info = check_update()
+        self._upd = info
+        m = info.get("manifest") or {}
         def upd():
-            if has:
-                self.upd_label.config(text=f"Доступно обновление: {tag}", fg="#e8d68a")
-                self.upd_btn.config(text=f"⬇ Обновить до {tag}")
+            if info.get("launcher_new"):
+                self.upd_label.config(text=f"Новая версия лаунчера: {m.get('launcher')}", fg="#e8d68a")
+                self.upd_btn.config(text=f"⬇ Обновить лаунчер до {m.get('launcher')}")
+            elif info.get("agent_new"):
+                self.upd_label.config(text=f"Новая версия агента: {m.get('agent')}", fg="#e8d68a")
+                self.upd_btn.config(text=f"⬇ Обновить агент до {m.get('agent')}")
             else:
                 self.upd_label.config(text="Установлена последняя версия.", fg="#7fbf7f")
         self.after(0, upd)
 
     def do_update(self):
-        info = getattr(self, "_pending_update", None)
-        if not info:
+        info = getattr(self, "_upd", None)
+        if not info or not (info.get("launcher_new") or info.get("agent_new")):
             self._set_status("Обновлений нет.", "#98a1ac")
             return
-        tag, url = info
+        m = info["manifest"]
         self.upd_btn.config(state="disabled", text="Скачиваю…")
+        prog = lambda p: self.after(0, lambda: self.upd_label.config(text=f"Скачиваю… {int(p*100)}%"))
+
         def work():
-            ok, msg = download_update(url, tag,
-                                      on_progress=lambda p: self.after(0, lambda:
-                                      self.upd_label.config(text=f"Скачиваю… {int(p*100)}%")))
+            if info.get("launcher_new"):
+                ok, msg = update_launcher(m, prog)
+                if ok and msg == "restart":
+                    self.after(0, lambda: (self._set_status("Лаунчер обновлён, перезапуск…", "#7fbf7f"),
+                                           self.after(800, self.destroy)))
+                    return
+            else:
+                ok, msg = update_agent(m, prog)
             def done():
                 self._set_status(msg, "#7fbf7f" if ok else "#e0a0a0")
-                self.upd_label.config(text="Обновлено." if ok else "Ошибка обновления.")
+                self.upd_label.config(text="Готово." if ok else "Ошибка обновления.")
                 self.upd_btn.config(state="normal", text="Проверить обновления")
             self.after(0, done)
         threading.Thread(target=work, daemon=True).start()

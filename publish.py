@@ -100,7 +100,19 @@ def sync_from_game():
             _feed_event(cit_data, "citation")
             new_cit += 1
 
-    return new_arrests, new_court, len(arrests), len(cases), new_cit, len(cits), skipped
+    # смены из очереди агента (владелец)
+    new_shifts = 0
+    shift_queue = os.path.join(ROOT, "pending_shifts.json")
+    if os.path.exists(shift_queue):
+        try:
+            for sh in json.load(open(shift_queue, encoding="utf-8")):
+                db.create_shift(sh)
+                new_shifts += 1
+            os.remove(shift_queue)
+        except Exception as e:
+            print(f"   смены не приняты: {e}")
+
+    return new_arrests, new_court, len(arrests), len(cases), new_cit, len(cits), skipped, new_shifts
 
 
 def _feed_event(rec, kind):
@@ -118,8 +130,10 @@ def run(cmd, cwd=ROOT):
 
 def main():
     print("1) Читаю данные из игры (pdComp)...")
-    na, nc, ta, tc, ncit, tcit, skipped = sync_from_game()
+    na, nc, ta, tc, ncit, tcit, skipped, nsh = sync_from_game()
     print(f"   аресты: {ta} (новых {na}) | суд: {tc} (новых {nc}) | штрафы: {tcit} (новых {ncit})")
+    if nsh:
+        print(f"   смен добавлено: {nsh}")
     if skipped:
         print(f"   пропущено чужих/демо записей: {skipped}")
 

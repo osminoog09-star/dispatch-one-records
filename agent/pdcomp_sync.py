@@ -434,7 +434,7 @@ def auto_publish():
         print(f"[publish] не удалось: {e}")
 
 
-def _gh_upload_records(repo, token, profile, arrests, citations, cases):
+def _gh_upload_records(repo, token, profile, arrests, citations, cases, shifts=None):
     """Кладёт данные игрока в inbox репозитория через GitHub API. (repo/token, ok, msg).
     Встроено в агент, чтобы ничего не терялось при сборке .exe."""
     import base64
@@ -442,8 +442,9 @@ def _gh_upload_records(repo, token, profile, arrests, citations, cases):
         return False, "не заданы репозиторий/ключ"
     payload = {"profile": profile, "arrests": arrests or [],
                "citations": citations or [], "cases": cases or [],
+               "shifts": shifts or [],
                "sent_at": time.strftime("%Y-%m-%dT%H:%M:%S")}
-    if not (payload["arrests"] or payload["citations"] or payload["cases"]):
+    if not (payload["arrests"] or payload["citations"] or payload["cases"] or payload["shifts"]):
         return True, "новых данных нет"
     safe = "".join(ch for ch in (profile.get("callsign") or "unknown")
                    if ch.isalnum() or ch in "-_")
@@ -475,7 +476,7 @@ def _gh_upload_records(repo, token, profile, arrests, citations, cases):
         return False, f"нет связи с GitHub: {e}"
 
 
-def upload_to_github():
+def upload_to_github(shift=None):
     """Игрок: отправить свои записи прямо в GitHub (без хостинга)."""
     if _setting("UPLOAD_MODE", "").lower() != "github":
         return
@@ -505,8 +506,51 @@ def upload_to_github():
     print("[github] отправляю данные...")
     ok, msg = _gh_upload_records(
         _setting("GITHUB_REPO", ""), _setting("GITHUB_TOKEN", ""),
-        profile, arrests, cits, cases)
+        profile, arrests, cits, cases, [shift] if shift else [])
     print(("[github] " if ok else "[github] ошибка: ") + msg)
+
+
+def _save_owner_shift(shift):
+    """Владелец: смена в очередь pending_shifts.json (publish.py её заберёт)."""
+    root = os.path.dirname(_base_dir())
+    path = os.path.join(root, "pending_shifts.json")
+    try:
+        queue = []
+        if os.path.exists(path):
+            queue = json.load(open(path, encoding="utf-8"))
+        queue.append(shift)
+        json.dump(queue, open(path, "w", encoding="utf-8"), ensure_ascii=False)
+    except Exception as e:
+        print(f"[shift] не сохранена: {e}")
+
+
+def _count_records():
+    """Сколько всего арестов и штрафов сейчас в pdComp (для замера смены)."""
+    arrests = len(read_json(os.path.join(PDCOMP_STORE, "arrests.json")) or [])
+    cits = read_json(os.path.join(PDCOMP_STORE, "citations.json")) or []
+    fines = sum(sum(float(l.get("Fine") or 0) for l in (c.get("Lines") or [])) for c in cits)
+    return arrests, len(cits), int(round(fines))
+
+
+def build_shift(started_ts, baseline):
+    """Собирает запись смены: длительность и что сделано за сессию."""
+    prof = _PROFILE or _CONFIG_PROFILE
+    a0, c0, f0 = baseline
+    a1, c1, f1 = _count_records()
+    dur_min = max(0, int((time.time() - started_ts) / 60))
+    hour = time.localtime(started_ts).tm_hour
+    stype = "day" if 6 <= hour < 18 else ("evening" if 18 <= hour < 23 else "night")
+    return {
+        "callsign": prof.get("callsign") or "UNKNOWN",
+        "officer_name": prof.get("nickname") or "",
+        "shift_type": stype,
+        "started_at": time.strftime("%Y-%m-%dT%H:%M:%S", time.localtime(started_ts)),
+        "ended_at": time.strftime("%Y-%m-%dT%H:%M:%S"),
+        "duration_min": dur_min,
+        "arrests": max(0, a1 - a0),
+        "traffic_stops": max(0, c1 - c0),   # штрафы ≈ остановки транспорта
+        "fines_total": max(0, f1 - f0),
+    }
 
 
 def watch_game():
@@ -515,6 +559,8 @@ def watch_game():
     print("Режим автозапуска: жду запуска игры...")
     was_running = False
     seen = {}
+    shift_start = None
+    shift_base = (0, 0, 0)
     while True:
         try:
             running = is_game_running()
@@ -522,6 +568,8 @@ def watch_game():
             if running and not was_running:
                 print("Игра запущена — слежу за данными.")
                 seen = {}
+                shift_start = time.time()
+                shift_base = _count_records()   # замер на начало смены
                 # профиль: с сайта, а если владелец/сайт недоступен — из локального конфига
                 prof = None if OWNER_MODE else fetch_profile()
                 if not prof:
@@ -544,8 +592,19 @@ def watch_game():
 
             if was_running and not running:
                 print("Игра закрыта.")
-                upload_to_github()   # игрок: отправка данных в GitHub
-                auto_publish()       # владелец: сборка и публикация сайта
+                shift = None
+                if shift_start:
+                    shift = build_shift(shift_start, shift_base)
+                    if shift["duration_min"] >= 1:
+                        print(f"    смена: {shift['duration_min']} мин, "
+                              f"задержаний {shift['arrests']}, штрафов {shift['traffic_stops']}")
+                    else:
+                        shift = None   # слишком короткая — не считаем
+                shift_start = None
+                if shift and OWNER_MODE:
+                    _save_owner_shift(shift)   # владелец: смена в очередь для publish
+                upload_to_github(shift)        # игрок: отправка данных в GitHub
+                auto_publish()                 # владелец: сборка и публикация сайта
                 print("Жду следующего запуска игры...")
 
             was_running = running

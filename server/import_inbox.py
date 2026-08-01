@@ -143,7 +143,7 @@ def main():
     db.init_db()
     roster = load_roster()
     os.makedirs(PENDING, exist_ok=True)
-    total_a = total_c = total_ct = 0
+    total_a = total_c = total_ct = total_s = 0
     parked = 0
 
     for fname in files:
@@ -188,11 +188,17 @@ def main():
             _, created = db.upsert_court_case(_map_case(cc))
             if created:
                 total_c += 1
+        for sh in data.get("shifts", []):
+            sh.setdefault("callsign", callsign)
+            sh.setdefault("officer_name", nickname)
+            db.create_shift(sh)
+            total_s += 1
 
         os.remove(path)     # приняли — убираем из inbox
         print(f"[принято] {fname} — офицер {callsign}")
 
-    print(f"Итого принято: задержаний {total_a}, штрафов {total_ct}, судебных дел {total_c}")
+    print(f"Итого принято: задержаний {total_a}, штрафов {total_ct}, "
+          f"судебных дел {total_c}, смен {total_s}")
     if parked:
         print(f"На модерации (неизвестные офицеры): {parked} — одобри их в разделе «Персонал»")
 

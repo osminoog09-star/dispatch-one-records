@@ -811,7 +811,8 @@ def delete_test_cases():
 
 
 # ---------- Смены (рапорт смены) ----------
-SHIFT_TYPE_RU = {"day": "дневная", "evening": "вечерняя", "night": "ночная", None: "—"}
+SHIFT_TYPE_RU = {"day": "дневная", "evening": "вечерняя", "night": "ночная",
+                 "patrol": "патруль", None: "—"}
 
 
 def create_shift(data):

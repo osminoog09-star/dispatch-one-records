@@ -18,7 +18,7 @@ import tkinter as tk
 from tkinter import messagebox
 
 APP_NAME = "LAPD Records"
-VERSION = "1.0.0"
+VERSION = "1.1.0"
 GITHUB_REPO = "osminoog09-star/dispatch-one-records"
 INSTALL_DIR = os.path.join(os.environ.get("LOCALAPPDATA", os.path.expanduser("~")), "DispatchOne")
 CONFIG = os.path.join(INSTALL_DIR, "sync-config.ini")
@@ -265,6 +265,73 @@ def get_embedded_token():
         return ""
 
 
+def _gh_api(path, payload, method="POST"):
+    """Запрос к GitHub API вшитым ключом. (ok, ответ)."""
+    token = get_embedded_token()
+    if not token:
+        return False, "нет ключа"
+    import base64  # noqa
+    data = json.dumps(payload).encode("utf-8")
+    req = urllib.request.Request(f"https://api.github.com/repos/{GITHUB_REPO}/{path}",
+                                 data=data, method=method)
+    req.add_header("Authorization", f"Bearer {token}")
+    req.add_header("Accept", "application/vnd.github+json")
+    req.add_header("User-Agent", "lapd-launcher")
+    req.add_header("Content-Type", "application/json")
+    try:
+        with urllib.request.urlopen(req, timeout=30) as r:
+            return True, json.load(r)
+    except urllib.error.HTTPError as e:
+        return False, f"{e.code}: {e.read().decode('utf-8','ignore')[:160]}"
+    except Exception as e:
+        return False, str(e)
+
+
+def send_bug_report(description, screenshot_path=None):
+    """Создаёт баг-репорт: скриншот и лог в репозиторий + Issue на GitHub. (ok, msg)."""
+    import base64
+    cfg = read_config()
+    who = cfg.get("CALLSIGN", "?") + " / " + cfg.get("NICKNAME", "?")
+    ts = time.strftime("%Y%m%d-%H%M%S")
+
+    body = [f"**Офицер:** {who}",
+            f"**Версия лаунчера:** {VERSION}",
+            f"**Игра:** {find_game() or 'не найдена'}",
+            "", "**Описание проблемы:**", description or "(без описания)", ""]
+
+    # приложить скриншот в репозиторий (bug-reports/)
+    if screenshot_path and os.path.exists(screenshot_path):
+        try:
+            raw = open(screenshot_path, "rb").read()
+            ext = os.path.splitext(screenshot_path)[1] or ".png"
+            img_path = f"bug-reports/{ts}{ext}"
+            ok, resp = _gh_api(f"contents/{img_path}", {
+                "message": f"баг-репорт скриншот {ts}",
+                "content": base64.b64encode(raw).decode("ascii")}, "PUT")
+            if ok:
+                url = f"https://github.com/{GITHUB_REPO}/blob/main/{img_path}?raw=true"
+                body.append(f"**Скриншот:** {url}")
+                body.append(f"![screenshot]({url})")
+        except Exception as e:
+            body.append(f"(скриншот не загрузился: {e})")
+
+    # приложить хвост лога
+    log_file = os.path.join(LOG_DIR, "launcher.log")
+    if os.path.exists(log_file):
+        tail = open(log_file, encoding="utf-8", errors="replace").read()[-1500:]
+        body.append("\n**Лог (последнее):**\n```\n" + tail + "\n```")
+
+    ok, resp = _gh_api("issues", {
+        "title": f"[Баг] {who} — {ts}",
+        "body": "\n".join(body),
+        "labels": ["bug", "from-launcher"]})
+    if ok:
+        log(f"баг-репорт отправлен: {resp.get('html_url')}")
+        return True, "Спасибо! Отчёт отправлен руководству."
+    log(f"баг-репорт не отправлен: {resp}", "ERROR")
+    return False, f"Не удалось отправить: {resp}"
+
+
 def ensure_agent_installed():
     """При первом запуске копирует вшитый агент в INSTALL_DIR."""
     exe = os.path.join(INSTALL_DIR, AGENT_EXE)
@@ -314,70 +381,103 @@ def start_vinewood():
 
 # ─────────────────────── ИНТЕРФЕЙС ───────────────────────
 
+# ── палитра (тёмная тема в стиле GitHub) ──
+BG      = "#0d1117"
+CARD    = "#161b22"
+CARD2   = "#1c232c"
+BORDER  = "#30363d"
+TEXT    = "#e6edf3"
+MUTED   = "#8b949e"
+ACCENT  = "#2f81f7"
+ACCENT2 = "#4c8dff"
+GREEN   = "#238636"
+GREEN2  = "#2ea043"
+OKGRN   = "#3fb950"
+REDT    = "#f85149"
+
+
 class Launcher(tk.Tk):
     def __init__(self):
         super().__init__()
-        self.title(f"{APP_NAME} — лаунчер")
-        self.geometry("560x620")
+        self.title(APP_NAME)
+        self.geometry("580x690")
         self.resizable(False, False)
-        self.configure(bg="#0f1216")
+        self.configure(bg=BG)
         self.after(80, self._front)
 
         cfg = read_config()
         self.game = find_game()
 
-        tk.Label(self, text="LAPD Records", bg="#0f1216", fg="#e8ecf1",
-                 font=("Segoe UI", 22, "bold")).pack(pady=(24, 2))
-        tk.Label(self, text=f"лаунчер · v{VERSION}", bg="#0f1216", fg="#7f8994",
+        # ─── ШАПКА ───
+        header = tk.Frame(self, bg=BG)
+        header.pack(fill="x", pady=(26, 0))
+        tk.Label(header, text="★", bg=ACCENT, fg="white",
+                 font=("Segoe UI", 15, "bold"), width=2, height=1).pack()
+        tk.Label(header, text="LAPD Records", bg=BG, fg=TEXT,
+                 font=("Segoe UI Semibold", 24)).pack(pady=(10, 0))
+        tk.Label(header, text=f"лаунчер · v{VERSION}", bg=BG, fg=MUTED,
                  font=("Segoe UI", 9)).pack()
 
-        game_txt = f"Игра: {self.game}" if self.game else "Игра не найдена!"
-        tk.Label(self, text=game_txt, bg="#0f1216",
-                 fg="#7fbf7f" if self.game else "#e0a0a0",
-                 font=("Segoe UI", 8), wraplength=500).pack(pady=(8, 0))
+        # статус игры — плашка
+        pill = tk.Label(self, bg=CARD, fg=OKGRN if self.game else REDT,
+                        font=("Segoe UI", 9), padx=12, pady=5,
+                        text="● игра найдена" if self.game else "● игра не найдена")
+        pill.pack(pady=(12, 0))
 
-        # поля позывного и имени
-        frm = tk.Frame(self, bg="#0f1216")
-        frm.pack(fill="x", padx=40, pady=16)
-        self.callsign = self._field(frm, "Позывной", cfg.get("CALLSIGN", ""))
-        self.nickname = self._field(frm, "Имя офицера", cfg.get("NICKNAME", ""))
+        # ─── КАРТОЧКА: ПРОФИЛЬ ───
+        card = self._card()
+        card.pack(fill="x", padx=32, pady=(18, 0))
+        inner = tk.Frame(card, bg=CARD)
+        inner.pack(fill="x", padx=18, pady=16)
+        tk.Label(inner, text="ПРОФИЛЬ ОФИЦЕРА", bg=CARD, fg=MUTED,
+                 font=("Segoe UI", 8, "bold")).pack(anchor="w", pady=(0, 6))
+        self.callsign = self._field(inner, "Позывной", cfg.get("CALLSIGN", ""))
+        self.nickname = self._field(inner, "Имя офицера", cfg.get("NICKNAME", ""))
+        self._button(inner, "Сохранить и прописать в игру",
+                     self.save_identity, ACCENT, ACCENT2).pack(fill="x", pady=(12, 0))
 
-        tk.Button(frm, text="💾 Сохранить и прописать в игру", command=self.save_identity,
-                  bg="#3b82f6", fg="white", font=("Segoe UI", 11, "bold"),
-                  relief="flat", padx=20, pady=9, cursor="hand2").pack(fill="x", pady=(6, 0))
-
-        # обновления
-        upd = tk.Frame(self, bg="#161b22", highlightbackground="#2a3038", highlightthickness=1)
-        upd.pack(fill="x", padx=40, pady=6)
-        self.upd_label = tk.Label(upd, text="Обновления: проверяю…", bg="#161b22", fg="#98a1ac",
+        # ─── КАРТОЧКА: ОБНОВЛЕНИЯ ───
+        upd = self._card()
+        upd.pack(fill="x", padx=32, pady=(14, 0))
+        ui = tk.Frame(upd, bg=CARD)
+        ui.pack(fill="x", padx=18, pady=14)
+        self.upd_label = tk.Label(ui, text="⟳  проверяю обновления…", bg=CARD, fg=MUTED,
                                   font=("Segoe UI", 9), anchor="w")
-        self.upd_label.pack(fill="x", padx=12, pady=(10, 4))
-        self.upd_btn = tk.Button(upd, text="Проверить обновления", command=self.do_update,
-                                 bg="#232a33", fg="#e8ecf1", font=("Segoe UI", 9),
-                                 relief="flat", padx=14, pady=6, cursor="hand2")
-        self.upd_btn.pack(anchor="w", padx=12, pady=(0, 10))
+        self.upd_label.pack(fill="x")
+        self.upd_notes = tk.Label(ui, text="", bg=CARD, fg=MUTED, font=("Segoe UI", 8),
+                                  anchor="w", justify="left", wraplength=480)
+        self.upd_notes.pack(fill="x", pady=(2, 0))
+        self.upd_btn = self._button(ui, "Проверить обновления", self.do_update,
+                                    CARD2, BORDER, small=True)
+        self.upd_btn.pack(anchor="w", pady=(10, 0))
 
-        # играть
-        tk.Button(self, text="▶  ИГРАТЬ  (Vinewood + синхронизация)", command=self.play,
-                  bg="#1f9d55", fg="white", font=("Segoe UI", 13, "bold"),
-                  relief="flat", padx=20, pady=13, cursor="hand2").pack(fill="x", padx=40, pady=(10, 6))
+        # ─── КНОПКА ИГРАТЬ ───
+        self._button(self, "▶   ИГРАТЬ", self.play, GREEN, GREEN2,
+                     big=True).pack(fill="x", padx=32, pady=(16, 4))
+        tk.Label(self, text="запустит Vinewood и синхронизацию", bg=BG, fg=MUTED,
+                 font=("Segoe UI", 8)).pack()
 
-        self.status = tk.Label(self, text="", bg="#0f1216", fg="#98a1ac", font=("Segoe UI", 9))
-        self.status.pack(pady=(4, 0))
+        self.status = tk.Label(self, text="", bg=BG, fg=MUTED, font=("Segoe UI", 9))
+        self.status.pack(pady=(8, 0))
 
-        # ссылки
-        bottom = tk.Frame(self, bg="#0f1216")
-        bottom.pack(side="bottom", pady=12)
-        tk.Button(bottom, text="Открыть логи", command=self.open_logs,
-                  bg="#0f1216", fg="#6b7684", font=("Segoe UI", 8), relief="flat",
-                  cursor="hand2", bd=0).pack(side="left", padx=8)
-        tk.Button(bottom, text="Открыть сайт", command=self.open_site,
-                  bg="#0f1216", fg="#6b7684", font=("Segoe UI", 8), relief="flat",
-                  cursor="hand2", bd=0).pack(side="left", padx=8)
+        # ─── ФУТЕР ───
+        bottom = tk.Frame(self, bg=BG)
+        bottom.pack(side="bottom", pady=14)
+        for txt, cmd in (("🐞 Сообщить о проблеме", self.bug_report),
+                         ("Открыть логи", self.open_logs), ("Открыть сайт", self.open_site)):
+            b = tk.Label(bottom, text=txt, bg=BG, fg=MUTED, font=("Segoe UI", 8), cursor="hand2")
+            b.pack(side="left", padx=10)
+            b.bind("<Button-1>", lambda e, c=cmd: c())
+            b.bind("<Enter>", lambda e, w=b: w.config(fg=ACCENT))
+            b.bind("<Leave>", lambda e, w=b: w.config(fg=MUTED))
 
         ensure_agent_installed()
         log(f"лаунчер запущен v{VERSION}, игра={self.game}")
         threading.Thread(target=self._check_update_async, daemon=True).start()
+
+    # ── строительные блоки UI ──
+    def _card(self):
+        return tk.Frame(self, bg=CARD, highlightbackground=BORDER, highlightthickness=1)
 
     def _front(self):
         try:
@@ -387,16 +487,94 @@ class Launcher(tk.Tk):
             pass
 
     def _field(self, parent, label, value):
-        tk.Label(parent, text=label, bg="#0f1216", fg="#98a1ac",
-                 font=("Segoe UI", 9)).pack(anchor="w", pady=(8, 2))
-        e = tk.Entry(parent, bg="#1b2027", fg="#e8ecf1", insertbackground="#e8ecf1",
-                     relief="flat", font=("Segoe UI", 11))
-        e.pack(fill="x", ipady=6)
+        tk.Label(parent, text=label, bg=CARD, fg=MUTED,
+                 font=("Segoe UI", 9)).pack(anchor="w", pady=(8, 3))
+        wrap = tk.Frame(parent, bg=BORDER)
+        wrap.pack(fill="x")
+        e = tk.Entry(wrap, bg=CARD2, fg=TEXT, insertbackground=ACCENT,
+                     relief="flat", font=("Segoe UI", 12))
+        e.pack(fill="x", padx=1, pady=1, ipady=7)
         e.insert(0, value)
+        e.bind("<FocusIn>", lambda ev: wrap.config(bg=ACCENT))
+        e.bind("<FocusOut>", lambda ev: wrap.config(bg=BORDER))
         return e
+
+    def _button(self, parent, text, cmd, color, hover, big=False, small=False):
+        size = 14 if big else (9 if small else 11)
+        pad = 14 if big else (7 if small else 10)
+        b = tk.Button(parent, text=text, command=cmd, bg=color,
+                      fg="white" if not small else TEXT,
+                      activebackground=hover, activeforeground="white",
+                      font=("Segoe UI Semibold", size), relief="flat",
+                      padx=18, pady=pad, cursor="hand2", bd=0)
+        b.bind("<Enter>", lambda e: b.config(bg=hover))
+        b.bind("<Leave>", lambda e: b.config(bg=color))
+        return b
 
     def _set_status(self, text, color="#98a1ac"):
         self.status.config(text=text, fg=color)
+
+    def bug_report(self):
+        """Окно баг-репорта: описание + скриншот → GitHub Issue."""
+        from tkinter import filedialog
+        dlg = tk.Toplevel(self)
+        dlg.title("Сообщить о проблеме")
+        dlg.geometry("460x440")
+        dlg.configure(bg=BG)
+        dlg.transient(self)
+        dlg.grab_set()
+
+        tk.Label(dlg, text="Сообщить о проблеме", bg=BG, fg=TEXT,
+                 font=("Segoe UI Semibold", 15)).pack(pady=(18, 2))
+        tk.Label(dlg, text="Опиши, что случилось. Можно приложить скриншот.",
+                 bg=BG, fg=MUTED, font=("Segoe UI", 9)).pack()
+
+        box = tk.Frame(dlg, bg=BORDER)
+        box.pack(fill="both", expand=True, padx=24, pady=(14, 6))
+        txt = tk.Text(box, bg=CARD2, fg=TEXT, insertbackground=ACCENT, relief="flat",
+                      font=("Segoe UI", 10), height=7, wrap="word")
+        txt.pack(fill="both", expand=True, padx=1, pady=1)
+
+        shot = {"path": None}
+        shot_lbl = tk.Label(dlg, text="скриншот не выбран", bg=BG, fg=MUTED,
+                            font=("Segoe UI", 8))
+        shot_lbl.pack()
+
+        def pick():
+            p = filedialog.askopenfilename(
+                title="Выбери скриншот",
+                filetypes=[("Изображения", "*.png *.jpg *.jpeg *.bmp"), ("Все файлы", "*.*")])
+            if p:
+                shot["path"] = p
+                shot_lbl.config(text="скриншот: " + os.path.basename(p), fg=OKGRN)
+
+        btns = tk.Frame(dlg, bg=BG)
+        btns.pack(fill="x", padx=24, pady=(4, 6))
+        self._button(btns, "📎 Прикрепить скриншот", pick, CARD2, BORDER, small=True).pack(side="left")
+
+        result = tk.Label(dlg, text="", bg=BG, fg=MUTED, font=("Segoe UI", 9), wraplength=410)
+        result.pack(pady=(2, 0))
+
+        def send():
+            desc = txt.get("1.0", "end").strip()
+            if not desc:
+                result.config(text="Опиши проблему — хотя бы пару слов.", fg=REDT)
+                return
+            result.config(text="Отправляю…", fg=MUTED)
+            send_btn.config(state="disabled")
+            def work():
+                ok, msg = send_bug_report(desc, shot["path"])
+                def done():
+                    result.config(text=msg, fg=OKGRN if ok else REDT)
+                    if ok:
+                        dlg.after(1500, dlg.destroy)
+                    else:
+                        send_btn.config(state="normal")
+                dlg.after(0, done)
+            threading.Thread(target=work, daemon=True).start()
+
+        send_btn = self._button(dlg, "Отправить отчёт", send, ACCENT, ACCENT2)
+        send_btn.pack(fill="x", padx=24, pady=(4, 16))
 
     def save_identity(self):
         cs = self.callsign.get().strip()
@@ -433,14 +611,18 @@ class Launcher(tk.Tk):
         self._upd = info
         m = info.get("manifest") or {}
         def upd():
+            notes = m.get("notes", "")
             if info.get("launcher_new"):
-                self.upd_label.config(text=f"Новая версия лаунчера: {m.get('launcher')}", fg="#e8d68a")
-                self.upd_btn.config(text=f"⬇ Обновить лаунчер до {m.get('launcher')}")
+                self.upd_label.config(text=f"● Новая версия лаунчера: {m.get('launcher')}", fg="#e3b341")
+                self.upd_btn.config(text=f"⬇ Обновить до {m.get('launcher')}")
+                self.upd_notes.config(text=notes)
             elif info.get("agent_new"):
-                self.upd_label.config(text=f"Новая версия агента: {m.get('agent')}", fg="#e8d68a")
+                self.upd_label.config(text=f"● Новая версия агента: {m.get('agent')}", fg="#e3b341")
                 self.upd_btn.config(text=f"⬇ Обновить агент до {m.get('agent')}")
+                self.upd_notes.config(text=notes)
             else:
-                self.upd_label.config(text="Установлена последняя версия.", fg="#7fbf7f")
+                self.upd_label.config(text="✓ Установлена последняя версия.", fg=OKGRN)
+                self.upd_notes.config(text=("Что нового: " + notes) if notes else "")
         self.after(0, upd)
 
     def do_update(self):

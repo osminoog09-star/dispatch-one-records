@@ -1,7 +1,7 @@
 {
-  "launcher": "1.0.0",
+  "launcher": "1.1.0",
   "agent": "1.0.0",
-  "notes": "Смены, Discord-лента, модерация, автообновление через лаунчер.",
+  "notes": "Новый дизайн лаунчера, описание обновлений, отправка баг-репортов со скриншотами.",
   "launcher_url": "https://github.com/osminoog09-star/dispatch-one-records/releases/latest/download/LAPD-Records-Launcher.exe",
   "agent_url": "https://github.com/osminoog09-star/dispatch-one-records/releases/latest/download/pdcomp_sync.exe"
 }

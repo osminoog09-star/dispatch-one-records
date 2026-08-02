@@ -1,0 +1,19 @@
+{
+ "profile": {
+  "callsign": "GATE-TEST",
+  "nickname": "Проверка шлюза",
+  "discord": "gate#1"
+ },
+ "arrests": [
+  {
+   "Id": "gateway-final-ok",
+   "OfficerName": "Officer",
+   "SubjectFullName": "Тест Шлюза",
+   "Location": "Vespucci Beach",
+   "Charges": [],
+   "Evidence": []
+  }
+ ],
+ "citations": [],
+ "cases": []
+}

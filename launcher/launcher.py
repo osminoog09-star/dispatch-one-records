@@ -18,11 +18,15 @@ import tkinter as tk
 from tkinter import messagebox
 
 APP_NAME = "LAPD Records"
-VERSION = "1.1.0"
+VERSION = "1.2.0"
 GITHUB_REPO = "osminoog09-star/dispatch-one-records"
-# Шлюз приёма данных (Cloudflare Worker). Задаётся при сборке — тогда токен в клиенте не нужен.
-GATEWAY_URL = os.environ.get("DISPATCH_GATEWAY_URL", "")
-GATEWAY_KEY = os.environ.get("DISPATCH_GATEWAY_KEY", "")
+# Шлюз приёма данных (Cloudflare Worker) — вшивается при сборке, токена в клиенте нет.
+try:
+    import gateway_config
+    GATEWAY_URL, GATEWAY_KEY = gateway_config.get()
+except Exception:
+    GATEWAY_URL = os.environ.get("DISPATCH_GATEWAY_URL", "")
+    GATEWAY_KEY = os.environ.get("DISPATCH_GATEWAY_KEY", "")
 INSTALL_DIR = os.path.join(os.environ.get("LOCALAPPDATA", os.path.expanduser("~")), "DispatchOne")
 CONFIG = os.path.join(INSTALL_DIR, "sync-config.ini")
 LOG_DIR = os.path.join(INSTALL_DIR, "logs")

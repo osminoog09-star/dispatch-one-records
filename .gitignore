@@ -55,3 +55,4 @@ Desktop.ini
 launcher/embedded_token.py
 launcher/pdcomp_sync.exe
 gateway/.dev.vars
+launcher/gateway_config.py

@@ -19,6 +19,34 @@ export default {
     if (request.method === "OPTIONS") {
       return cors(new Response(null, { status: 204 }));
     }
+
+    // ВРЕМЕННАЯ ДИАГНОСТИКА: GET ?debug=1 показывает, что видит Worker (без раскрытия секретов)
+    const url = new URL(request.url);
+    if (request.method === "GET" && url.searchParams.get("debug") === "1") {
+      const t = env.GITHUB_TOKEN || env.GITHUB_TOKE || "";
+      // Worker сам делает GET к GitHub тем же токеном — увидим точный ответ
+      let ghStatus = "?", ghMsg = "";
+      try {
+        const r = await fetch(`https://api.github.com/repos/${env.GITHUB_REPO}`, {
+          headers: {
+            Authorization: `Bearer ${t}`,
+            Accept: "application/vnd.github+json",
+            "User-Agent": "lapd-records-gateway",
+          },
+        });
+        ghStatus = r.status;
+        const jd = await r.json();
+        ghMsg = jd.message || jd.full_name || "";
+      } catch (e) {
+        ghMsg = "fetch err: " + e;
+      }
+      return cors(json({
+        repo: env.GITHUB_REPO || "(нет)",
+        token_len: t.length,
+        github_status: ghStatus,
+        github_msg: ghMsg,
+      }));
+    }
     if (request.method !== "POST") {
       return cors(json({ error: "only POST" }, 405));
     }
@@ -60,14 +88,15 @@ export default {
     // кладём в inbox репозитория через GitHub API (токен — секрет Worker'а)
     const safe = callsign.replace(/[^a-zA-Z0-9_-]/g, "");
     const path = `server/inbox/${safe}-${Math.floor(now / 1000)}.json`;
-    const content = btoa(unescape(encodeURIComponent(JSON.stringify(body, null, 1))));
+    const content = toBase64(JSON.stringify(body, null, 1));
 
+    const token = env.GITHUB_TOKEN || env.GITHUB_TOKE;  // терпим опечатку в имени секрета
     const gh = await fetch(
       `https://api.github.com/repos/${env.GITHUB_REPO}/contents/${path}`,
       {
         method: "PUT",
         headers: {
-          Authorization: `Bearer ${env.GITHUB_TOKEN}`,
+          Authorization: `Bearer ${token}`,
           Accept: "application/vnd.github+json",
           "User-Agent": "lapd-records-gateway",
           "Content-Type": "application/json",
@@ -86,6 +115,14 @@ export default {
     return cors(json({ error: `github ${gh.status}`, detail: detail.slice(0, 200) }, 502));
   },
 };
+
+function toBase64(str) {
+  // UTF-8 → base64 без unescape (которого нет в среде Workers)
+  const bytes = new TextEncoder().encode(str);
+  let bin = "";
+  for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+  return btoa(bin);
+}
 
 function json(obj, status = 200) {
   return new Response(JSON.stringify(obj), {

@@ -20,6 +20,9 @@ from tkinter import messagebox
 APP_NAME = "LAPD Records"
 VERSION = "1.1.0"
 GITHUB_REPO = "osminoog09-star/dispatch-one-records"
+# Шлюз приёма данных (Cloudflare Worker). Задаётся при сборке — тогда токен в клиенте не нужен.
+GATEWAY_URL = os.environ.get("DISPATCH_GATEWAY_URL", "")
+GATEWAY_KEY = os.environ.get("DISPATCH_GATEWAY_KEY", "")
 INSTALL_DIR = os.path.join(os.environ.get("LOCALAPPDATA", os.path.expanduser("~")), "DispatchOne")
 CONFIG = os.path.join(INSTALL_DIR, "sync-config.ini")
 LOG_DIR = os.path.join(INSTALL_DIR, "logs")
@@ -601,13 +604,17 @@ class Launcher(tk.Tk):
             return
         cfg = read_config()
         cfg["CALLSIGN"], cfg["NICKNAME"] = cs, nick
-        # первичная настройка отправки в GitHub (ключ вшит)
         cfg.setdefault("UPLOAD_MODE", "github")
         cfg.setdefault("GITHUB_REPO", GITHUB_REPO)
         cfg.setdefault("WATCH_GAME", "1")
         cfg.setdefault("AUTO_PUBLISH", "0")
         cfg.setdefault("POLL_SECONDS", "8")
-        if "GITHUB_TOKEN" not in cfg:
+        # приём данных через шлюз (токена в клиенте нет). GATEWAY_URL/KEY вшиты при сборке.
+        if GATEWAY_URL:
+            cfg["GATEWAY_URL"] = GATEWAY_URL
+            cfg["GATEWAY_KEY"] = GATEWAY_KEY
+            cfg.pop("GITHUB_TOKEN", None)   # токен больше не нужен на клиенте
+        elif "GITHUB_TOKEN" not in cfg:
             tok = get_embedded_token()
             if tok:
                 cfg["GITHUB_TOKEN"] = tok

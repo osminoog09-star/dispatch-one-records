@@ -447,18 +447,42 @@ def auto_publish():
         print(f"[publish] не удалось: {e}")
 
 
+def _via_gateway(payload):
+    """Отправка через шлюз Cloudflare (токен не в клиенте). (ok, msg)."""
+    url = _setting("GATEWAY_URL", "")
+    key = _setting("GATEWAY_KEY", "")
+    body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
+    req = urllib.request.Request(url, data=body, method="POST")
+    req.add_header("Content-Type", "application/json")
+    req.add_header("X-Client-Key", key)
+    req.add_header("User-Agent", "lapd-agent")
+    try:
+        with urllib.request.urlopen(req, timeout=30) as r:
+            resp = json.load(r)
+            return bool(resp.get("ok")), resp.get("msg", "принято")
+    except urllib.error.HTTPError as e:
+        detail = e.read().decode("utf-8", "ignore")[:160]
+        return False, f"шлюз {e.code}: {detail}"
+    except Exception as e:
+        return False, f"нет связи со шлюзом: {e}"
+
+
 def _gh_upload_records(repo, token, profile, arrests, citations, cases, shifts=None, warnings=None):
-    """Кладёт данные игрока в inbox репозитория через GitHub API. (repo/token, ok, msg).
-    Встроено в агент, чтобы ничего не терялось при сборке .exe."""
+    """Кладёт данные игрока в inbox. Через шлюз (если задан GATEWAY_URL) или прямо в GitHub."""
     import base64
-    if not repo or not token:
-        return False, "не заданы репозиторий/ключ"
     payload = {"profile": profile, "arrests": arrests or [],
                "citations": citations or [], "cases": cases or [],
                "shifts": shifts or [], "warnings": warnings or [],
                "sent_at": time.strftime("%Y-%m-%dT%H:%M:%S")}
     if not any(payload[k] for k in ("arrests", "citations", "cases", "shifts", "warnings")):
         return True, "новых данных нет"
+
+    # приоритет — шлюз (токена в клиенте нет)
+    if _setting("GATEWAY_URL", ""):
+        return _via_gateway(payload)
+
+    if not repo or not token:
+        return False, "не заданы репозиторий/ключ"
     safe = "".join(ch for ch in (profile.get("callsign") or "unknown")
                    if ch.isalnum() or ch in "-_")
     path = f"server/inbox/{safe}-{int(time.time())}.json"

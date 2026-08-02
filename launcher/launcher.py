@@ -168,6 +168,23 @@ def _ver_tuple(v):
         return (0,)
 
 
+def check_killswitch():
+    """Стоп-кран: читает флаг enabled и минимальную версию из манифеста.
+    Позволяет владельцу отключить копии/устаревшие сборки. (разрешено, причина)."""
+    try:
+        req = urllib.request.Request(MANIFEST_URL, headers={"User-Agent": "lapd-launcher"})
+        with urllib.request.urlopen(req, timeout=12) as r:
+            m = json.load(r)
+    except Exception:
+        return True, ""   # нет связи — не блокируем (иначе оффлайн ломает всё)
+    if m.get("enabled") is False:
+        return False, "Доступ временно отключён руководством.\nОбратись к администратору."
+    if _ver_tuple(VERSION) < _ver_tuple(m.get("min_launcher", "0")):
+        return False, ("Эта версия лаунчера больше не поддерживается.\n"
+                       "Скачай свежую с сайта департамента.")
+    return True, ""
+
+
 def check_update():
     """Читает version.json из репозитория. Возвращает dict:
        {launcher_new, agent_new, manifest} — что новее установленного."""
@@ -666,6 +683,13 @@ class Launcher(tk.Tk):
 
 if __name__ == "__main__":
     try:
+        allowed, reason = check_killswitch()
+        if not allowed:
+            import tkinter.messagebox as mb
+            root = tk.Tk(); root.withdraw()
+            mb.showerror(APP_NAME, reason)
+            log(f"запуск заблокирован: {reason}", "WARN")
+            sys.exit(0)
         Launcher().mainloop()
     except Exception:
         log_exc("main")

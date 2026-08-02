@@ -232,3 +232,5 @@ h3{font-size:14px;margin:0 0 .5em;color:var(--muted);text-transform:uppercase;le
   .cols,.case-grid{grid-template-columns:1fr}
   .report-fields{grid-template-columns:1fr}
 }
+
+.foot-attr{display:block;margin-top:6px;font-size:11px;color:#5a636e;opacity:.75}

@@ -1,6 +1,8 @@
 {
   "launcher": "1.1.0",
   "agent": "1.0.0",
+  "enabled": true,
+  "min_launcher": "1.0.0",
   "notes": "Новый дизайн лаунчера, описание обновлений, отправка баг-репортов со скриншотами.",
   "launcher_url": "https://github.com/osminoog09-star/dispatch-one-records/releases/latest/download/LAPD-Records-Launcher.exe",
   "agent_url": "https://github.com/osminoog09-star/dispatch-one-records/releases/latest/download/pdcomp_sync.exe"

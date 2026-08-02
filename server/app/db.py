@@ -119,6 +119,16 @@ def init_db():
                 changed_at TEXT NOT NULL
             )""")
         c.execute(
+            """CREATE TABLE IF NOT EXISTS warnings (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                external_id TEXT UNIQUE,
+                officer_id INTEGER,
+                subject_name TEXT,
+                issued_at TEXT,
+                location TEXT,
+                reason TEXT
+            )""")
+        c.execute(
             """CREATE TABLE IF NOT EXISTS citations (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 external_id TEXT UNIQUE,
@@ -654,6 +664,45 @@ def list_citations(limit=200, officer_id=None):
     q += " ORDER BY citations.id DESC LIMIT ?"; params.append(limit)
     with get_conn() as c:
         return [_row_to_citation(r) for r in c.execute(q, params).fetchall()]
+
+
+def upsert_warning(data):
+    """Предупреждение из игры (pdComp warnings.json)."""
+    officer_id = get_or_create_officer(data.get("callsign", "UNKNOWN"), data.get("officer_name"))
+    ext = data.get("external_id")
+    with get_conn() as c:
+        if ext and c.execute("SELECT id FROM warnings WHERE external_id=?", (ext,)).fetchone():
+            return None, False
+        cur = c.execute(
+            """INSERT INTO warnings (external_id, officer_id, subject_name, issued_at, location, reason)
+               VALUES (?,?,?,?,?,?)""",
+            (ext, officer_id, data.get("subject_name"), data.get("issued_at"),
+             data.get("location"), data.get("reason")))
+        return cur.lastrowid, True
+
+
+def _row_to_warning(r):
+    d = dict(r)
+    d["issued_fmt"] = fmt_dt(r["issued_at"]) if r["issued_at"] else "—"
+    return d
+
+
+def list_warnings(limit=200, officer_id=None):
+    q = """SELECT warnings.*, officers.callsign, officers.name AS officer_name
+           FROM warnings LEFT JOIN officers ON officers.id = warnings.officer_id"""
+    params = []
+    if officer_id:
+        q += " WHERE warnings.officer_id=?"; params.append(officer_id)
+    q += " ORDER BY warnings.id DESC LIMIT ?"; params.append(limit)
+    with get_conn() as c:
+        return [_row_to_warning(r) for r in c.execute(q, params).fetchall()]
+
+
+def warnings_count(officer_id=None):
+    with get_conn() as c:
+        if officer_id:
+            return c.execute("SELECT COUNT(*) FROM warnings WHERE officer_id=?", (officer_id,)).fetchone()[0]
+        return c.execute("SELECT COUNT(*) FROM warnings").fetchone()[0]
 
 
 def get_citation(cit_id):

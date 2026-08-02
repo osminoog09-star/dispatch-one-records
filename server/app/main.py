@@ -226,6 +226,11 @@ def citations():
                            summary=db.citations_summary())
 
 
+@app.route("/warnings")
+def warnings():
+    return render_template("warnings.html", warnings=db.list_warnings(300))
+
+
 @app.route("/citation/<int:cid>")
 def citation_view(cid):
     cit = db.get_citation(cid)

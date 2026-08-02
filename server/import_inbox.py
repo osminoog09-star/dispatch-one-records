@@ -193,6 +193,12 @@ def main():
             sh.setdefault("officer_name", nickname)
             db.create_shift(sh)
             total_s += 1
+        for w in data.get("warnings", []):
+            w.setdefault("callsign", callsign)
+            w.setdefault("officer_name", nickname)
+            _, created = db.upsert_warning(w)
+            if created:
+                _feed(w, "warning")
 
         os.remove(path)     # приняли — убираем из inbox
         print(f"[принято] {fname} — офицер {callsign}")

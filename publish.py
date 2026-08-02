@@ -100,6 +100,16 @@ def sync_from_game():
             _feed_event(cit_data, "citation")
             new_cit += 1
 
+    warns = agent.read_json(os.path.join(agent.PDCOMP_STORE, "warnings.json")) or []
+    for w in warns:
+        if not is_ours(w.get("OfficerName")):
+            skipped += 1
+            continue
+        w_data = agent.map_warning(w)
+        _, created = db.upsert_warning(w_data)
+        if created:
+            _feed_event(w_data, "warning")
+
     # смены из очереди агента (владелец)
     new_shifts = 0
     shift_queue = os.path.join(ROOT, "pending_shifts.json")

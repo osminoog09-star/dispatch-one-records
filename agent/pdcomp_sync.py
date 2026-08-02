@@ -339,6 +339,19 @@ def map_citation(ct):
     }
 
 
+def map_warning(w):
+    callsign, officer = _resolve_officer(w.get("OfficerName"))
+    return {
+        "external_id": w.get("Id"),
+        "callsign": callsign,
+        "officer_name": officer,
+        "subject_name": w.get("SubjectFullName") or "Неизвестный",
+        "issued_at": w.get("IssuedAtWall") or w.get("IssuedAt"),
+        "location": fix_mojibake(w.get("Location")),
+        "reason": w.get("Reason"),
+    }
+
+
 def read_json(path):
     if not os.path.exists(path):
         return None
@@ -434,7 +447,7 @@ def auto_publish():
         print(f"[publish] не удалось: {e}")
 
 
-def _gh_upload_records(repo, token, profile, arrests, citations, cases, shifts=None):
+def _gh_upload_records(repo, token, profile, arrests, citations, cases, shifts=None, warnings=None):
     """Кладёт данные игрока в inbox репозитория через GitHub API. (repo/token, ok, msg).
     Встроено в агент, чтобы ничего не терялось при сборке .exe."""
     import base64
@@ -442,9 +455,9 @@ def _gh_upload_records(repo, token, profile, arrests, citations, cases, shifts=N
         return False, "не заданы репозиторий/ключ"
     payload = {"profile": profile, "arrests": arrests or [],
                "citations": citations or [], "cases": cases or [],
-               "shifts": shifts or [],
+               "shifts": shifts or [], "warnings": warnings or [],
                "sent_at": time.strftime("%Y-%m-%dT%H:%M:%S")}
-    if not (payload["arrests"] or payload["citations"] or payload["cases"] or payload["shifts"]):
+    if not any(payload[k] for k in ("arrests", "citations", "cases", "shifts", "warnings")):
         return True, "новых данных нет"
     safe = "".join(ch for ch in (profile.get("callsign") or "unknown")
                    if ch.isalnum() or ch in "-_")
@@ -499,6 +512,8 @@ def upload_to_github(shift=None):
 
     arrests = [a for a in (read_json(os.path.join(PDCOMP_STORE, "arrests.json")) or []) if ours(a)]
     cits = [c for c in (read_json(os.path.join(PDCOMP_STORE, "citations.json")) or []) if ours(c)]
+    warns = [w for w in (read_json(os.path.join(PDCOMP_STORE, "warnings.json")) or []) if ours(w)]
+    warns = [map_warning(w) for w in warns]
     our_ids = {r.get("Id") for r in arrests + cits if r.get("Id")}
     cases = [c for c in (read_json(os.path.join(PDCOMP_STORE, "cases.json")) or [])
              if (c.get("CitationId") or c.get("ArrestReportId")) in our_ids]
@@ -506,7 +521,7 @@ def upload_to_github(shift=None):
     print("[github] отправляю данные...")
     ok, msg = _gh_upload_records(
         _setting("GITHUB_REPO", ""), _setting("GITHUB_TOKEN", ""),
-        profile, arrests, cits, cases, [shift] if shift else [])
+        profile, arrests, cits, cases, [shift] if shift else [], warns)
     print(("[github] " if ok else "[github] ошибка: ") + msg)
 
 

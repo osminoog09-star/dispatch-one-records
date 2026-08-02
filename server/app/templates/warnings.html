@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Предупреждения{% endblock %}
+{% block content %}
+<h1>Вынесенные предупреждения</h1>
+
+<section class="stats">
+  <div class="stat"><div class="num">{{ warnings|length }}</div><div class="lbl">Всего предупреждений</div></div>
+</section>
+
+{% if warnings %}
+<table class="tbl">
+  <thead><tr><th>#</th><th>Гражданин</th><th>Причина</th><th>Район</th><th>Офицер</th><th>Когда</th></tr></thead>
+  <tbody>
+  {% for w in warnings %}
+    <tr>
+      <td>#{{ w.id }}</td>
+      <td>{{ w.subject_name }}</td>
+      <td>{{ w.reason or '—' }}</td>
+      <td>{{ w.location or '—' }}</td>
+      <td><span class="cs">{{ w.callsign or '—' }}</span></td>
+      <td class="muted">{{ w.issued_fmt }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% else %}
+  <p class="empty">Предупреждений пока нет — появятся после игры.</p>
+{% endif %}
+{% endblock %}

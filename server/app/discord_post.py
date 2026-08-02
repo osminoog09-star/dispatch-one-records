@@ -159,18 +159,22 @@ def build_feed(record, kind):
        Статьи: <код описание>
        <дата время>
     """
-    event = "Произошло задержание" if kind == "arrest" else "Выдан штраф"
+    event = {"arrest": "Произошло задержание", "citation": "Выдан штраф",
+             "warning": "Вынесено предупреждение"}.get(kind, "Событие")
     officer = record.get("officer_name") or record.get("callsign") or "—"
     who = record.get("suspect_name") or record.get("subject_name") or "—"
     where = record.get("zone") or record.get("location") or "—"
-    charges = [_clean_charge(c) for c in (record.get("charges") or []) if _clean_charge(c)]
 
     lines = [event, officer, who, where]
-    if charges:
-        lines.append("Статьи: " + charges[0])
-        lines.extend(charges[1:])   # остальные статьи — отдельными строками
+    if kind == "warning":
+        lines.append("Причина: " + (record.get("reason") or "—"))
     else:
-        lines.append("Статьи: —")
+        charges = [_clean_charge(c) for c in (record.get("charges") or []) if _clean_charge(c)]
+        if charges:
+            lines.append("Статьи: " + charges[0])
+            lines.extend(charges[1:])
+        else:
+            lines.append("Статьи: —")
     lines.append(_feed_time(record))
     return "\n".join(lines)
 

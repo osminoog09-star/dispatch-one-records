@@ -6,11 +6,12 @@
 
 {% if vehicles %}
 <table class="tbl">
-  <thead><tr><th>Номер</th><th>Эпизодов</th><th>Причастные лица</th><th>Замечен</th></tr></thead>
+  <thead><tr><th>Номер</th><th>Машина</th><th>Эпизодов</th><th>Причастные лица</th><th>Замечен</th></tr></thead>
   <tbody>
   {% for v in vehicles %}
     <tr onclick="location='{{ url_for('vehicle_view', plate=v.plate) }}'">
       <td><span class="cs">{{ v.plate }}</span></td>
+      <td>{{ v.vehicle or '—' }}{% if v.color %} · {{ v.color }}{% endif %}</td>
       <td>{{ v.incidents }}</td>
       <td>{{ v.suspects or '—' }}</td>
       <td class="muted">{{ v.last_seen[:16].replace('T',' ') if v.last_seen else '—' }}</td>

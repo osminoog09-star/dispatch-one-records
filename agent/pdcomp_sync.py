@@ -375,6 +375,72 @@ def read_json(path):
         return None
 
 
+# ---------- Живые данные из плагина DispatchOne.MDT (mdt.jsonl) ----------
+def mdt_file():
+    """Путь к mdt.jsonl, куда пишет игровой плагин (проверки ped/plate, статус смены)."""
+    return os.path.join(_lspdfr_dir(), "DispatchOne", "mdt.jsonl")
+
+
+def read_mdt():
+    """Читает mdt.jsonl построчно. Возвращает список записей (dict) с type ped/plate/duty."""
+    path = mdt_file()
+    if not os.path.exists(path):
+        return []
+    out = []
+    try:
+        for line in open(path, "r", encoding="utf-8"):
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                rec = json.loads(line)
+                if isinstance(rec, dict) and rec.get("type"):
+                    out.append(rec)
+            except Exception:
+                continue
+    except Exception as e:
+        print(f"[warn] не прочитать mdt.jsonl: {e}")
+    return out
+
+
+def map_ped_check(r):
+    """Проверка человека из плагина → документ NPC для сайта."""
+    prof = _PROFILE or _CONFIG_PROFILE
+    first = (r.get("first") or "").strip()
+    last = (r.get("last") or "").strip()
+    name = (first + " " + last).strip() or "Неизвестный"
+    return {
+        "external_id": "ped:" + name.lower() + ":" + (r.get("ts") or ""),
+        "name": name,
+        "dob": r.get("dob"),
+        "male": bool(r.get("male")),
+        "wanted": bool(r.get("wanted")),
+        "license": r.get("license"),
+        "citations": int(r.get("citations") or 0),
+        "advisory": r.get("advisory"),
+        "callsign": prof.get("callsign") or "UNKNOWN",
+        "seen_at": r.get("ts"),
+    }
+
+
+def map_plate_check(r):
+    """Проверка машины из плагина → запись транспорта для сайта."""
+    prof = _PROFILE or _CONFIG_PROFILE
+    return {
+        "external_id": "plate:" + (r.get("plate") or "") + ":" + (r.get("ts") or ""),
+        "plate": (r.get("plate") or "").strip(),
+        "make": r.get("make"),
+        "model": r.get("model"),
+        "color": r.get("color"),
+        "vclass": r.get("class"),
+        "owner": r.get("owner"),
+        "insurance": r.get("insurance"),
+        "registration": r.get("registration"),
+        "callsign": prof.get("callsign") or "UNKNOWN",
+        "seen_at": r.get("ts"),
+    }
+
+
 def sync_arrests():
     path = os.path.join(PDCOMP_STORE, "arrests.json")
     arrests = read_json(path)
@@ -479,14 +545,18 @@ def _via_gateway(payload):
         return False, f"нет связи со шлюзом: {e}"
 
 
-def _gh_upload_records(repo, token, profile, arrests, citations, cases, shifts=None, warnings=None):
+def _gh_upload_records(repo, token, profile, arrests, citations, cases, shifts=None, warnings=None,
+                       ped_checks=None, plate_checks=None, duty_events=None):
     """Кладёт данные игрока в inbox. Через шлюз (если задан GATEWAY_URL) или прямо в GitHub."""
     import base64
     payload = {"profile": profile, "arrests": arrests or [],
                "citations": citations or [], "cases": cases or [],
                "shifts": shifts or [], "warnings": warnings or [],
+               "ped_checks": ped_checks or [], "plate_checks": plate_checks or [],
+               "duty_events": duty_events or [],
                "sent_at": time.strftime("%Y-%m-%dT%H:%M:%S")}
-    if not any(payload[k] for k in ("arrests", "citations", "cases", "shifts", "warnings")):
+    if not any(payload[k] for k in ("arrests", "citations", "cases", "shifts", "warnings",
+                                     "ped_checks", "plate_checks", "duty_events")):
         return True, "новых данных нет"
 
     # приоритет — шлюз (токена в клиенте нет)
@@ -554,10 +624,23 @@ def upload_to_github(shift=None):
     cases = [c for c in (read_json(os.path.join(PDCOMP_STORE, "cases.json")) or [])
              if (c.get("CitationId") or c.get("ArrestReportId")) in our_ids]
 
+    # живые данные из плагина (проверки ped/plate, статус смены)
+    ped_checks, plate_checks, duty_events = [], [], []
+    for rec in read_mdt():
+        t = rec.get("type")
+        if t == "ped":
+            ped_checks.append(map_ped_check(rec))
+        elif t == "plate":
+            plate_checks.append(map_plate_check(rec))
+        elif t == "duty":
+            duty_events.append({"on_duty": rec.get("onDuty"), "at": rec.get("ts"),
+                                "external_id": "duty:" + str(rec.get("ts"))})
+
     print("[github] отправляю данные...")
     ok, msg = _gh_upload_records(
         _setting("GITHUB_REPO", ""), _setting("GITHUB_TOKEN", ""),
-        profile, arrests, cits, cases, [shift] if shift else [], warns)
+        profile, arrests, cits, cases, [shift] if shift else [], warns,
+        ped_checks, plate_checks, duty_events)
     print(("[github] " if ok else "[github] ошибка: ") + msg)
 
 

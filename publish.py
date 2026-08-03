@@ -140,6 +140,36 @@ def sync_from_game():
         except Exception as e:
             print(f"   смены не приняты: {e}")
 
+    # живые данные из игрового плагина DispatchOne.MDT (проверки ped/plate, статус смены)
+    n_ped = n_plate = n_duty = 0
+    for rec in agent.read_mdt():
+        t = rec.get("type")
+        try:
+            if t == "ped":
+                n_ped += 1 if db.record_ped_document(agent.map_ped_check(rec)) else 0
+            elif t == "plate":
+                n_plate += 1 if db.record_vehicle_check(agent.map_plate_check(rec)) else 0
+            elif t == "duty":
+                prof = agent._PROFILE or agent._CONFIG_PROFILE
+                n_duty += 1 if db.record_duty_event({
+                    "on_duty": rec.get("onDuty"), "at": rec.get("ts"),
+                    "callsign": prof.get("callsign") or "UNKNOWN",
+                    "external_id": "duty:" + str(rec.get("ts")),
+                }) else 0
+        except Exception as e:
+            print(f"   mdt {t} пропущен: {e}")
+    if n_ped or n_plate or n_duty:
+        print(f"   плагин: проверок людей {n_ped}, машин {n_plate}, событий смены {n_duty}")
+    # смены из статуса диспетчера (парные duty-события) — засчитываются автоматически
+    if n_duty:
+        prof = agent._PROFILE or agent._CONFIG_PROFILE
+        cs = prof.get("callsign")
+        if cs:
+            dsh = db.sync_duty_shifts(cs, prof.get("nickname"))
+            if dsh:
+                new_shifts += dsh
+                print(f"   смен по статусу диспетчера: +{dsh}")
+
     return new_arrests, new_court, len(arrests), len(cases), new_cit, len(cits), skipped, new_shifts
 
 

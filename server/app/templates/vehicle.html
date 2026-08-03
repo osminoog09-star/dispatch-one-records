@@ -14,6 +14,17 @@
 </p>
 {% endif %}
 
+{% set i = v.info %}
+{% if i and (i.vehicle or i.color or i.owner) %}
+<table class="doc-tbl" style="max-width:520px;margin:14px 0">
+  {% if i.vehicle %}<tr><td>Модель</td><td><b>{{ i.vehicle }}</b>{% if i.vclass %} · {{ i.vclass }}{% endif %}</td></tr>{% endif %}
+  {% if i.color %}<tr><td>Цвет</td><td>{{ i.color }}</td></tr>{% endif %}
+  {% if i.owner %}<tr><td>Владелец</td><td>{{ i.owner }}</td></tr>{% endif %}
+  {% if i.insurance %}<tr><td>Страховка</td><td>{{ i.insurance_ru }}</td></tr>{% endif %}
+  {% if i.registration %}<tr><td>Регистрация</td><td>{{ i.registration_ru }}</td></tr>{% endif %}
+</table>
+{% endif %}
+
 <h2>Где замечена</h2>
 <table class="tbl">
   <thead><tr><th>Лицо</th><th>Район</th><th>Офицер</th><th>Когда</th></tr></thead>

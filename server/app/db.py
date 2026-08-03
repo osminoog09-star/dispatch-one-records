@@ -129,6 +129,43 @@ def init_db():
                 source_ext TEXT,
                 UNIQUE(plate, source_ext)
             )""")
+        # миграция vehicles: данные из проверки номера плагином (марка/модель/цвет/владелец…)
+        _vcols = {r["name"] for r in c.execute("PRAGMA table_info(vehicles)").fetchall()}
+        for col, typ in {"make": "TEXT", "model": "TEXT", "color": "TEXT",
+                         "vclass": "TEXT", "owner": "TEXT", "insurance": "TEXT",
+                         "registration": "TEXT"}.items():
+            if col not in _vcols:
+                c.execute(f"ALTER TABLE vehicles ADD COLUMN {col} {typ}")
+        # документы NPC из проверок личности (плагин OnPedCheck)
+        c.execute(
+            """CREATE TABLE IF NOT EXISTS ped_documents (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT,
+                dob TEXT,
+                male INTEGER,
+                wanted INTEGER,
+                license TEXT,
+                citations INTEGER DEFAULT 0,
+                advisory TEXT,
+                officer_id INTEGER,
+                seen_at TEXT,
+                source_ext TEXT UNIQUE
+            )""")
+        # события смены от диспетчера (плагин OnDutyStateChanged)
+        c.execute(
+            """CREATE TABLE IF NOT EXISTS duty_events (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                on_duty INTEGER,
+                at TEXT,
+                officer_id INTEGER,
+                source_ext TEXT UNIQUE
+            )""")
+        # миграция shifts: source_ext для дедупа смен из duty-событий
+        _scols = {r["name"] for r in c.execute("PRAGMA table_info(shifts)").fetchall()}
+        if "source_ext" not in _scols:
+            c.execute("ALTER TABLE shifts ADD COLUMN source_ext TEXT")
+        c.execute("CREATE UNIQUE INDEX IF NOT EXISTS ix_shifts_src "
+                  "ON shifts(source_ext) WHERE source_ext IS NOT NULL")
         c.execute(
             """CREATE TABLE IF NOT EXISTS callouts (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -773,7 +810,7 @@ def case_file(name):
 
 
 def person_info(name):
-    """Досье-шапка: дата рождения, возраст, статус розыска, номера машин."""
+    """Досье-шапка: дата рождения, возраст, розыск, номера машин + документ NPC (плагин)."""
     with get_conn() as c:
         dob_row = c.execute("SELECT suspect_dob FROM cases WHERE suspect_name=? COLLATE NOCASE "
                             "AND suspect_dob IS NOT NULL AND suspect_dob!='' LIMIT 1", (name,)).fetchone()
@@ -781,15 +818,130 @@ def person_info(name):
                            (name,)).fetchone()[0]
         plates = [r["plate"] for r in c.execute(
             "SELECT DISTINCT plate FROM vehicles WHERE suspect_name=? COLLATE NOCASE", (name,)).fetchall()]
-    dob = dob_row["suspect_dob"] if dob_row else None
-    age = None
+        # свежайший документ NPC из проверки личности в игре
+        doc = c.execute(
+            """SELECT dob, male, wanted, license, citations, advisory, seen_at
+               FROM ped_documents WHERE name=? COLLATE NOCASE
+               ORDER BY seen_at DESC LIMIT 1""", (name,)).fetchone()
+    dob = (dob_row["suspect_dob"] if dob_row else None) or (doc["dob"] if doc else None)
+    info = {"dob": dob, "age": None, "wanted": bool(wanted), "plates": plates,
+            "gender": None, "license": None, "license_ru": None, "citations": None,
+            "advisory": None, "checked_at": None}
+    if doc:
+        info["wanted"] = info["wanted"] or bool(doc["wanted"])
+        info["gender"] = ("Мужской" if doc["male"] else "Женский")
+        info["license"] = doc["license"]
+        info["license_ru"] = LICENSE_STATE_RU.get(doc["license"], doc["license"])
+        info["citations"] = doc["citations"]
+        info["advisory"] = doc["advisory"]
+        info["checked_at"] = fmt_dt(doc["seen_at"]) if doc["seen_at"] else None
     if dob:
         try:
             b = datetime.datetime.strptime(dob[:10], "%Y-%m-%d")
-            age = int((datetime.datetime.now() - b).days / 365.25)
+            info["age"] = int((datetime.datetime.now() - b).days / 365.25)
         except Exception:
             pass
-    return {"dob": dob, "age": age, "wanted": bool(wanted), "plates": plates}
+    return info
+
+
+LICENSE_STATE_RU = {"Valid": "действительны", "Suspended": "приостановлены",
+                    "Expired": "просрочены", "Unlicensed": "нет прав", "None": "нет прав",
+                    "Revoked": "аннулированы"}
+DOC_STATUS_RU = {"Valid": "действует", "Expired": "просрочена", "None": "нет",
+                 "Unknown": "неизвестно"}
+
+
+def record_ped_document(rec):
+    """Документ NPC из проверки личности (плагин). Дедуп по source_ext."""
+    officer_id = get_or_create_officer(rec.get("callsign", "UNKNOWN"))
+    with get_conn() as c:
+        cur = c.execute(
+            """INSERT OR IGNORE INTO ped_documents
+               (name, dob, male, wanted, license, citations, advisory, officer_id, seen_at, source_ext)
+               VALUES (?,?,?,?,?,?,?,?,?,?)""",
+            (rec.get("name"), rec.get("dob"), 1 if rec.get("male") else 0,
+             1 if rec.get("wanted") else 0, rec.get("license"), int(rec.get("citations") or 0),
+             rec.get("advisory"), officer_id, rec.get("seen_at"), rec.get("external_id")))
+        return cur.rowcount > 0
+
+
+def record_vehicle_check(rec):
+    """Проверка номера (плагин) → запись/обогащение транспорта. Дедуп по (plate, source_ext)."""
+    if not rec.get("plate"):
+        return False
+    officer_id = get_or_create_officer(rec.get("callsign", "UNKNOWN"))
+    with get_conn() as c:
+        cur = c.execute(
+            """INSERT OR IGNORE INTO vehicles
+               (plate, suspect_name, officer_id, zone, seen_at, source_ext,
+                make, model, color, vclass, owner, insurance, registration)
+               VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+            (rec.get("plate"), rec.get("owner"), officer_id, None, rec.get("seen_at"),
+             rec.get("external_id"), rec.get("make"), rec.get("model"), rec.get("color"),
+             rec.get("vclass"), rec.get("owner"), rec.get("insurance"), rec.get("registration")))
+        return cur.rowcount > 0
+
+
+def record_duty_event(rec):
+    """Событие смены (плагин). Дедуп по source_ext. True если новое."""
+    officer_id = get_or_create_officer(rec.get("callsign", "UNKNOWN"))
+    with get_conn() as c:
+        cur = c.execute(
+            "INSERT OR IGNORE INTO duty_events (on_duty, at, officer_id, source_ext) VALUES (?,?,?,?)",
+            (1 if rec.get("on_duty") else 0, rec.get("at"), officer_id, rec.get("external_id")))
+        return cur.rowcount > 0
+
+
+def shifts_from_duty(callsign):
+    """Собирает смены из парных событий (на смену → со смены) для позывного.
+    Возвращает список dict со started_at/ended_at/duration_min. Не пишет в БД."""
+    with get_conn() as c:
+        oid = c.execute("SELECT id FROM officers WHERE callsign=?", (callsign,)).fetchone()
+        if not oid:
+            return []
+        rows = c.execute("SELECT on_duty, at FROM duty_events WHERE officer_id=? ORDER BY at",
+                         (oid["id"],)).fetchall()
+    shifts, open_at = [], None
+    for r in rows:
+        if r["on_duty"] and open_at is None:
+            open_at = r["at"]
+        elif not r["on_duty"] and open_at is not None:
+            try:
+                t0 = datetime.datetime.fromisoformat(open_at)
+                t1 = datetime.datetime.fromisoformat(r["at"])
+                dur = max(0, int((t1 - t0).total_seconds() / 60))
+            except Exception:
+                dur = 0
+            shifts.append({"started_at": open_at, "ended_at": r["at"], "duration_min": dur})
+            open_at = None
+    return shifts
+
+
+def _shift_type_for(started_at):
+    try:
+        h = datetime.datetime.fromisoformat(started_at).hour
+    except Exception:
+        return None
+    return "day" if 6 <= h < 18 else ("evening" if 18 <= h < 23 else "night")
+
+
+def sync_duty_shifts(callsign, officer_name=None):
+    """Создаёт смены из завершённых duty-пар (дедуп по source_ext). Возвращает число новых."""
+    n = 0
+    for s in shifts_from_duty(callsign):
+        if s["duration_min"] < 1:
+            continue
+        src = "duty:%s:%s" % (s["started_at"], s["ended_at"])
+        officer_id = get_or_create_officer(callsign, officer_name)
+        with get_conn() as c:
+            cur = c.execute(
+                """INSERT OR IGNORE INTO shifts
+                   (officer_id, shift_type, started_at, ended_at, duration_min, source_ext)
+                   VALUES (?,?,?,?,?,?)""",
+                (officer_id, _shift_type_for(s["started_at"]), s["started_at"],
+                 s["ended_at"], s["duration_min"], src))
+            n += 1 if cur.rowcount > 0 else 0
+    return n
 
 
 def list_vehicles(limit=300):
@@ -798,10 +950,18 @@ def list_vehicles(limit=300):
             """SELECT vehicles.plate,
                       COUNT(DISTINCT vehicles.source_ext) AS incidents,
                       GROUP_CONCAT(DISTINCT vehicles.suspect_name) AS suspects,
+                      MAX(vehicles.make) AS make, MAX(vehicles.model) AS model,
+                      MAX(vehicles.color) AS color,
                       MAX(vehicles.seen_at) AS last_seen
                FROM vehicles WHERE plate IS NOT NULL AND plate!=''
                GROUP BY vehicles.plate ORDER BY last_seen DESC LIMIT ?""", (limit,)).fetchall()
-        return [dict(r) for r in rows]
+        out = []
+        for r in rows:
+            d = dict(r)
+            mm = " ".join(x for x in (d.get("make"), d.get("model")) if x)
+            d["vehicle"] = mm or None
+            out.append(d)
+        return out
 
 
 def get_vehicle(plate):
@@ -816,7 +976,17 @@ def get_vehicle(plate):
         for e in events:
             e["seen_fmt"] = fmt_dt(e["seen_at"]) if e.get("seen_at") else "—"
         suspects = sorted({e["suspect_name"] for e in events if e.get("suspect_name")})
-        return {"plate": plate, "events": events, "suspects": suspects}
+        # сводка: самые свежие непустые данные проверки номера
+        info = {}
+        for key in ("make", "model", "color", "vclass", "owner", "insurance", "registration"):
+            for e in events:                       # events отсортированы по seen_at DESC
+                if e.get(key):
+                    info[key] = e[key]
+                    break
+        info["vehicle"] = " ".join(x for x in (info.get("make"), info.get("model")) if x) or None
+        info["insurance_ru"] = DOC_STATUS_RU.get(info.get("insurance"), info.get("insurance"))
+        info["registration_ru"] = DOC_STATUS_RU.get(info.get("registration"), info.get("registration"))
+        return {"plate": plate, "events": events, "suspects": suspects, "info": info}
 
 
 def list_case_files(limit=200):

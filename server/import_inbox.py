@@ -200,6 +200,21 @@ def main():
             if created:
                 _feed(w, "warning")
 
+        # живые данные из игрового плагина DispatchOne.MDT
+        for p in data.get("ped_checks", []):
+            p.setdefault("callsign", callsign)
+            db.record_ped_document(p)
+        for v in data.get("plate_checks", []):
+            v.setdefault("callsign", callsign)
+            db.record_vehicle_check(v)
+        duty_seen = False
+        for d in data.get("duty_events", []):
+            d.setdefault("callsign", callsign)
+            if db.record_duty_event(d):
+                duty_seen = True
+        if duty_seen:
+            db.sync_duty_shifts(callsign, nickname)
+
         os.remove(path)     # приняли — убираем из inbox
         print(f"[принято] {fname} — офицер {callsign}")
 

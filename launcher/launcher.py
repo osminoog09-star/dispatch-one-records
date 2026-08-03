@@ -27,6 +27,9 @@ try:
 except Exception:
     GATEWAY_URL = os.environ.get("DISPATCH_GATEWAY_URL", "")
     GATEWAY_KEY = os.environ.get("DISPATCH_GATEWAY_KEY", "")
+# Supabase — чат-поддержка (publishable-ключ публичный, безопасен в клиенте)
+SUPABASE_URL = "https://gwvqfiwdbviwoimvhdvg.supabase.co"
+SUPABASE_KEY = "sb_publishable_gkXQmLngTvpGQfLFDk2YnA_nuv0krkk"
 INSTALL_DIR = os.path.join(os.environ.get("LOCALAPPDATA", os.path.expanduser("~")), "DispatchOne")
 CONFIG = os.path.join(INSTALL_DIR, "sync-config.ini")
 LOG_DIR = os.path.join(INSTALL_DIR, "logs")
@@ -140,6 +143,103 @@ def _resolve_lnk(path):
         return (r.stdout or "").strip() or None
     except Exception:
         return None
+
+
+# ─────────────────── Supabase: чат-поддержка ───────────────────
+
+def _client_id():
+    """Постоянный id этого установщика — по нему игрок видит свои тикеты."""
+    cfg = read_config()
+    cid = cfg.get("CLIENT_ID")
+    if not cid:
+        import uuid
+        cid = str(uuid.uuid4())
+        cfg["CLIENT_ID"] = cid
+        write_config(cfg)
+    return cid
+
+
+def _sb(path, method="GET", body=None, prefer=None):
+    """Запрос к Supabase REST с publishable-ключом и заголовкомx-client-id."""
+    url = f"{SUPABASE_URL}/rest/v1/{path}"
+    data = json.dumps(body).encode("utf-8") if body is not None else None
+    req = urllib.request.Request(url, data=data, method=method)
+    req.add_header("apikey", SUPABASE_KEY)
+    req.add_header("Authorization", "Bearer " + SUPABASE_KEY)
+    req.add_header("Content-Type", "application/json")
+    req.add_header("x-client-id", _client_id())
+    if prefer:
+        req.add_header("Prefer", prefer)
+    with urllib.request.urlopen(req, timeout=20) as r:
+        t = r.read().decode("utf-8")
+        return r.status, (json.loads(t) if t else None)
+
+
+def sb_open_ticket_id():
+    """id последнего открытого тикета этого игрока (или None)."""
+    try:
+        _, rows = _sb(f"tickets?client_id=eq.{_client_id()}&status=eq.open"
+                      f"&select=id&order=created_at.desc&limit=1")
+        return rows[0]["id"] if rows else None
+    except Exception:
+        log_exc("sb_open_ticket_id")
+        return None
+
+
+def sb_create_ticket(title):
+    cfg = read_config()
+    _, rows = _sb("tickets", "POST", {
+        "title": title[:120] or "Обращение",
+        "client_id": _client_id(),
+        "callsign": cfg.get("CALLSIGN", ""),
+        "created_by": cfg.get("NICKNAME") or cfg.get("CALLSIGN", "") or "Игрок",
+    }, prefer="return=representation")
+    return rows[0]["id"] if rows else None
+
+
+def sb_add_comment(ticket_id, body, attachment_url=None):
+    cfg = read_config()
+    _sb("ticket_comments", "POST", {
+        "ticket_id": ticket_id,
+        "client_id": _client_id(),
+        "body": body,
+        "author": cfg.get("NICKNAME") or cfg.get("CALLSIGN", "") or "Игрок",
+        "attachment_url": attachment_url,
+    })
+
+
+def sb_list_comments(ticket_id):
+    try:
+        _, rows = _sb(f"ticket_comments?ticket_id=eq.{ticket_id}"
+                      f"&select=body,from_admin,author,created_at,attachment_url&order=created_at")
+        return rows or []
+    except Exception:
+        return []
+
+
+def sb_close_ticket(ticket_id):
+    try:
+        _sb(f"tickets?id=eq.{ticket_id}", "PATCH", {"status": "closed"})
+        return True
+    except Exception:
+        return False
+
+
+def sb_upload(name, data_bytes, content_type):
+    """Загружает вложение в bucket support, возвращает публичный URL."""
+    try:
+        url = f"{SUPABASE_URL}/storage/v1/object/support/{name}"
+        req = urllib.request.Request(url, data=data_bytes, method="POST")
+        req.add_header("apikey", SUPABASE_KEY)
+        req.add_header("Authorization", "Bearer " + SUPABASE_KEY)
+        req.add_header("Content-Type", content_type)
+        req.add_header("x-upsert", "true")
+        with urllib.request.urlopen(req, timeout=60) as r:
+            if r.status in (200, 201):
+                return f"{SUPABASE_URL}/storage/v1/object/public/support/{name}"
+    except Exception:
+        log_exc("sb_upload")
+    return None
 
 
 def find_game():
@@ -721,7 +821,7 @@ class Launcher(tk.Tk):
         # ─── ФУТЕР ───
         bottom = tk.Frame(self, bg=BG)
         bottom.pack(side="bottom", pady=14)
-        for txt, cmd in (("🐞 Сообщить о проблеме", self.bug_report),
+        for txt, cmd in (("💬 Поддержка", self.support_chat),
                          ("Открыть логи", self.open_logs), ("Открыть сайт", self.open_site)):
             b = tk.Label(bottom, text=txt, bg=BG, fg=MUTED, font=("Segoe UI", 8), cursor="hand2")
             b.pack(side="left", padx=10)
@@ -851,6 +951,149 @@ class Launcher(tk.Tk):
 
         send_btn = self._button(dlg, "Отправить отчёт", send, ACCENT, ACCENT2)
         send_btn.pack(fill="x", padx=24, pady=(4, 16))
+
+    def support_chat(self):
+        """Чат-поддержка: игрок пишет, прикладывает лог/скрин, видит ответы оператора."""
+        dlg = tk.Toplevel(self)
+        dlg.title("Поддержка LAPD")
+        dlg.geometry("460x580")
+        dlg.configure(bg=BG)
+        dlg.transient(self)
+
+        top = tk.Frame(dlg, bg=CARD)
+        top.pack(fill="x")
+        tk.Label(top, text="🟢  Поддержка LAPD", bg=CARD, fg=TEXT,
+                 font=("Segoe UI Semibold", 13)).pack(anchor="w", padx=16, pady=(12, 0))
+        tk.Label(top, text="Опиши проблему — оператор ответит здесь.", bg=CARD, fg=MUTED,
+                 font=("Segoe UI", 8)).pack(anchor="w", padx=16, pady=(0, 12))
+
+        box = tk.Frame(dlg, bg=BORDER)
+        box.pack(fill="both", expand=True, padx=14, pady=(10, 6))
+        msgs = tk.Text(box, bg=CARD, fg=TEXT, relief="flat", font=("Segoe UI", 10),
+                       wrap="word", state="disabled", padx=10, pady=8)
+        msgs.pack(fill="both", expand=True, padx=1, pady=1)
+        msgs.tag_config("me", foreground="#4c8dff")
+        msgs.tag_config("op", foreground="#3fb950")
+        msgs.tag_config("sys", foreground=MUTED, font=("Segoe UI", 8))
+
+        state = {"ticket": None, "seen": 0, "att": None, "alive": True}
+
+        def add(text, tag):
+            msgs.config(state="normal")
+            msgs.insert("end", text + "\n\n", tag)
+            msgs.config(state="disabled")
+            msgs.see("end")
+
+        def _render_new(rows):
+            for r in rows[state["seen"]:]:
+                who = "Оператор" if r.get("from_admin") else "Вы"
+                add(f"{who}: {r.get('body', '')}", "op" if r.get("from_admin") else "me")
+                if r.get("attachment_url"):
+                    add("📎 " + r["attachment_url"], "sys")
+            state["seen"] = len(rows)
+
+        def load_history():
+            try:
+                tid = sb_open_ticket_id()
+                rows = sb_list_comments(tid) if tid else []
+            except Exception as e:
+                dlg.after(0, lambda: add(f"Нет связи с поддержкой: {e}", "sys"))
+                return
+
+            def render():
+                state["ticket"] = tid
+                if tid:
+                    _render_new(rows)
+                else:
+                    add("Напиши сообщение — создадим обращение.", "sys")
+                dlg.after(2000, poll)
+            dlg.after(0, render)
+
+        def poll():
+            if not state["alive"]:
+                return
+            tid = state["ticket"]
+            if not tid:
+                dlg.after(8000, poll)
+                return
+
+            def work():
+                try:
+                    rows = sb_list_comments(tid)
+                except Exception:
+                    rows = None
+                def render():
+                    if not state["alive"]:
+                        return
+                    if rows is not None:
+                        _render_new(rows)
+                    dlg.after(8000, poll)
+                dlg.after(0, render)
+            threading.Thread(target=work, daemon=True).start()
+
+        att_lbl = tk.Label(dlg, text="", bg=BG, fg=OKGRN, font=("Segoe UI", 8))
+        att_lbl.pack()
+
+        def attach_log():
+            p = os.path.join(self.game, "RagePluginHook.log") if self.game else None
+            if p and os.path.exists(p):
+                state["att"] = p
+                att_lbl.config(text="📎 приложен RagePluginHook.log")
+            else:
+                att_lbl.config(text="RagePluginHook.log не найден", fg=REDT)
+
+        def send():
+            text = inp.get().strip()
+            if not text and not state["att"]:
+                return
+            inp.delete(0, "end")
+            send_btn.config(state="disabled")
+
+            def work():
+                try:
+                    if not state["ticket"]:
+                        state["ticket"] = sb_create_ticket(text or "Обращение")
+                    att_url = None
+                    if state["att"]:
+                        data = open(state["att"], "rb").read()
+                        nm = f"{_client_id()}/{int(time.time())}_{os.path.basename(state['att'])}"
+                        att_url = sb_upload(nm, data, "text/plain")
+                    sb_add_comment(state["ticket"], text or "(вложение)", att_url)
+                    state["att"] = None
+                    def done():
+                        add(f"Вы: {text}" if text else "Вы: (вложение)", "me")
+                        if att_url:
+                            add("📎 " + att_url, "sys")
+                        att_lbl.config(text="")
+                        send_btn.config(state="normal")
+                    dlg.after(0, done)
+                except Exception as e:
+                    dlg.after(0, lambda: (add(f"Не отправилось: {e}", "sys"),
+                                          send_btn.config(state="normal")))
+            threading.Thread(target=work, daemon=True).start()
+
+        bar = tk.Frame(dlg, bg=BG)
+        bar.pack(fill="x", padx=14, pady=(0, 4))
+        self._button(bar, "📎 Лог RPH", attach_log, CARD2, BORDER, small=True).pack(side="left")
+        self._button(bar, "Закрыть обращение",
+                     lambda: (sb_close_ticket(state["ticket"]) if state["ticket"] else None,
+                              add("Обращение закрыто.", "sys")), CARD2, BORDER, small=True).pack(side="right")
+
+        inp_wrap = tk.Frame(dlg, bg=BORDER)
+        inp_wrap.pack(fill="x", padx=14, pady=(0, 6))
+        inp = tk.Entry(inp_wrap, bg=CARD2, fg=TEXT, insertbackground=ACCENT, relief="flat",
+                       font=("Segoe UI", 11))
+        inp.pack(side="left", fill="x", expand=True, padx=1, pady=1, ipady=6)
+        inp.bind("<Return>", lambda e: send())
+        send_btn = self._button(dlg, "Отправить", send, ACCENT, ACCENT2)
+        send_btn.pack(fill="x", padx=14, pady=(0, 14))
+
+        def on_close():
+            state["alive"] = False
+            dlg.destroy()
+        dlg.protocol("WM_DELETE_WINDOW", on_close)
+
+        threading.Thread(target=load_history, daemon=True).start()
 
     def save_identity(self):
         cs = self.callsign.get().strip()

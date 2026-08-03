@@ -1,9 +1,9 @@
 {
-  "launcher": "1.4.2",
+  "launcher": "1.4.3",
   "agent": "1.1.0",
   "enabled": true,
   "min_launcher": "1.0.0",
-  "notes": "Авто-поиск игры и Vinewood (реестр + сканирование дисков). Анимированная полицейская мигалка в шапке. «Играть» запускает Vinewood и ставит плагин в LSPDFR.",
+  "notes": "Обновление лаунчера ставится автоматически (без кнопки). Авто-поиск игры и Vinewood. «Играть» запускает Vinewood и ставит плагин в LSPDFR.",
   "launcher_url": "https://github.com/osminoog09-star/dispatch-one-records/releases/latest/download/LAPD-Records-Launcher.exe",
   "agent_url": "https://github.com/osminoog09-star/dispatch-one-records/releases/latest/download/pdcomp_sync.exe"
 }

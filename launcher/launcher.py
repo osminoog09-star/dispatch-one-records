@@ -18,7 +18,7 @@ import tkinter as tk
 from tkinter import messagebox
 
 APP_NAME = "LAPD Records"
-VERSION = "1.4.2"
+VERSION = "1.4.3"
 GITHUB_REPO = "osminoog09-star/dispatch-one-records"
 # Шлюз приёма данных (Cloudflare Worker) — вшивается при сборке, токена в клиенте нет.
 try:
@@ -636,15 +636,24 @@ class Launcher(tk.Tk):
         cfg = read_config()
         self.game = find_game()
 
-        # ─── полицейская мигалка (анимация) ───
-        self.lightbar = tk.Canvas(self, height=8, bg="#05070c", highlightthickness=0)
-        self.lightbar.pack(fill="x")
-        self._lb_phase = 0
-        self.after(150, self._animate_lightbar)
+        # ─── баннер: полицейский крузер с мигалкой (анимированная картинка) ───
+        self._frames = []
+        for nm in ("banner_red.png", "banner_blue.png"):
+            p = _bundled(nm)
+            try:
+                if os.path.exists(p):
+                    self._frames.append(tk.PhotoImage(file=p))
+            except Exception:
+                log_exc("load banner")
+        if self._frames:
+            self.hero = tk.Label(self, image=self._frames[0], bg=BG, bd=0)
+            self.hero.pack(fill="x")
+            self._frame_i = 0
+            self.after(200, self._animate_hero)
 
         # ─── ШАПКА ───
         header = tk.Frame(self, bg=BG)
-        header.pack(fill="x", pady=(18, 0))
+        header.pack(fill="x", pady=(26, 0))
         tk.Label(header, text="★", bg=ACCENT, fg="white",
                  font=("Segoe UI", 15, "bold"), width=2, height=1).pack()
         tk.Label(header, text="LAPD Records", bg=BG, fg=TEXT,
@@ -731,26 +740,14 @@ class Launcher(tk.Tk):
         log(f"лаунчер запущен v{VERSION}, игра={self.game}")
         threading.Thread(target=self._check_update_async, daemon=True).start()
 
-    def _animate_lightbar(self):
-        """Анимированная полицейская светополоса: красная и синяя половины мигают."""
+    def _animate_hero(self):
+        """Чередует кадры баннера (красная/синяя мигалка) — эффект включённых огней."""
         try:
-            c = self.lightbar
-            c.delete("all")
-            w = c.winfo_width() or 580
-            h = 8
-            half = w // 2
-            p = self._lb_phase % 2
-            # активная сторона горит ярко, вторая — тускло (эффект мигалки)
-            reds = ["#ff3b3b", "#e01e1e", "#7a0d0d"] if p == 0 else ["#3a1414", "#2a0e0e", "#1a0808"]
-            blues = ["#141d3a", "#0e1730", "#08101f"] if p == 0 else ["#3b7bff", "#1e5ae0", "#123f9a"]
-            # красная половина (3 сегмента с яркостью к центру)
-            seg = half / 3.0
-            for i, col in enumerate(reds):
-                c.create_rectangle(i * seg, 0, (i + 1) * seg, h, fill=col, outline="")
-            for i, col in enumerate(blues):
-                c.create_rectangle(half + (2 - i) * seg, 0, half + (3 - i) * seg, h, fill=col, outline="")
-            self._lb_phase += 1
-            self.after(420, self._animate_lightbar)
+            if not self._frames:
+                return
+            self._frame_i = (self._frame_i + 1) % len(self._frames)
+            self.hero.config(image=self._frames[self._frame_i])
+            self.after(500, self._animate_hero)
         except Exception:
             pass
 
@@ -895,8 +892,23 @@ class Launcher(tk.Tk):
         m = info.get("manifest") or {}
         notes = m.get("notes", "")
 
+        # ЛАУНЧЕР обновляем САМИ сразу: качаем, подменяем, перезапускаемся (без кнопки)
+        if info.get("launcher_new"):
+            self.after(0, lambda: (self.upd_label.config(text=f"⬇ обновляю лаунчер до {m.get('launcher')}…", fg="#e3b341"),
+                                   self.upd_notes.config(text=notes),
+                                   self.upd_btn.config(state="disabled")))
+            ok, msg = update_launcher(m)
+            if ok and msg == "restart":
+                self.after(0, lambda: (self._set_status(f"Обновлено до {m.get('launcher')} — перезапуск…", "#7fbf7f"),
+                                       self.after(1000, self.destroy)))
+                return
+            # авто не вышло (напр. запуск из исходников) — оставим кнопку как запас
+            self.after(0, lambda: (self.upd_label.config(text=f"● Обновление {m.get('launcher')} готово — нажми кнопку", fg="#e3b341"),
+                                   self.upd_btn.config(state="normal", text=f"⬇ Обновить до {m.get('launcher')}")))
+            return
+
         # агент обновляем САМИ, тихо (безопасно, перезапуск не нужен)
-        if info.get("agent_new") and not info.get("launcher_new"):
+        if info.get("agent_new"):
             self.after(0, lambda: self.upd_label.config(text="⬇ обновляю агент…", fg="#e3b341"))
             ok, _ = update_agent(m)
             info["agent_new"] = not ok
@@ -905,15 +917,8 @@ class Launcher(tk.Tk):
                                        self.upd_notes.config(text=notes)))
                 return
 
-        def upd():
-            if info.get("launcher_new"):
-                self.upd_label.config(text=f"● Доступно обновление лаунчера: {m.get('launcher')}", fg="#e3b341")
-                self.upd_btn.config(text=f"⬇ Обновить до {m.get('launcher')}")
-                self.upd_notes.config(text=notes)
-            else:
-                self.upd_label.config(text="✓ Установлена последняя версия.", fg=OKGRN)
-                self.upd_notes.config(text=("Что нового: " + notes) if notes else "")
-        self.after(0, upd)
+        self.after(0, lambda: (self.upd_label.config(text="✓ Установлена последняя версия.", fg=OKGRN),
+                               self.upd_notes.config(text=("Что нового: " + notes) if notes else "")))
 
     def do_update(self):
         info = getattr(self, "_upd", None)

@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block title %}Вызов {{ co.callout_no }}{% endblock %}
+{% block content %}
+<a class="back" href="{{ url_for('callouts') }}">← к вызовам</a>
+
+<div class="case-head">
+  <h1>Карта вызова · {{ co.callout_type or 'Вызов' }}</h1>
+  {% if co.priority %}<span class="tag {{ 'wanted' if co.priority=='1' }}">{{ co.priority_ru }}</span>{% endif %}
+</div>
+
+<div class="doc-actions">
+  <button class="btn primary" onclick="downloadDoc()">📄 Скачать карту вызова (PNG)</button>
+  <span class="muted small">Картинку можно перетащить в Discord.</span>
+</div>
+
+<div id="doc" class="doc">
+  <div class="doc-title">
+    <div class="doc-court">ЦЕНТР ДИСПЕТЧЕРИЗАЦИИ · LAPD</div>
+    <div class="doc-county">КАРТА ВЫЗОВА (CAD) · № {{ co.callout_no }}</div>
+  </div>
+
+  <div class="doc-body">
+    <div class="doc-left">
+      <table class="doc-tbl">
+        <tr><td>Тип вызова</td><td><b>{{ co.callout_type or '—' }}</b></td></tr>
+        <tr><td>Приоритет</td><td>{{ co.priority_ru }}</td></tr>
+        <tr><td>Адрес</td><td>{{ co.location or '—' }}</td></tr>
+        <tr><td>Район</td><td>{{ co.zone or '—' }}</td></tr>
+        <tr><td>Время</td><td>{{ co.occurred_fmt }}</td></tr>
+      </table>
+
+      <div class="doc-sec-title">ОТВЕТИЛ</div>
+      <table class="doc-tbl">
+        <tr><td>Офицер</td><td>{{ co.officer_name or co.callsign or '—' }}</td></tr>
+        <tr><td>Позывной</td><td>{{ co.callsign or '—' }}</td></tr>
+      </table>
+    </div>
+
+    <div class="doc-right">
+      <div class="doc-sec-title">ОБСТОЯТЕЛЬСТВА</div>
+      <div style="font-size:12.5px;min-height:60px">{{ co.description or '—' }}</div>
+
+      <div class="doc-sec-title">ИТОГ</div>
+      <div style="font-size:12.5px">{{ co.outcome or '—' }}</div>
+    </div>
+  </div>
+
+  <div class="doc-footer">
+    <div class="doc-seal">🚨</div>
+    <div class="doc-cert" style="margin-left:46px">
+      Зарегистрированный вызов службы. Карта сформирована центром диспетчеризации LAPD.
+    </div>
+    <div class="doc-sign">
+      <div>_______________________<br><span class="doc-mut">Диспетчер</span></div>
+      <div>{{ co.occurred_fmt }}<br><span class="doc-mut">Время регистрации</span></div>
+    </div>
+    <div class="doc-form">ЦЕНТР ДИСПЕТЧЕРИЗАЦИИ LAPD · ФОРМА CAD-101</div>
+  </div>
+</div>
+
+<script src="{{ url_for('static', filename='html2canvas.min.js') }}"></script>
+<script>
+function downloadDoc(){
+  html2canvas(document.getElementById('doc'),{scale:2,backgroundColor:'#f4f1e8'}).then(function(c){
+    var a=document.createElement('a');
+    a.download='{{ co.callout_no }}_{{ co.callout_type or "вызов" }}.png';
+    a.href=c.toDataURL('image/png'); a.click();
+  });
+}
+</script>
+{% endblock %}

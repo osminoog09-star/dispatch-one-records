@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block title %}Вызовы{% endblock %}
+{% block content %}
+<h1>Журнал вызовов</h1>
+
+<section class="stats">
+  <div class="stat"><div class="num">{{ callouts|length }}</div><div class="lbl">Всего вызовов</div></div>
+</section>
+
+{% if not static_export %}
+<div class="card" style="margin-bottom:18px">
+  <h2 style="margin-top:0">Добавить вызов</h2>
+  <form method="post" class="callout-form">
+    <div class="cf-row">
+      <label>Тип вызова
+        <input name="callout_type" list="ctypes" placeholder="Ограбление, ДТП, стрельба…" required></label>
+      <datalist id="ctypes">
+        <option>Ограбление</option><option>ДТП</option><option>Стрельба</option>
+        <option>Драка</option><option>Кража</option><option>Угон</option>
+        <option>Наркотики</option><option>Погоня</option><option>Домашнее насилие</option>
+        <option>Проверка подозрительного</option><option>Помощь гражданину</option>
+      </datalist>
+      <label>Приоритет
+        <select name="priority">
+          <option value="">—</option>
+          <option value="1">Приоритет 1 (срочный)</option>
+          <option value="2">Приоритет 2</option>
+          <option value="3">Приоритет 3</option>
+        </select></label>
+    </div>
+    <div class="cf-row">
+      <label>Адрес / место<input name="location" placeholder="628 Davis Avenue"></label>
+      <label>Район<input name="zone" placeholder="Davis"></label>
+    </div>
+    <div class="cf-row">
+      <label>Офицер (позывной)
+        <input name="callsign" list="offs" placeholder="1-ADAM-12"></label>
+      <datalist id="offs">
+        {% for o in officers %}<option value="{{ o.callsign }}">{{ o.name }}</option>{% endfor %}
+      </datalist>
+      <label>Имя офицера<input name="officer_name" placeholder="John Miller"></label>
+    </div>
+    <label>Описание<textarea name="description" rows="2" placeholder="Что произошло на вызове"></textarea></label>
+    <label>Итог<input name="outcome" placeholder="Задержан, выписан штраф, ложный вызов…"></label>
+    <button class="btn primary" type="submit">Добавить вызов</button>
+  </form>
+</div>
+{% endif %}
+
+{% if callouts %}
+<table class="tbl">
+  <thead><tr><th>#</th><th>Тип</th><th>Приоритет</th><th>Место</th><th>Офицер</th><th>Когда</th></tr></thead>
+  <tbody>
+  {% for c in callouts %}
+    <tr onclick="location='{{ url_for('callout_view', cid=c.id) }}'">
+      <td>#{{ c.id }}</td>
+      <td><b>{{ c.callout_type or '—' }}</b></td>
+      <td>{% if c.priority %}<span class="tag {{ 'wanted' if c.priority=='1' }}">{{ c.priority_ru }}</span>{% else %}—{% endif %}</td>
+      <td>{{ c.location or '—' }}{% if c.zone %} <span class="muted">· {{ c.zone }}</span>{% endif %}</td>
+      <td><span class="cs">{{ c.callsign or '—' }}</span></td>
+      <td class="muted">{{ c.occurred_fmt }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% else %}
+  <p class="empty">Вызовов пока нет.{% if not static_export %} Добавь первый через форму выше.{% endif %}</p>
+{% endif %}
+{% endblock %}

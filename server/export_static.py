@@ -50,7 +50,7 @@ def main():
     os.makedirs(OUT, exist_ok=True)
 
     urls = ["/", "/map", "/cases", "/court", "/shifts", "/citations", "/warnings",
-            "/register", "/staff"]
+            "/callouts", "/register", "/staff"]
     for c in db.list_cases(500):
         urls.append(f"/case/{c['id']}")
     for c in db.list_court_cases(500):
@@ -59,6 +59,8 @@ def main():
         urls.append(f"/shift/{s['id']}")
     for ct in db.list_citations(500):
         urls.append(f"/citation/{ct['id']}")
+    for co in db.list_callouts(500):
+        urls.append(f"/callout/{co['id']}")
     for o in db.list_officers_with_stats():
         urls.append(f"/officer/{o['callsign']}")
 

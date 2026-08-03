@@ -119,6 +119,19 @@ def init_db():
                 changed_at TEXT NOT NULL
             )""")
         c.execute(
+            """CREATE TABLE IF NOT EXISTS callouts (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                external_id TEXT UNIQUE,
+                officer_id INTEGER,
+                callout_type TEXT,
+                priority TEXT,
+                location TEXT,
+                zone TEXT,
+                description TEXT,
+                outcome TEXT,
+                occurred_at TEXT
+            )""")
+        c.execute(
             """CREATE TABLE IF NOT EXISTS warnings (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 external_id TEXT UNIQUE,
@@ -664,6 +677,67 @@ def list_citations(limit=200, officer_id=None):
     q += " ORDER BY citations.id DESC LIMIT ?"; params.append(limit)
     with get_conn() as c:
         return [_row_to_citation(r) for r in c.execute(q, params).fetchall()]
+
+
+CALLOUT_PRIORITY_RU = {"1": "Приоритет 1 (срочный)", "2": "Приоритет 2", "3": "Приоритет 3",
+                       "high": "Высокий", "medium": "Средний", "low": "Низкий", None: "—", "": "—"}
+
+
+def create_callout(data):
+    """Вызов, добавленный вручную (или из плагина)."""
+    officer_id = get_or_create_officer(data.get("callsign", "UNKNOWN"), data.get("officer_name"))
+    ext = data.get("external_id") or ("manual-" + datetime.datetime.now().strftime("%Y%m%d%H%M%S%f"))
+    with get_conn() as c:
+        if c.execute("SELECT id FROM callouts WHERE external_id=?", (ext,)).fetchone():
+            return None, False
+        cur = c.execute(
+            """INSERT INTO callouts (external_id, officer_id, callout_type, priority,
+               location, zone, description, outcome, occurred_at)
+               VALUES (?,?,?,?,?,?,?,?,?)""",
+            (ext, officer_id, data.get("callout_type"), data.get("priority"),
+             data.get("location"), data.get("zone"), data.get("description"),
+             data.get("outcome"), data.get("occurred_at") or _now()))
+        return cur.lastrowid, True
+
+
+def _row_to_callout(r):
+    d = dict(r)
+    d["priority_ru"] = CALLOUT_PRIORITY_RU.get(r["priority"], r["priority"] or "—")
+    d["occurred_fmt"] = fmt_dt(r["occurred_at"]) if r["occurred_at"] else "—"
+    ext = r["external_id"] or str(r["id"])
+    try:
+        num = int("".join(ch for ch in ext if ch.isdigit())[:8] or "0") % 900000 + 100000
+    except Exception:
+        num = 100000 + (r["id"] or 0)
+    d["callout_no"] = f"CAD-{num}"
+    return d
+
+
+def list_callouts(limit=200, officer_id=None):
+    q = """SELECT callouts.*, officers.callsign, officers.name AS officer_name
+           FROM callouts LEFT JOIN officers ON officers.id = callouts.officer_id"""
+    params = []
+    if officer_id:
+        q += " WHERE callouts.officer_id=?"; params.append(officer_id)
+    q += " ORDER BY callouts.id DESC LIMIT ?"; params.append(limit)
+    with get_conn() as c:
+        return [_row_to_callout(r) for r in c.execute(q, params).fetchall()]
+
+
+def get_callout(cid):
+    with get_conn() as c:
+        r = c.execute(
+            """SELECT callouts.*, officers.callsign, officers.name AS officer_name
+               FROM callouts LEFT JOIN officers ON officers.id = callouts.officer_id
+               WHERE callouts.id=?""", (cid,)).fetchone()
+        return _row_to_callout(r) if r else None
+
+
+def callouts_count(officer_id=None):
+    with get_conn() as c:
+        if officer_id:
+            return c.execute("SELECT COUNT(*) FROM callouts WHERE officer_id=?", (officer_id,)).fetchone()[0]
+        return c.execute("SELECT COUNT(*) FROM callouts").fetchone()[0]
 
 
 def upsert_warning(data):

@@ -232,6 +232,34 @@ def warnings():
     return render_template("warnings.html", warnings=db.list_warnings(300))
 
 
+@app.route("/callouts", methods=["GET", "POST"])
+def callouts():
+    is_static = os.environ.get("STATIC_EXPORT") == "1"
+    if request.method == "POST" and not is_static:
+        db.create_callout({
+            "callsign": request.form.get("callsign", "").strip(),
+            "officer_name": request.form.get("officer_name", "").strip(),
+            "callout_type": request.form.get("callout_type", "").strip(),
+            "priority": request.form.get("priority", "").strip(),
+            "location": request.form.get("location", "").strip(),
+            "zone": request.form.get("zone", "").strip(),
+            "description": request.form.get("description", "").strip(),
+            "outcome": request.form.get("outcome", "").strip(),
+        })
+        flash("Вызов добавлен.", "ok")
+        return redirect(url_for("callouts"))
+    officers = db.list_officers_with_stats()
+    return render_template("callouts.html", callouts=db.list_callouts(300), officers=officers)
+
+
+@app.route("/callout/<int:cid>")
+def callout_view(cid):
+    co = db.get_callout(cid)
+    if not co:
+        abort(404)
+    return render_template("callout.html", co=co)
+
+
 @app.route("/citation/<int:cid>")
 def citation_view(cid):
     cit = db.get_citation(cid)

@@ -243,3 +243,20 @@ h3{font-size:14px;margin:0 0 .5em;color:var(--muted);text-transform:uppercase;le
 .callout-form .cf-row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 .callout-form button{margin-top:8px}
 @media(max-width:700px){.callout-form .cf-row{grid-template-columns:1fr}}
+
+/* меню — перенос при нехватке места */
+.topbar .wrap{flex-wrap:wrap;height:auto;min-height:58px;padding-top:8px;padding-bottom:8px}
+nav{display:flex;flex-wrap:wrap;gap:2px 0}
+/* таймлайн дела */
+.timeline{position:relative;margin-top:10px}
+.tl-item{display:flex;gap:14px;padding:0 0 4px}
+.tl-dot{width:38px;height:38px;border-radius:50%;background:var(--surface2);border:1px solid var(--border);
+  display:grid;place-items:center;font-size:18px;flex-shrink:0;z-index:1}
+.tl-body{flex:1;background:var(--surface);border:1px solid var(--border);border-radius:10px;
+  padding:10px 14px;margin-bottom:10px}
+.tl-head{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.tl-open{color:var(--accent);font-size:13px;white-space:nowrap}
+.tl-item:not(:last-child){background:linear-gradient(var(--border),var(--border)) no-repeat 18px 38px/1px 100%}
+.tl-arrest .tl-dot{border-color:#7a3a3a}
+.tl-court .tl-dot{border-color:#5f3f7a}
+.tl-callout .tl-dot{border-color:#31517a}

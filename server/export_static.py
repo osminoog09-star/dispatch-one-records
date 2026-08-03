@@ -62,8 +62,7 @@ def main():
     for co in db.list_callouts(500):
         urls.append(f"/callout/{co['id']}")
     for f in db.list_case_files(500):
-        from urllib.parse import quote
-        urls.append("/file/" + quote(f["name"]))
+        urls.append("/file/" + f["name"])   # без quote — папка с именем как есть
     for o in db.list_officers_with_stats():
         urls.append(f"/officer/{o['callsign']}")
 

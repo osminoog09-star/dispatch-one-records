@@ -7,7 +7,45 @@
   <h1>Дело · {{ cf.name }}</h1>
   <span class="tag">{{ cf.count }} записей</span>
 </div>
-<p class="muted">Полная цепочка событий по человеку, по времени.</p>
+
+<div class="doc-actions">
+  <button class="btn primary" onclick="downloadDoc()">📄 Скачать карточку дела (PNG)</button>
+  <span class="muted small">Картинку можно перетащить в Discord.</span>
+</div>
+
+<div id="doc" class="doc">
+  <div class="doc-title">
+    <div class="doc-court">ЛИЧНОЕ ДЕЛО · LAPD</div>
+    <div class="doc-county">ДОСЬЕ · {{ cf.name|upper }} · ЗАПИСЕЙ: {{ cf.count }}</div>
+  </div>
+  <div class="doc-sec-title">ХРОНОЛОГИЯ СОБЫТИЙ</div>
+  <table class="doc-tbl doc-chain-tbl">
+    <tr><th>СОБЫТИЕ</th><th>ДЕТАЛИ</th><th>ОФИЦЕР</th><th>ДАТА</th></tr>
+    {% for it in cf.chain %}
+      {% set icon = {'callout':'🚨','arrest':'🚔','citation':'🎫','warning':'⚠️','court':'⚖'}[it.kind] %}
+      <tr>
+        <td><b>{{ icon }} {{ it.title }}</b></td>
+        <td>{% if it.kind == 'callout' %}{{ it.row.location or '—' }}
+            {%- elif it.kind == 'arrest' %}{{ it.row.zone or '—' }}
+            {%- elif it.kind == 'citation' %}{{ it.row.location or '—' }}
+            {%- elif it.kind == 'warning' %}{{ it.row.reason or '—' }}
+            {%- else %}—{% endif %}</td>
+        <td>{{ it.row.callsign or '—' }}</td>
+        <td>{{ it.when[:10] if it.when else '—' }}</td>
+      </tr>
+    {% endfor %}
+  </table>
+  <div class="doc-footer">
+    <div class="doc-seal">🗂️</div>
+    <div class="doc-cert" style="margin-left:46px">
+      Сводное личное дело. Объединяет все записи по указанному лицу из систем LAPD.
+    </div>
+    <div class="doc-form">LAPD RECORDS · ЛИЧНОЕ ДЕЛО · ФОРМА CF-001</div>
+  </div>
+</div>
+
+<h2>Хронология</h2>
+<p class="muted small">Кликни событие, чтобы открыть его карточку.</p>
 
 <div class="timeline">
   {% for it in cf.chain %}
@@ -34,4 +72,15 @@
     </div>
   {% endfor %}
 </div>
+
+<script src="{{ url_for('static', filename='html2canvas.min.js') }}"></script>
+<script>
+function downloadDoc(){
+  html2canvas(document.getElementById('doc'),{scale:2,backgroundColor:'#f4f1e8'}).then(function(c){
+    var a=document.createElement('a');
+    a.download='delo_{{ cf.name }}.png';
+    a.href=c.toDataURL('image/png'); a.click();
+  });
+}
+</script>
 {% endblock %}

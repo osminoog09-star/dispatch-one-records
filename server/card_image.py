@@ -47,6 +47,7 @@ _PATHS = {
     "citation": "/citation/{id}",
     "court": "/court/{id}",
     "callout": "/callout/{id}",
+    "file": "/file/{id}",   # досье (id = имя человека)
 }
 
 
@@ -55,13 +56,15 @@ def render_card(kind, record_id):
     path = _PATHS.get(kind)
     if not path:
         return None
+    import urllib.parse
+    id_part = urllib.parse.quote(str(record_id))
     try:
         from playwright.sync_api import sync_playwright
     except Exception:
         return None
 
     _ensure_server()
-    url = f"http://127.0.0.1:{_port}" + path.format(id=record_id)
+    url = f"http://127.0.0.1:{_port}" + path.format(id=id_part)
     try:
         with sync_playwright() as p:
             browser = p.chromium.launch()

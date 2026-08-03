@@ -240,6 +240,21 @@ def send_case_file(cf):
         return False, "Webhook не задан"
     import urllib.parse
     site = config.PUBLIC_BASE_URL.rstrip("/") + "/file/" + urllib.parse.quote(cf["name"])
+
+    # 1) картинка-карточка досье
+    try:
+        import card_image
+        png = card_image.render_card("file", cf["name"])
+        if png:
+            r = requests.post(url, data={"payload_json": _json({
+                "username": "LAPD-Dispatch", "content": f"📁 Дело · {cf['name']}\n{site}"})},
+                files={"file": ("delo.png", png, "image/png")}, timeout=30)
+            if r.status_code in (200, 204):
+                return True, "отправлена карточка дела"
+    except Exception as e:
+        print(f"[case-file] картинка не вышла ({e}) — шлю embed")
+
+    # 2) запасной вариант — embed
     icons = {"callout": "🚨", "arrest": "🚔", "citation": "🎫", "warning": "⚠️", "court": "⚖"}
     lines = []
     for it in cf["chain"]:

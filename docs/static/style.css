@@ -260,3 +260,9 @@ nav{display:flex;flex-wrap:wrap;gap:2px 0}
 .tl-arrest .tl-dot{border-color:#7a3a3a}
 .tl-court .tl-dot{border-color:#5f3f7a}
 .tl-callout .tl-dot{border-color:#31517a}
+
+.doc-chain-tbl th{text-align:left;font-size:9.5px;color:#6b6555;text-transform:uppercase;
+  letter-spacing:.3px;border-bottom:1px solid #999;padding:4px 6px}
+.doc-chain-tbl td{padding:5px 6px;border-bottom:1px solid #ddd6c2;font-size:12px;vertical-align:top;
+  text-transform:none;color:#1a1a1a;width:auto}
+.doc-chain-tbl td:first-child{width:auto;font-size:12px}

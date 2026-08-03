@@ -18,7 +18,7 @@ import tkinter as tk
 from tkinter import messagebox
 
 APP_NAME = "LAPD Records"
-VERSION = "1.4.1"
+VERSION = "1.4.2"
 GITHUB_REPO = "osminoog09-star/dispatch-one-records"
 # Шлюз приёма данных (Cloudflare Worker) — вшивается при сборке, токена в клиенте нет.
 try:
@@ -86,13 +86,119 @@ def write_config(cfg):
             f.write(f"{k}={v}\n")
 
 
+def _drives():
+    import string
+    return [f"{d}:\\" for d in string.ascii_uppercase if os.path.isdir(f"{d}:\\")]
+
+
+def _reg_values(hive, key, names):
+    out = []
+    try:
+        import winreg
+        with winreg.OpenKey(hive, key) as k:
+            for n in names:
+                try:
+                    v, _ = winreg.QueryValueEx(k, n)
+                    if v:
+                        out.append(v)
+                except OSError:
+                    pass
+    except OSError:
+        pass
+    except Exception:
+        pass
+    return out
+
+
+def _reg_gtav():
+    """Путь установки GTA V из реестра Rockstar (Steam/Epic/Retail)."""
+    try:
+        import winreg
+    except Exception:
+        return []
+    keys = [
+        r"SOFTWARE\WOW6432Node\Rockstar Games\Grand Theft Auto V",
+        r"SOFTWARE\Rockstar Games\Grand Theft Auto V",
+        r"SOFTWARE\WOW6432Node\Rockstar Games\GTAV",
+        r"SOFTWARE\Rockstar Games\GTAV",
+    ]
+    names = ["InstallFolder", "InstallFolderSteam", "InstallFolderEpic", "InstallFolderRetail"]
+    out = []
+    import winreg
+    for key in keys:
+        out += _reg_values(winreg.HKEY_LOCAL_MACHINE, key, names)
+    return out
+
+
+def _resolve_lnk(path):
+    if not os.path.exists(path):
+        return None
+    try:
+        ps = f'(New-Object -ComObject WScript.Shell).CreateShortcut("{path}").TargetPath'
+        r = subprocess.run(["powershell", "-NoProfile", "-Command", ps],
+                           capture_output=True, text=True, creationflags=0x08000000, timeout=10)
+        return (r.stdout or "").strip() or None
+    except Exception:
+        return None
+
+
 def find_game():
+    """Авто-поиск папки игры: сохранённый путь → реестр → кандидаты → скан дисков.
+    Годится папка с plugins\\LSPDFR\\pdComp ИЛИ с RAGEPluginHook.exe."""
+    def ok(p):
+        return bool(p) and (os.path.isdir(os.path.join(p, "plugins", "LSPDFR", "pdComp"))
+                            or os.path.exists(os.path.join(p, "RAGEPluginHook.exe")))
     saved = read_config().get("GAME_DIR")
-    if saved and os.path.isdir(os.path.join(saved, "plugins", "LSPDFR", "pdComp")):
+    if ok(saved):
         return saved
+    for p in _reg_gtav():
+        if ok(p):
+            return p
     for c in GAME_CANDIDATES:
-        if os.path.isdir(os.path.join(c, "plugins", "LSPDFR", "pdComp")):
+        if ok(c):
             return c
+    subs = [
+        r"Program Files\Rockstar Games\Grand Theft Auto V Legacy",
+        r"Program Files\Rockstar Games\Grand Theft Auto V",
+        r"Rockstar Games\Grand Theft Auto V Legacy",
+        r"Rockstar Games\Grand Theft Auto V",
+        r"Steam\steamapps\common\Grand Theft Auto V",
+        r"SteamLibrary\steamapps\common\Grand Theft Auto V",
+        r"Program Files (x86)\Steam\steamapps\common\Grand Theft Auto V",
+        r"Epic Games\GTAV", r"Games\Grand Theft Auto V", r"Grand Theft Auto V",
+    ]
+    for drive in _drives():
+        for s in subs:
+            p = os.path.join(drive, s)
+            if ok(p):
+                return p
+    return None
+
+
+def find_vinewood():
+    """Авто-поиск Vinewood Launcher.exe: сохранённый → типовые пути → ярлык → скан дисков."""
+    saved = read_config().get("VINEWOOD_EXE")
+    if saved and os.path.exists(saved):
+        return saved
+    la = os.environ.get("LOCALAPPDATA", "")
+    cands = [
+        r"C:\Program Files\Vinewood Launcher\Vinewood Launcher.exe",
+        r"C:\Program Files (x86)\Vinewood Launcher\Vinewood Launcher.exe",
+        os.path.join(la, "Programs", "Vinewood Launcher", "Vinewood Launcher.exe"),
+        os.path.join(la, "Vinewood Launcher", "Vinewood Launcher.exe"),
+    ]
+    for c in cands:
+        if os.path.exists(c):
+            return c
+    tgt = _resolve_lnk(os.path.join(os.environ.get("APPDATA", ""), "Microsoft", "Windows",
+                                    "Start Menu", "Programs", "Vinewood Launcher.lnk"))
+    if tgt and os.path.exists(tgt):
+        return tgt
+    for drive in _drives():
+        for base in ("Program Files", "Program Files (x86)"):
+            p = os.path.join(drive, base, "Vinewood Launcher", "Vinewood Launcher.exe")
+            if os.path.exists(p):
+                return p
     return None
 
 
@@ -393,10 +499,11 @@ def start_agent():
 
 
 def start_vinewood():
-    if os.path.exists(VINEWOOD):
+    exe = find_vinewood()
+    if exe:
         try:
-            subprocess.Popen([VINEWOOD])
-            log("Vinewood запущен")
+            subprocess.Popen([exe])
+            log(f"Vinewood запущен: {exe}")
             return True
         except Exception:
             log_exc("start_vinewood")
@@ -529,9 +636,15 @@ class Launcher(tk.Tk):
         cfg = read_config()
         self.game = find_game()
 
+        # ─── полицейская мигалка (анимация) ───
+        self.lightbar = tk.Canvas(self, height=8, bg="#05070c", highlightthickness=0)
+        self.lightbar.pack(fill="x")
+        self._lb_phase = 0
+        self.after(150, self._animate_lightbar)
+
         # ─── ШАПКА ───
         header = tk.Frame(self, bg=BG)
-        header.pack(fill="x", pady=(26, 0))
+        header.pack(fill="x", pady=(18, 0))
         tk.Label(header, text="★", bg=ACCENT, fg="white",
                  font=("Segoe UI", 15, "bold"), width=2, height=1).pack()
         tk.Label(header, text="LAPD Records", bg=BG, fg=TEXT,
@@ -617,6 +730,29 @@ class Launcher(tk.Tk):
                 self.after(1200, lambda: self._set_status(f"Плагин: {pmsg}", "#e0a0a0"))
         log(f"лаунчер запущен v{VERSION}, игра={self.game}")
         threading.Thread(target=self._check_update_async, daemon=True).start()
+
+    def _animate_lightbar(self):
+        """Анимированная полицейская светополоса: красная и синяя половины мигают."""
+        try:
+            c = self.lightbar
+            c.delete("all")
+            w = c.winfo_width() or 580
+            h = 8
+            half = w // 2
+            p = self._lb_phase % 2
+            # активная сторона горит ярко, вторая — тускло (эффект мигалки)
+            reds = ["#ff3b3b", "#e01e1e", "#7a0d0d"] if p == 0 else ["#3a1414", "#2a0e0e", "#1a0808"]
+            blues = ["#141d3a", "#0e1730", "#08101f"] if p == 0 else ["#3b7bff", "#1e5ae0", "#123f9a"]
+            # красная половина (3 сегмента с яркостью к центру)
+            seg = half / 3.0
+            for i, col in enumerate(reds):
+                c.create_rectangle(i * seg, 0, (i + 1) * seg, h, fill=col, outline="")
+            for i, col in enumerate(blues):
+                c.create_rectangle(half + (2 - i) * seg, 0, half + (3 - i) * seg, h, fill=col, outline="")
+            self._lb_phase += 1
+            self.after(420, self._animate_lightbar)
+        except Exception:
+            pass
 
     # ── строительные блоки UI ──
     def _card(self):

@@ -1,9 +1,9 @@
 {
-  "launcher": "1.4.1",
+  "launcher": "1.4.2",
   "agent": "1.1.0",
   "enabled": true,
   "min_launcher": "1.0.0",
-  "notes": "Кнопка «Играть» теперь запускает игру через Vinewood (со всеми его модами) и ставит наш плагин в LSPDFR. Плагин грузится при любом запуске игры. Агент публикует данные, даже если не поймал запуск игры.",
+  "notes": "Авто-поиск игры и Vinewood (реестр + сканирование дисков). Анимированная полицейская мигалка в шапке. «Играть» запускает Vinewood и ставит плагин в LSPDFR.",
   "launcher_url": "https://github.com/osminoog09-star/dispatch-one-records/releases/latest/download/LAPD-Records-Launcher.exe",
   "agent_url": "https://github.com/osminoog09-star/dispatch-one-records/releases/latest/download/pdcomp_sync.exe"
 }

@@ -18,7 +18,7 @@ import tkinter as tk
 from tkinter import messagebox
 
 APP_NAME = "LAPD Records"
-VERSION = "1.3.0"
+VERSION = "1.4.0"
 GITHUB_REPO = "osminoog09-star/dispatch-one-records"
 # Шлюз приёма данных (Cloudflare Worker) — вшивается при сборке, токена в клиенте нет.
 try:
@@ -403,6 +403,65 @@ def start_vinewood():
     return False
 
 
+PLUGIN_DLL = "DispatchOne.MDT.dll"
+
+
+def _plugin_source():
+    """Ищет собранный плагин: вшитый в лаунчер, рядом, или в репозитории."""
+    for p in (_bundled(PLUGIN_DLL),
+              os.path.join(os.path.dirname(os.path.abspath(__file__)), PLUGIN_DLL),
+              os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                           "..", "dispatch-plugin", "out", PLUGIN_DLL)):
+        if os.path.exists(p):
+            return os.path.abspath(p)
+    return None
+
+
+def install_plugin(game):
+    """Копирует плагин в plugins\\LSPDFR игры (лаунчер идёт от админа). (ok, msg)."""
+    if not game:
+        return False, "игра не найдена"
+    src = _plugin_source()
+    if not src:
+        return False, "файл плагина не найден в комплекте"
+    dst_dir = os.path.join(game, "plugins", "LSPDFR")
+    if not os.path.isdir(dst_dir):
+        return False, "нет папки plugins\\LSPDFR (установлен ли LSPDFR?)"
+    dst = os.path.join(dst_dir, PLUGIN_DLL)
+    try:
+        # не перезаписываем, если тот же по размеру и не старее
+        if os.path.exists(dst) and os.path.getsize(dst) == os.path.getsize(src) \
+                and os.path.getmtime(dst) >= os.path.getmtime(src):
+            return True, "плагин уже установлен"
+        import shutil
+        shutil.copy2(src, dst)
+        log(f"плагин установлен: {dst}")
+        return True, "плагин установлен"
+    except PermissionError:
+        log("нет прав на установку плагина — нужен запуск от админа", "WARN")
+        return False, "нет прав — запусти лаунчер от администратора"
+    except Exception as e:
+        log_exc("install_plugin")
+        return False, str(e)
+
+
+def launch_game(game):
+    """Запускает модовую игру через RagePluginHook (грузит LSPDFR + плагин). (ok, msg)."""
+    if not game:
+        return False, "игра не найдена"
+    for exe in ("RAGEPluginHook.exe", "RAGEPluginHook64.exe"):
+        p = os.path.join(game, exe)
+        if os.path.exists(p):
+            try:
+                subprocess.Popen([p], cwd=game)
+                log(f"игра запущена через {exe}")
+                return True, "игра запускается через RagePluginHook"
+            except Exception as e:
+                log_exc("launch_game")
+                return False, str(e)
+    return False, "RagePluginHook.exe не найден в папке игры"
+
+
 # ─────────────── автозапуск агента с Windows ───────────────
 
 def _startup_lnk():
@@ -531,8 +590,8 @@ class Launcher(tk.Tk):
         # ─── КНОПКА ИГРАТЬ ───
         self._button(self, "▶   ИГРАТЬ", self.play, GREEN, GREEN2,
                      big=True).pack(fill="x", padx=32, pady=(14, 4))
-        tk.Label(self, text="запустит Vinewood и синхронизацию", bg=BG, fg=MUTED,
-                 font=("Segoe UI", 8)).pack()
+        tk.Label(self, text="поставит плагин, запустит игру (RagePluginHook) и синхронизацию",
+                 bg=BG, fg=MUTED, font=("Segoe UI", 8)).pack()
 
         self.status = tk.Label(self, text="", bg=BG, fg=MUTED, font=("Segoe UI", 9))
         self.status.pack(pady=(8, 0))
@@ -549,6 +608,13 @@ class Launcher(tk.Tk):
             b.bind("<Leave>", lambda e, w=b: w.config(fg=MUTED))
 
         ensure_agent_installed()
+        # ставим плагин сразу — тогда он грузится при ЛЮБОМ запуске игры
+        # (наш лаунчер, Vinewood, Steam) как обычный плагин LSPDFR
+        if self.game:
+            pok, pmsg = install_plugin(self.game)
+            log(f"плагин при старте: {pmsg}")
+            if not pok and "уже установлен" not in pmsg:
+                self.after(1200, lambda: self._set_status(f"Плагин: {pmsg}", "#e0a0a0"))
         log(f"лаунчер запущен v{VERSION}, игра={self.game}")
         threading.Thread(target=self._check_update_async, daemon=True).start()
 
@@ -749,10 +815,22 @@ class Launcher(tk.Tk):
             self.autostart_var.set(not on)
 
     def play(self):
-        ok, msg = start_agent()
-        self._set_status("Агент запущен. Открываю Vinewood…" if ok else f"Агент: {msg}",
-                         "#7fbf7f" if ok else "#e0a0a0")
-        start_vinewood()
+        # 1) поставить плагин (лаунчер от админа — права есть)
+        pok, pmsg = install_plugin(self.game)
+        log(f"play: плагин — {pmsg}")
+        # 2) запустить агент (синхронизация/публикация)
+        aok, amsg = start_agent()
+        # 3) запустить модовую игру через RagePluginHook; если нет — Vinewood
+        gok, gmsg = launch_game(self.game)
+        if not gok:
+            if start_vinewood():
+                gok, gmsg = True, "запуск через Vinewood"
+        if gok:
+            extra = "" if pok else f" (плагин: {pmsg})"
+            self._set_status(f"Запускаю игру — {gmsg}.{extra}", "#7fbf7f")
+        else:
+            self._set_status(f"Не удалось запустить игру: {gmsg}. "
+                             f"Агент: {amsg}.", "#e0a0a0")
 
     def open_logs(self):
         os.makedirs(LOG_DIR, exist_ok=True)

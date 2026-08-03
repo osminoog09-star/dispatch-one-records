@@ -1,8 +1,18 @@
 """Настройки сервера Records. Секреты — из переменных окружения (не в коде)."""
 import os
 
-# URL вебхука Discord-канала #уголовные-дела. Пусто = «сухой» режим (постинг логируется, не шлётся).
-DISCORD_WEBHOOK_URL = os.environ.get("DISCORD_WEBHOOK_URL", "")
+# Вебхуки Discord по каналам. Пусто = «сухой» режим (не шлётся).
+DISCORD_WEBHOOK_URL = os.environ.get("DISCORD_WEBHOOK_URL", "")            # общий/запасной
+DISCORD_WEBHOOK_ARRESTS = os.environ.get("DISCORD_WEBHOOK_ARRESTS", "")    # аресты, суды, вызовы
+DISCORD_WEBHOOK_CITATIONS = os.environ.get("DISCORD_WEBHOOK_CITATIONS", "")  # штрафы, предупреждения
+
+
+def webhook_for(kind):
+    """Возвращает вебхук канала для типа события."""
+    if kind in ("citation", "warning"):
+        return DISCORD_WEBHOOK_CITATIONS or DISCORD_WEBHOOK_URL
+    # arrest, court, callout
+    return DISCORD_WEBHOOK_ARRESTS or DISCORD_WEBHOOK_URL
 
 # Ключ, которым мод авторизуется при отправке дела (POST /api/case).
 API_KEY = os.environ.get("RECORDS_API_KEY", "dev-key")

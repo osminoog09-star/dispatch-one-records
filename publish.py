@@ -14,6 +14,15 @@ ROOT = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(ROOT, "server"))
 sys.path.insert(0, os.path.join(ROOT, "agent"))
 
+# вебхуки Discord из локального файла (в переменные окружения до импорта config)
+_envfile = os.path.join(ROOT, "discord-webhooks.env")
+if os.path.exists(_envfile):
+    for _ln in open(_envfile, encoding="utf-8"):
+        _ln = _ln.strip()
+        if _ln and not _ln.startswith("#") and "=" in _ln:
+            _k, _v = _ln.split("=", 1)
+            os.environ.setdefault(_k.strip(), _v.strip())
+
 from app import db                      # noqa: E402
 import pdcomp_sync as agent             # noqa: E402
 

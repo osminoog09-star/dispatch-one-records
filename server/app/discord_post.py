@@ -180,8 +180,8 @@ def build_feed(record, kind):
 
 
 def send_feed(record, kind, webhook=None):
-    """Отправить событие в ленту Discord. (ok, message)."""
-    url = webhook or config.DISCORD_WEBHOOK_URL
+    """Отправить событие в нужный канал Discord по типу. (ok, message)."""
+    url = webhook or config.webhook_for(kind)
     if not url:
         return False, "Webhook не задан"
     try:

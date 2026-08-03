@@ -36,6 +36,8 @@ jobs:
       - name: Принять данные игроков из inbox
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          DISCORD_WEBHOOK_ARRESTS: ${{ secrets.DISCORD_WEBHOOK_ARRESTS }}
+          DISCORD_WEBHOOK_CITATIONS: ${{ secrets.DISCORD_WEBHOOK_CITATIONS }}
         run: python server/import_inbox.py
 
       - name: Собрать сайт

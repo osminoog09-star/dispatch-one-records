@@ -687,17 +687,41 @@ def build_shift(started_ts, baseline):
     }
 
 
+def _store_fp():
+    """Отпечаток данных pdComp (+ mdt плагина): меняется, когда игра что-то записала.
+    По нему публикуем даже если детект запуска игры не сработал."""
+    fp = []
+    for name in ("arrests.json", "citations.json", "warnings.json", "cases.json"):
+        p = os.path.join(PDCOMP_STORE, name)
+        fp.append(os.path.getmtime(p) if os.path.exists(p) else 0)
+    mp = mdt_file()
+    fp.append(os.path.getmtime(mp) if os.path.exists(mp) else 0)
+    return tuple(fp)
+
+
 def watch_game():
     """Режим ожидания игры: спим, пока игра не запущена; синхронизируем во время игры;
-    после выхода из игры — публикуем на сайт."""
+    после выхода из игры — публикуем на сайт.
+    В режиме владельца ДОПОЛНИТЕЛЬНО публикуем, как только данные pdComp изменились —
+    это ловит случаи, когда детект запуска игры не сработал."""
     print("Режим автозапуска: жду запуска игры...")
     was_running = False
     seen = {}
     shift_start = None
     shift_base = (0, 0, 0)
+    last_pub_fp = None    # владелец: отпечаток данных на момент последней публикации
     while True:
         try:
             running = is_game_running()
+
+            # Страховка владельца: данные изменились, а игра «не поймана» — публикуем сами.
+            if OWNER_MODE and not running:
+                fp = _store_fp()
+                if fp != last_pub_fp:
+                    if last_pub_fp is not None:
+                        print("Обнаружены новые данные игры — публикую...")
+                    auto_publish()
+                    last_pub_fp = fp
 
             if running and not was_running:
                 print("Игра запущена — слежу за данными.")
@@ -739,6 +763,8 @@ def watch_game():
                     _save_owner_shift(shift)   # владелец: смена в очередь для publish
                 upload_to_github(shift)        # игрок: отправка данных в GitHub
                 auto_publish()                 # владелец: сборка и публикация сайта
+                if OWNER_MODE:
+                    last_pub_fp = _store_fp()  # не публиковать повторно тем же
                 print("Жду следующего запуска игры...")
 
             was_running = running

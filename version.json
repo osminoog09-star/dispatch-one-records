@@ -1,9 +1,9 @@
 {
-  "launcher": "1.2.0",
+  "launcher": "1.3.0",
   "agent": "1.0.0",
   "enabled": true,
   "min_launcher": "1.0.0",
-  "notes": "Данные идут через защищённый шлюз (токен больше не хранится в лаунчере).",
+  "notes": "Автозапуск с Windows (агент сам ловит игру, лаунчер каждый раз не нужен) + автообновление агента.",
   "launcher_url": "https://github.com/osminoog09-star/dispatch-one-records/releases/latest/download/LAPD-Records-Launcher.exe",
   "agent_url": "https://github.com/osminoog09-star/dispatch-one-records/releases/latest/download/pdcomp_sync.exe"
 }

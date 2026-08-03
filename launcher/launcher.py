@@ -18,7 +18,7 @@ import tkinter as tk
 from tkinter import messagebox
 
 APP_NAME = "LAPD Records"
-VERSION = "1.2.0"
+VERSION = "1.3.0"
 GITHUB_REPO = "osminoog09-star/dispatch-one-records"
 # Шлюз приёма данных (Cloudflare Worker) — вшивается при сборке, токена в клиенте нет.
 try:
@@ -403,6 +403,44 @@ def start_vinewood():
     return False
 
 
+# ─────────────── автозапуск агента с Windows ───────────────
+
+def _startup_lnk():
+    startup = os.path.join(os.environ.get("APPDATA", ""), "Microsoft", "Windows",
+                           "Start Menu", "Programs", "Startup")
+    return os.path.join(startup, "LAPD Records Agent.lnk")
+
+
+def autostart_enabled():
+    return os.path.exists(_startup_lnk())
+
+
+def set_autostart(enable):
+    """Вкл/выкл автозапуск АГЕНТА с Windows (ярлык в Автозагрузке).
+    Тогда агент сам ловит запуск игры — через Vinewood, Steam, как угодно."""
+    lnk = _startup_lnk()
+    try:
+        if enable:
+            ensure_agent_installed()
+            exe = os.path.join(INSTALL_DIR, AGENT_EXE)
+            ps = (f'$w=New-Object -ComObject WScript.Shell;'
+                  f'$s=$w.CreateShortcut("{lnk}");$s.TargetPath="{exe}";'
+                  f'$s.WorkingDirectory="{INSTALL_DIR}";$s.Save()')
+            subprocess.run(["powershell", "-NoProfile", "-Command", ps],
+                           capture_output=True, creationflags=0x08000000)
+            # запустить сразу, если не запущен
+            start_agent()
+            log("автозапуск агента включён")
+        else:
+            if os.path.exists(lnk):
+                os.remove(lnk)
+            log("автозапуск агента выключен")
+        return True
+    except Exception:
+        log_exc("set_autostart")
+        return False
+
+
 # ─────────────────────── ИНТЕРФЕЙС ───────────────────────
 
 # ── палитра (тёмная тема в стиле GitHub) ──
@@ -424,7 +462,7 @@ class Launcher(tk.Tk):
     def __init__(self):
         super().__init__()
         self.title(APP_NAME)
-        self.geometry("580x690")
+        self.geometry("580x780")
         self.resizable(False, False)
         self.configure(bg=BG)
         self.after(80, self._front)
@@ -475,9 +513,24 @@ class Launcher(tk.Tk):
                                     CARD2, BORDER, small=True)
         self.upd_btn.pack(anchor="w", pady=(10, 0))
 
+        # ─── АВТОЗАПУСК АГЕНТА ───
+        self.autostart_var = tk.BooleanVar(value=autostart_enabled())
+        acard = self._card()
+        acard.pack(fill="x", padx=32, pady=(14, 0))
+        ai = tk.Frame(acard, bg=CARD)
+        ai.pack(fill="x", padx=18, pady=12)
+        cb = tk.Checkbutton(ai, text="  Автозапуск с Windows (агент сам ловит игру)",
+                            variable=self.autostart_var, command=self.toggle_autostart,
+                            bg=CARD, fg=TEXT, selectcolor=CARD2, activebackground=CARD,
+                            activeforeground=TEXT, font=("Segoe UI", 10), anchor="w")
+        cb.pack(fill="x")
+        tk.Label(ai, text="Включи — и запускай игру как угодно (Vinewood, Steam). "
+                          "Через лаунчер ходить не нужно.", bg=CARD, fg=MUTED,
+                 font=("Segoe UI", 8), wraplength=470, justify="left").pack(anchor="w", pady=(4, 0))
+
         # ─── КНОПКА ИГРАТЬ ───
         self._button(self, "▶   ИГРАТЬ", self.play, GREEN, GREEN2,
-                     big=True).pack(fill="x", padx=32, pady=(16, 4))
+                     big=True).pack(fill="x", padx=32, pady=(14, 4))
         tk.Label(self, text="запустит Vinewood и синхронизацию", bg=BG, fg=MUTED,
                  font=("Segoe UI", 8)).pack()
 
@@ -638,15 +691,22 @@ class Launcher(tk.Tk):
         info = check_update()
         self._upd = info
         m = info.get("manifest") or {}
+        notes = m.get("notes", "")
+
+        # агент обновляем САМИ, тихо (безопасно, перезапуск не нужен)
+        if info.get("agent_new") and not info.get("launcher_new"):
+            self.after(0, lambda: self.upd_label.config(text="⬇ обновляю агент…", fg="#e3b341"))
+            ok, _ = update_agent(m)
+            info["agent_new"] = not ok
+            if ok:
+                self.after(0, lambda: (self.upd_label.config(text="✓ Агент обновлён автоматически.", fg=OKGRN),
+                                       self.upd_notes.config(text=notes)))
+                return
+
         def upd():
-            notes = m.get("notes", "")
             if info.get("launcher_new"):
-                self.upd_label.config(text=f"● Новая версия лаунчера: {m.get('launcher')}", fg="#e3b341")
+                self.upd_label.config(text=f"● Доступно обновление лаунчера: {m.get('launcher')}", fg="#e3b341")
                 self.upd_btn.config(text=f"⬇ Обновить до {m.get('launcher')}")
-                self.upd_notes.config(text=notes)
-            elif info.get("agent_new"):
-                self.upd_label.config(text=f"● Новая версия агента: {m.get('agent')}", fg="#e3b341")
-                self.upd_btn.config(text=f"⬇ Обновить агент до {m.get('agent')}")
                 self.upd_notes.config(text=notes)
             else:
                 self.upd_label.config(text="✓ Установлена последняя версия.", fg=OKGRN)
@@ -677,6 +737,16 @@ class Launcher(tk.Tk):
                 self.upd_btn.config(state="normal", text="Проверить обновления")
             self.after(0, done)
         threading.Thread(target=work, daemon=True).start()
+
+    def toggle_autostart(self):
+        on = self.autostart_var.get()
+        if set_autostart(on):
+            self._set_status("Автозапуск включён — агент стартует с Windows и сам ловит игру."
+                             if on else "Автозапуск выключен.",
+                             "#7fbf7f" if on else "#98a1ac")
+        else:
+            self._set_status("Не удалось изменить автозапуск.", "#e0a0a0")
+            self.autostart_var.set(not on)
 
     def play(self):
         ok, msg = start_agent()

@@ -21,7 +21,7 @@ EXTRA_COLUMNS = {
     "vehicle_model": "TEXT", "vehicle_plate": "TEXT", "vehicle_color": "TEXT",
     "charges": "TEXT", "found_items": "TEXT", "reason": "TEXT", "notes": "TEXT",
     "mugshot": "TEXT", "fine": "INTEGER", "bail": "INTEGER", "jail_time": "TEXT",
-    "is_test": "INTEGER", "external_id": "TEXT",
+    "is_test": "INTEGER", "external_id": "TEXT", "suspect_dob": "TEXT",
 }
 
 
@@ -117,6 +117,17 @@ def init_db():
                 officer_id INTEGER NOT NULL,
                 status TEXT NOT NULL,
                 changed_at TEXT NOT NULL
+            )""")
+        c.execute(
+            """CREATE TABLE IF NOT EXISTS vehicles (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                plate TEXT,
+                suspect_name TEXT,
+                officer_id INTEGER,
+                zone TEXT,
+                seen_at TEXT,
+                source_ext TEXT,
+                UNIQUE(plate, source_ext)
             )""")
         c.execute(
             """CREATE TABLE IF NOT EXISTS callouts (
@@ -271,8 +282,19 @@ def create_case(data):
         case_id = cur.lastrowid
         if data.get("external_id"):
             c.execute("UPDATE cases SET external_id=? WHERE id=?", (data["external_id"], case_id))
+        if data.get("suspect_dob"):
+            c.execute("UPDATE cases SET suspect_dob=? WHERE id=?", (data["suspect_dob"], case_id))
         c.execute("INSERT INTO status_log (case_id, status, changed_at) VALUES (?, 'submitted', ?)",
                   (case_id, now))
+        # машины из ареста → в реестр транспорта
+        for plate in (data.get("vehicle_plates") or []):
+            try:
+                c.execute("""INSERT OR IGNORE INTO vehicles (plate, suspect_name, officer_id, zone, seen_at, source_ext)
+                             VALUES (?,?,?,?,?,?)""",
+                          (plate, data.get("suspect_name"), officer_id, data.get("zone"),
+                           data.get("game_time") or now, data.get("external_id") or str(case_id)))
+            except Exception:
+                pass
         return case_id
 
 
@@ -748,6 +770,53 @@ def case_file(name):
     if not items:
         return None
     return {"name": name, "chain": items, "count": len(items)}
+
+
+def person_info(name):
+    """Досье-шапка: дата рождения, возраст, статус розыска, номера машин."""
+    with get_conn() as c:
+        dob_row = c.execute("SELECT suspect_dob FROM cases WHERE suspect_name=? COLLATE NOCASE "
+                            "AND suspect_dob IS NOT NULL AND suspect_dob!='' LIMIT 1", (name,)).fetchone()
+        wanted = c.execute("SELECT MAX(wanted) FROM cases WHERE suspect_name=? COLLATE NOCASE",
+                           (name,)).fetchone()[0]
+        plates = [r["plate"] for r in c.execute(
+            "SELECT DISTINCT plate FROM vehicles WHERE suspect_name=? COLLATE NOCASE", (name,)).fetchall()]
+    dob = dob_row["suspect_dob"] if dob_row else None
+    age = None
+    if dob:
+        try:
+            b = datetime.datetime.strptime(dob[:10], "%Y-%m-%d")
+            age = int((datetime.datetime.now() - b).days / 365.25)
+        except Exception:
+            pass
+    return {"dob": dob, "age": age, "wanted": bool(wanted), "plates": plates}
+
+
+def list_vehicles(limit=300):
+    with get_conn() as c:
+        rows = c.execute(
+            """SELECT vehicles.plate,
+                      COUNT(DISTINCT vehicles.source_ext) AS incidents,
+                      GROUP_CONCAT(DISTINCT vehicles.suspect_name) AS suspects,
+                      MAX(vehicles.seen_at) AS last_seen
+               FROM vehicles WHERE plate IS NOT NULL AND plate!=''
+               GROUP BY vehicles.plate ORDER BY last_seen DESC LIMIT ?""", (limit,)).fetchall()
+        return [dict(r) for r in rows]
+
+
+def get_vehicle(plate):
+    with get_conn() as c:
+        rows = c.execute(
+            """SELECT vehicles.*, officers.callsign
+               FROM vehicles LEFT JOIN officers ON officers.id = vehicles.officer_id
+               WHERE plate=? COLLATE NOCASE ORDER BY seen_at DESC""", (plate,)).fetchall()
+        if not rows:
+            return None
+        events = [dict(r) for r in rows]
+        for e in events:
+            e["seen_fmt"] = fmt_dt(e["seen_at"]) if e.get("seen_at") else "—"
+        suspects = sorted({e["suspect_name"] for e in events if e.get("suspect_name")})
+        return {"plate": plate, "events": events, "suspects": suspects}
 
 
 def list_case_files(limit=200):

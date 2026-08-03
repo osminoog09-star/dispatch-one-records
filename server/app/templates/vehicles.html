@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Транспорт{% endblock %}
+{% block content %}
+<h1>Транспорт (реестр)</h1>
+<p class="muted">Номера машин, замеченные при задержаниях. Клик — к каким делам и людям привязана.</p>
+
+{% if vehicles %}
+<table class="tbl">
+  <thead><tr><th>Номер</th><th>Эпизодов</th><th>Причастные лица</th><th>Замечен</th></tr></thead>
+  <tbody>
+  {% for v in vehicles %}
+    <tr onclick="location='{{ url_for('vehicle_view', plate=v.plate) }}'">
+      <td><span class="cs">{{ v.plate }}</span></td>
+      <td>{{ v.incidents }}</td>
+      <td>{{ v.suspects or '—' }}</td>
+      <td class="muted">{{ v.last_seen[:16].replace('T',' ') if v.last_seen else '—' }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% else %}
+  <p class="empty">Машин пока нет — номера появляются из задержаний с транспортом.</p>
+{% endif %}
+{% endblock %}

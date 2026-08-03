@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Машина {{ v.plate }}{% endblock %}
+{% block content %}
+<a class="back" href="{{ url_for('vehicles') }}">← к транспорту</a>
+
+<div class="case-head">
+  <h1>Транспорт · <span class="cs big">{{ v.plate }}</span></h1>
+  <span class="tag">{{ v.events|length }} эпизодов</span>
+</div>
+
+{% if v.suspects %}
+<p class="muted">Причастные лица:
+  {% for s in v.suspects %}<a class="cs" href="{{ url_for('file_view', name=s) }}">{{ s }}</a>{% if not loop.last %}, {% endif %}{% endfor %}
+</p>
+{% endif %}
+
+<h2>Где замечена</h2>
+<table class="tbl">
+  <thead><tr><th>Лицо</th><th>Район</th><th>Офицер</th><th>Когда</th></tr></thead>
+  <tbody>
+  {% for e in v.events %}
+    <tr>
+      <td>{{ e.suspect_name or '—' }}</td>
+      <td>{{ e.zone or '—' }}</td>
+      <td><span class="cs">{{ e.callsign or '—' }}</span></td>
+      <td class="muted">{{ e.seen_fmt }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

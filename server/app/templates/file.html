@@ -18,6 +18,13 @@
     <div class="doc-court">ЛИЧНОЕ ДЕЛО · LAPD</div>
     <div class="doc-county">ДОСЬЕ · {{ cf.name|upper }} · ЗАПИСЕЙ: {{ cf.count }}</div>
   </div>
+  <div class="doc-sec-title">ЛИЧНОСТЬ</div>
+  <table class="doc-tbl">
+    <tr><td>ФИО</td><td><b>{{ cf.name }}</b></td></tr>
+    <tr><td>Дата рождения</td><td>{{ person.dob[:10] if person.dob else '—' }}{% if person.age %} · {{ person.age }} лет{% endif %}</td></tr>
+    <tr><td>Статус</td><td>{% if person.wanted %}🔴 В РОЗЫСКЕ{% else %}не в розыске{% endif %}</td></tr>
+    {% if person.plates %}<tr><td>Транспорт</td><td>{% for p in person.plates %}{{ p }}{% if not loop.last %}, {% endif %}{% endfor %}</td></tr>{% endif %}
+  </table>
   <div class="doc-sec-title">ХРОНОЛОГИЯ СОБЫТИЙ</div>
   <table class="doc-tbl doc-chain-tbl">
     <tr><th>СОБЫТИЕ</th><th>ДЕТАЛИ</th><th>ОФИЦЕР</th><th>ДАТА</th></tr>

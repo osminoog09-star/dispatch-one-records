@@ -50,7 +50,7 @@ def main():
     os.makedirs(OUT, exist_ok=True)
 
     urls = ["/", "/map", "/cases", "/court", "/shifts", "/citations", "/warnings",
-            "/callouts", "/files", "/register", "/staff"]
+            "/callouts", "/files", "/vehicles", "/register", "/staff"]
     for c in db.list_cases(500):
         urls.append(f"/case/{c['id']}")
     for c in db.list_court_cases(500):
@@ -63,6 +63,8 @@ def main():
         urls.append(f"/callout/{co['id']}")
     for f in db.list_case_files(500):
         urls.append("/file/" + f["name"])   # без quote — папка с именем как есть
+    for v in db.list_vehicles(500):
+        urls.append("/vehicle/" + v["plate"])
     for o in db.list_officers_with_stats():
         urls.append(f"/officer/{o['callsign']}")
 

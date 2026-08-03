@@ -186,15 +186,27 @@ def map_arrest(a):
 
     evidence = [e.get("Description", "") for e in a.get("Evidence", []) if e.get("Description")]
 
+    # номера машин из текста ареста ("plate 82WIM168")
+    import re
+    narr = a.get("Narrative") or ""
+    plates = re.findall(r"plate[s]?\s+([0-9A-Z]{5,8}(?:\s*,\s*[0-9A-Z]{5,8})*)", narr)
+    plate_list = []
+    for grp in plates:
+        for p in re.split(r"\s*,\s*", grp):
+            if p and p not in plate_list:
+                plate_list.append(p)
+
     return {
         "external_id": a.get("Id"),
         "callsign": callsign,          # позывной из игры (pdComp config.ini [Officer])
         "officer_name": officer_name,  # имя персонажа
         "suspect_name": a.get("SubjectFullName") or "Неизвестный",
+        "suspect_dob": a.get("SubjectDob"),
         "zone": fix_mojibake(a.get("Location")),
         "game_time": a.get("ArrestedAtWall") or a.get("ArrestedAt"),
         "charges": charges,
         "found_items": evidence,
+        "vehicle_plates": plate_list,
         "notes": a.get("Narrative"),
         "is_test": False,             # это реальные данные из игры
     }

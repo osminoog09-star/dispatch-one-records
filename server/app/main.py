@@ -278,7 +278,20 @@ def file_view(name):
     cf = db.case_file(name)
     if not cf:
         abort(404)
-    return render_template("file.html", cf=cf)
+    return render_template("file.html", cf=cf, person=db.person_info(name))
+
+
+@app.route("/vehicles")
+def vehicles():
+    return render_template("vehicles.html", vehicles=db.list_vehicles())
+
+
+@app.route("/vehicle/<plate>")
+def vehicle_view(plate):
+    v = db.get_vehicle(plate)
+    if not v:
+        abort(404)
+    return render_template("vehicle.html", v=v)
 
 
 @app.route("/citation/<int:cid>")

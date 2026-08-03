@@ -3,15 +3,18 @@ import os
 
 # Вебхуки Discord по каналам. Пусто = «сухой» режим (не шлётся).
 DISCORD_WEBHOOK_URL = os.environ.get("DISCORD_WEBHOOK_URL", "")            # общий/запасной
-DISCORD_WEBHOOK_ARRESTS = os.environ.get("DISCORD_WEBHOOK_ARRESTS", "")    # аресты, суды, вызовы
+DISCORD_WEBHOOK_ARRESTS = os.environ.get("DISCORD_WEBHOOK_ARRESTS", "")    # аресты, суды
 DISCORD_WEBHOOK_CITATIONS = os.environ.get("DISCORD_WEBHOOK_CITATIONS", "")  # штрафы, предупреждения
+DISCORD_WEBHOOK_CALLOUTS = os.environ.get("DISCORD_WEBHOOK_CALLOUTS", "")  # вызовы
 
 
 def webhook_for(kind):
     """Возвращает вебхук канала для типа события."""
     if kind in ("citation", "warning"):
         return DISCORD_WEBHOOK_CITATIONS or DISCORD_WEBHOOK_URL
-    # arrest, court, callout
+    if kind == "callout":
+        return DISCORD_WEBHOOK_CALLOUTS or DISCORD_WEBHOOK_URL
+    # arrest, court
     return DISCORD_WEBHOOK_ARRESTS or DISCORD_WEBHOOK_URL
 
 # Ключ, которым мод авторизуется при отправке дела (POST /api/case).

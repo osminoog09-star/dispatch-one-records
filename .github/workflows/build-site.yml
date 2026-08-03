@@ -31,13 +31,16 @@ jobs:
           python-version: "3.11"
 
       - name: Установить зависимости
-        run: pip install --quiet flask requests
+        run: |
+          pip install --quiet flask requests playwright
+          python -m playwright install --with-deps chromium
 
       - name: Принять данные игроков из inbox
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
           DISCORD_WEBHOOK_ARRESTS: ${{ secrets.DISCORD_WEBHOOK_ARRESTS }}
           DISCORD_WEBHOOK_CITATIONS: ${{ secrets.DISCORD_WEBHOOK_CITATIONS }}
+          DISCORD_WEBHOOK_CALLOUTS: ${{ secrets.DISCORD_WEBHOOK_CALLOUTS }}
         run: python server/import_inbox.py
 
       - name: Собрать сайт

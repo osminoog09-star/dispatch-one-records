@@ -160,11 +160,21 @@ def build_feed(record, kind):
        <дата время>
     """
     event = {"arrest": "Произошло задержание", "citation": "Выдан штраф",
-             "warning": "Вынесено предупреждение"}.get(kind, "Событие")
+             "warning": "Вынесено предупреждение", "callout": "Поступил вызов"}.get(kind, "Событие")
     officer = record.get("officer_name") or record.get("callsign") or "—"
-    who = record.get("suspect_name") or record.get("subject_name") or "—"
     where = record.get("zone") or record.get("location") or "—"
 
+    # вызов: событие / тип / офицер / место / приоритет / итог / время
+    if kind == "callout":
+        lines = [event, record.get("callout_type") or "Вызов", officer, where]
+        if record.get("priority_ru") and record.get("priority_ru") != "—":
+            lines.append("Приоритет: " + record["priority_ru"])
+        if record.get("outcome"):
+            lines.append("Итог: " + record["outcome"])
+        lines.append(_feed_time({"game_time": record.get("occurred_at")}))
+        return "\n".join(lines)
+
+    who = record.get("suspect_name") or record.get("subject_name") or "—"
     lines = [event, officer, who, where]
     if kind == "warning":
         lines.append("Причина: " + (record.get("reason") or "—"))
@@ -179,16 +189,85 @@ def build_feed(record, kind):
     return "\n".join(lines)
 
 
-def send_feed(record, kind, webhook=None):
-    """Отправить событие в нужный канал Discord по типу. (ok, message)."""
+def build_feed_embed(record, kind):
+    """Карточка-embed для Discord (рамка, поля, цвет)."""
+    officer = record.get("officer_name") or record.get("callsign") or "—"
+    callsign = record.get("callsign") or ""
+    where = record.get("zone") or record.get("location") or "—"
+    when = _feed_time(record if kind != "callout" else {"game_time": record.get("occurred_at")})
+
+    meta = {
+        "arrest":   ("🚔", "Протокол задержания", 0xC0392B, "LAPD · Форма CA-207"),
+        "citation": ("🎫", "Квитанция о штрафе", 0xE0A020, "LAPD · Форма CA-TC-105"),
+        "warning":  ("⚠️", "Предупреждение", 0x8A7420, "LAPD · Предупреждение"),
+        "callout":  ("🚨", "Карта вызова", 0x2E5C8A, "LAPD · Форма CAD-101"),
+    }.get(kind, ("📋", "Событие", 0x2E5C8A, "LAPD Records"))
+    icon, title_kind, color, footer = meta
+
+    who = record.get("suspect_name") or record.get("subject_name") or record.get("callout_type") or "—"
+    fields = []
+    fields.append({"name": "Офицер", "value": f"{officer}" + (f" · `{callsign}`" if callsign else ""), "inline": True})
+    fields.append({"name": "Место", "value": where, "inline": True})
+
+    if kind == "callout":
+        if record.get("priority_ru") and record["priority_ru"] != "—":
+            fields.append({"name": "Приоритет", "value": record["priority_ru"], "inline": True})
+        if record.get("description"):
+            fields.append({"name": "Обстоятельства", "value": record["description"][:1000], "inline": False})
+        if record.get("outcome"):
+            fields.append({"name": "Итог", "value": record["outcome"], "inline": False})
+    elif kind == "warning":
+        fields.append({"name": "Причина", "value": record.get("reason") or "—", "inline": False})
+    else:
+        charges = [_clean_charge(c) for c in (record.get("charges") or []) if _clean_charge(c)]
+        if charges:
+            fields.append({"name": "Статьи", "value": "\n".join("• " + c for c in charges)[:1000], "inline": False})
+        if kind == "citation" and record.get("fine"):
+            fields.append({"name": "Сумма штрафа", "value": f"${record['fine']}", "inline": True})
+
+    return {
+        "title": f"{icon} {title_kind} · {who}",
+        "color": color,
+        "fields": fields,
+        "footer": {"text": f"{footer} · {when}"},
+    }
+
+
+def send_feed(record, kind, webhook=None, record_id=None):
+    """Отправить карточку в нужный канал Discord.
+    Сначала пробуем красивую КАРТИНКУ-документ (как на сайте); если не вышло — embed."""
     url = webhook or config.webhook_for(kind)
     if not url:
         return False, "Webhook не задан"
+
+    rid = record_id or record.get("id")
+    # 1) картинка-карточка
+    if rid:
+        try:
+            import card_image
+            png = card_image.render_card(kind, rid)
+            if png:
+                who = (record.get("suspect_name") or record.get("subject_name")
+                       or record.get("callout_type") or "")
+                caption = {"arrest": "🚔 Задержание", "citation": "🎫 Штраф",
+                           "warning": "⚠️ Предупреждение", "callout": "🚨 Вызов"}.get(kind, "Событие")
+                if who:
+                    caption += f" · {who}"
+                r = requests.post(url, data={"payload_json": _json({
+                    "username": "LAPD-Dispatch", "content": caption})},
+                    files={"file": (f"{kind}.png", png, "image/png")}, timeout=30)
+                if r.status_code in (200, 204):
+                    return True, "отправлена карточка-картинка"
+        except Exception as e:
+            print(f"[feed] картинка не вышла ({e}) — шлю embed")
+
+    # 2) запасной вариант — embed
     try:
-        r = requests.post(url, json={"content": build_feed(record, kind)}, timeout=15)
+        embed = build_feed_embed(record, kind)
+        r = requests.post(url, json={"embeds": [embed], "username": "LAPD-Dispatch"}, timeout=15)
         if r.status_code in (200, 204):
             return True, "отправлено в ленту"
-        return False, f"Discord вернул {r.status_code}"
+        return False, f"Discord вернул {r.status_code}: {r.text[:120]}"
     except Exception as e:
         return False, f"ошибка: {e}"
 

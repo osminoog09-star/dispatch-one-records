@@ -236,7 +236,7 @@ def warnings():
 def callouts():
     is_static = os.environ.get("STATIC_EXPORT") == "1"
     if request.method == "POST" and not is_static:
-        db.create_callout({
+        data = {
             "callsign": request.form.get("callsign", "").strip(),
             "officer_name": request.form.get("officer_name", "").strip(),
             "callout_type": request.form.get("callout_type", "").strip(),
@@ -245,7 +245,14 @@ def callouts():
             "zone": request.form.get("zone", "").strip(),
             "description": request.form.get("description", "").strip(),
             "outcome": request.form.get("outcome", "").strip(),
-        })
+        }
+        cid, created = db.create_callout(data)
+        if created:
+            try:
+                co = db.get_callout(cid)
+                discord_post.send_feed(co, "callout")
+            except Exception:
+                pass
         flash("Вызов добавлен.", "ok")
         return redirect(url_for("callouts"))
     officers = db.list_officers_with_stats()

@@ -72,8 +72,8 @@ def sync_from_game():
             continue
         data = agent.map_arrest(a)
         if not db.case_exists_external(data.get("external_id")):
-            db.create_case(data)
-            _feed_event(data, "arrest")
+            cid = db.create_case(data)
+            _feed_event(data, "arrest", cid)
             new_arrests += 1
 
     # Судебные дела берём только по нашим арестам/штрафам
@@ -104,9 +104,9 @@ def sync_from_game():
             skipped += 1
             continue
         cit_data = agent.map_citation(ct)
-        _, created = db.upsert_citation(cit_data)
+        cit_id, created = db.upsert_citation(cit_data)
         if created:
-            _feed_event(cit_data, "citation")
+            _feed_event(cit_data, "citation", cit_id)
             new_cit += 1
 
     warns = agent.read_json(os.path.join(agent.PDCOMP_STORE, "warnings.json")) or []
@@ -115,9 +115,9 @@ def sync_from_game():
             skipped += 1
             continue
         w_data = agent.map_warning(w)
-        _, created = db.upsert_warning(w_data)
+        w_id, created = db.upsert_warning(w_data)
         if created:
-            _feed_event(w_data, "warning")
+            _feed_event(w_data, "warning", w_id)
 
     # смены из очереди агента (владелец)
     new_shifts = 0
@@ -134,11 +134,11 @@ def sync_from_game():
     return new_arrests, new_court, len(arrests), len(cases), new_cit, len(cits), skipped, new_shifts
 
 
-def _feed_event(rec, kind):
-    """Отправить событие в ленту Discord, если задан вебхук."""
+def _feed_event(rec, kind, record_id=None):
+    """Отправить карточку события в Discord, если задан вебхук."""
     try:
         from app import discord_post
-        discord_post.send_feed(rec, kind)
+        discord_post.send_feed(rec, kind, record_id=record_id)
     except Exception:
         pass
 

@@ -112,11 +112,11 @@ def _map_case(cc):
     }
 
 
-def _feed(rec, kind):
-    """Отправить событие в ленту Discord (если задан вебхук)."""
+def _feed(rec, kind, record_id=None):
+    """Отправить карточку события в Discord (если задан вебхук)."""
     try:
         from app import discord_post
-        ok, msg = discord_post.send_feed(rec, kind)
+        ok, msg = discord_post.send_feed(rec, kind, record_id=record_id)
         if ok:
             print(f"   [discord] {kind}: {rec.get('suspect_name') or rec.get('subject_name')}")
     except Exception as e:
@@ -175,14 +175,14 @@ def main():
         for a in data.get("arrests", []):
             if not db.case_exists_external(a.get("Id")):
                 rec = _map_arrest(a, callsign, nickname)
-                db.create_case(rec)
-                _feed(rec, "arrest")
+                cid = db.create_case(rec)
+                _feed(rec, "arrest", cid)
                 total_a += 1
         for ct in data.get("citations", []):
             rec = _map_citation(ct, callsign, nickname)
-            _, created = db.upsert_citation(rec)
+            cit_id, created = db.upsert_citation(rec)
             if created:
-                _feed(rec, "citation")
+                _feed(rec, "citation", cit_id)
                 total_ct += 1
         for cc in data.get("cases", []):
             _, created = db.upsert_court_case(_map_case(cc))

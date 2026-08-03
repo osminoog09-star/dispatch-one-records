@@ -6,6 +6,7 @@ DISCORD_WEBHOOK_URL = os.environ.get("DISCORD_WEBHOOK_URL", "")            # о�
 DISCORD_WEBHOOK_ARRESTS = os.environ.get("DISCORD_WEBHOOK_ARRESTS", "")    # аресты, суды
 DISCORD_WEBHOOK_CITATIONS = os.environ.get("DISCORD_WEBHOOK_CITATIONS", "")  # штрафы, предупреждения
 DISCORD_WEBHOOK_CALLOUTS = os.environ.get("DISCORD_WEBHOOK_CALLOUTS", "")  # вызовы
+DISCORD_WEBHOOK_CASES = os.environ.get("DISCORD_WEBHOOK_CASES", "")        # дела (досье, итог)
 
 
 def webhook_for(kind):

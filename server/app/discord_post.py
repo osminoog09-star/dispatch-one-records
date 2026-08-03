@@ -233,6 +233,33 @@ def build_feed_embed(record, kind):
     }
 
 
+def send_case_file(cf):
+    """Отправить сводку ДЕЛА (досье) в канал «Дела» со ссылкой на сайт."""
+    url = config.DISCORD_WEBHOOK_CASES or config.DISCORD_WEBHOOK_URL
+    if not url or not cf:
+        return False, "Webhook не задан"
+    import urllib.parse
+    site = config.PUBLIC_BASE_URL.rstrip("/") + "/file/" + urllib.parse.quote(cf["name"])
+    icons = {"callout": "🚨", "arrest": "🚔", "citation": "🎫", "warning": "⚠️", "court": "⚖"}
+    lines = []
+    for it in cf["chain"]:
+        when = (it.get("when") or "")[:16].replace("T", " ")
+        lines.append(f"{icons.get(it['kind'],'•')} {it['title']} · {when}")
+    embed = {
+        "title": f"📁 Дело · {cf['name']}",
+        "url": site,
+        "color": 0x5865F2,
+        "description": "\n".join(lines)[:3800],
+        "footer": {"text": f"LAPD Records · {cf['count']} записей · подробнее на сайте"},
+    }
+    try:
+        r = requests.post(url, json={"embeds": [embed], "username": "LAPD-Dispatch",
+                                     "content": f"Полное дело: {site}"}, timeout=15)
+        return (r.status_code in (200, 204)), ("отправлено" if r.status_code in (200, 204) else str(r.status_code))
+    except Exception as e:
+        return False, str(e)
+
+
 def send_feed(record, kind, webhook=None, record_id=None):
     """Отправить карточку в нужный канал Discord.
     Сначала пробуем красивую КАРТИНКУ-документ (как на сайте); если не вышло — embed."""

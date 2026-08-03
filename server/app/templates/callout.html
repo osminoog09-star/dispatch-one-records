@@ -2,6 +2,7 @@
 {% block title %}Вызов {{ co.callout_no }}{% endblock %}
 {% block content %}
 <a class="back" href="{{ url_for('callouts') }}">← к вызовам</a>
+{% if co.suspect_name %}<a class="back" style="margin-left:14px" href="{{ url_for('file_view', name=co.suspect_name) }}">📁 Полное дело: {{ co.suspect_name }} →</a>{% endif %}
 
 <div class="case-head">
   <h1>Карта вызова · {{ co.callout_type or 'Вызов' }}</h1>

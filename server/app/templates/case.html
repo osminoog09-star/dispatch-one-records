@@ -2,7 +2,8 @@
 {% block title %}Дело #{{ case.id }}{% endblock %}
 {% block content %}
 
-<a class="back" href="{{ url_for('cases') }}">← к реестру</a>
+<a class="back" href="{{ url_for('cases') }}">← к задержаниям</a>
+{% if case.suspect_name %}<a class="back" style="margin-left:14px" href="{{ url_for('file_view', name=case.suspect_name) }}">📁 Полное дело: {{ case.suspect_name }} →</a>{% endif %}
 
 <div class="case-head">
   <h1>Рапорт о задержании · Дело #{{ case.id }}</h1>

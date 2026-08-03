@@ -2,6 +2,7 @@
 {% block title %}Штраф {{ cit.cit_no }}{% endblock %}
 {% block content %}
 <a class="back" href="{{ url_for('citations') }}">← к списку штрафов</a>
+{% if cit.subject_name %}<a class="back" style="margin-left:14px" href="{{ url_for('file_view', name=cit.subject_name) }}">📁 Полное дело: {{ cit.subject_name }} →</a>{% endif %}
 
 <div class="case-head">
   <h1>Квитанция о штрафе · {{ cit.subject_name }}</h1>

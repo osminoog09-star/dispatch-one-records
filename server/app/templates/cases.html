@@ -1,7 +1,7 @@
 {% extends "base.html" %}
-{% block title %}Дела{% endblock %}
+{% block title %}Задержания{% endblock %}
 {% block content %}
-<h1>Реестр дел</h1>
+<h1>Задержания</h1>
 
 <div class="filters">
   <a href="{{ url_for('cases') }}" class="chip {{ 'on' if not active_status }}">Все</a>

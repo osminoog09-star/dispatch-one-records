@@ -93,9 +93,18 @@ def sync_from_game():
         if known and src not in our_sources:
             skipped += 1
             continue
-        _, created = db.upsert_court_case(agent.map_court_case(c))
+        court_data = agent.map_court_case(c)
+        _, created = db.upsert_court_case(court_data)
         if created:
             new_court += 1
+            # суд завершён → шлём полное дело в канal «Дела»
+            try:
+                from app import discord_post
+                cf = db.case_file(court_data.get("subject_name") or c.get("SubjectFullName"))
+                if cf:
+                    discord_post.send_case_file(cf)
+            except Exception:
+                pass
 
     new_cit = 0
     cits = agent.read_json(os.path.join(agent.PDCOMP_STORE, "citations.json")) or []

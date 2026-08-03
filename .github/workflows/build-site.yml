@@ -41,6 +41,8 @@ jobs:
           DISCORD_WEBHOOK_ARRESTS: ${{ secrets.DISCORD_WEBHOOK_ARRESTS }}
           DISCORD_WEBHOOK_CITATIONS: ${{ secrets.DISCORD_WEBHOOK_CITATIONS }}
           DISCORD_WEBHOOK_CALLOUTS: ${{ secrets.DISCORD_WEBHOOK_CALLOUTS }}
+          DISCORD_WEBHOOK_CASES: ${{ secrets.DISCORD_WEBHOOK_CASES }}
+          PUBLIC_BASE_URL: ${{ secrets.PUBLIC_BASE_URL }}
         run: python server/import_inbox.py
 
       - name: Собрать сайт

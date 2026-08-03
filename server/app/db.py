@@ -129,8 +129,13 @@ def init_db():
                 zone TEXT,
                 description TEXT,
                 outcome TEXT,
-                occurred_at TEXT
+                occurred_at TEXT,
+                suspect_name TEXT
             )""")
+        # миграция callouts (для старых баз)
+        _cocols = {r["name"] for r in c.execute("PRAGMA table_info(callouts)").fetchall()}
+        if "suspect_name" not in _cocols:
+            c.execute("ALTER TABLE callouts ADD COLUMN suspect_name TEXT")
         c.execute(
             """CREATE TABLE IF NOT EXISTS warnings (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -510,6 +515,13 @@ _PHRASES = [
     ("prison", "тюрьма"),
     ("ordered", "предписано"),
     ("No sentence assessed", "Наказание не назначено"),
+    ("No sentence (dismissed)", "Дело прекращено"),
+    ("No sentence", "Без наказания"),
+    ("(dismissed)", "(прекращено)"),
+    ("dismissed", "прекращено"),
+    ("incl.", "вкл."),
+    ("court costs", "судебные издержки"),
+    ("Fine", "Штраф"),
 ]
 # кириллические заглавные → латинские двойники (для номеров залов/отделов)
 _CYR2LAT = {"А": "A", "Б": "B", "В": "B", "Г": "G", "Д": "D", "Е": "E", "Ж": "J", "З": "Z",
@@ -688,16 +700,72 @@ def create_callout(data):
     officer_id = get_or_create_officer(data.get("callsign", "UNKNOWN"), data.get("officer_name"))
     ext = data.get("external_id") or ("manual-" + datetime.datetime.now().strftime("%Y%m%d%H%M%S%f"))
     with get_conn() as c:
+        cols = {r["name"] for r in c.execute("PRAGMA table_info(callouts)").fetchall()}
+        if "suspect_name" not in cols:
+            c.execute("ALTER TABLE callouts ADD COLUMN suspect_name TEXT")
         if c.execute("SELECT id FROM callouts WHERE external_id=?", (ext,)).fetchone():
             return None, False
         cur = c.execute(
             """INSERT INTO callouts (external_id, officer_id, callout_type, priority,
-               location, zone, description, outcome, occurred_at)
-               VALUES (?,?,?,?,?,?,?,?,?)""",
+               location, zone, description, outcome, occurred_at, suspect_name)
+               VALUES (?,?,?,?,?,?,?,?,?,?)""",
             (ext, officer_id, data.get("callout_type"), data.get("priority"),
              data.get("location"), data.get("zone"), data.get("description"),
-             data.get("outcome"), data.get("occurred_at") or _now()))
+             data.get("outcome"), data.get("occurred_at") or _now(), data.get("suspect_name")))
         return cur.lastrowid, True
+
+
+def case_file(name):
+    """Досье на человека: все записи (вызовы, аресты, штрафы, предупреждения, суд)
+    с этим именем, собранные в одну хронологическую цепочку."""
+    name = (name or "").strip()
+    if not name:
+        return None
+    items = []
+
+    def add(kind, rows, name_key, time_key, title_fn):
+        for r in rows:
+            d = dict(r)
+            items.append({"kind": kind, "id": d["id"], "when": d.get(time_key) or "",
+                          "title": title_fn(d), "row": d})
+
+    with get_conn() as c:
+        cur = c.execute("SELECT * FROM cases WHERE suspect_name=? COLLATE NOCASE", (name,)).fetchall()
+        add("arrest", cur, "suspect_name", "created_at", lambda d: "Задержание")
+        cit = c.execute("SELECT * FROM citations WHERE subject_name=? COLLATE NOCASE", (name,)).fetchall()
+        add("citation", cit, "subject_name", "issued_at", lambda d: f"Штраф ${d.get('fine') or 0}")
+        wr = c.execute("SELECT * FROM warnings WHERE subject_name=? COLLATE NOCASE", (name,)).fetchall()
+        add("warning", wr, "subject_name", "issued_at", lambda d: "Предупреждение")
+        co = c.execute("SELECT * FROM callouts WHERE suspect_name=? COLLATE NOCASE", (name,)).fetchall()
+        add("callout", co, "suspect_name", "occurred_at", lambda d: f"Вызов: {d.get('callout_type') or ''}")
+        crt = c.execute("SELECT * FROM court_cases WHERE subject_name=? COLLATE NOCASE", (name,)).fetchall()
+        add("court", crt, "subject_name", "filed_at",
+            lambda d: "Суд: " + (localize(d["sentence"]) if d.get("sentence") else "рассмотрено"))
+
+    # порядок вызова→арест→штраф→суд внутри одного времени
+    order = {"callout": 0, "arrest": 1, "citation": 2, "warning": 3, "court": 4}
+    items.sort(key=lambda x: (x["when"] or "", order.get(x["kind"], 9)))
+    if not items:
+        return None
+    return {"name": name, "chain": items, "count": len(items)}
+
+
+def list_case_files(limit=200):
+    """Люди, на которых есть дело (>=1 запись), с числом записей."""
+    counts = {}
+    with get_conn() as c:
+        for tbl, col in [("cases", "suspect_name"), ("citations", "subject_name"),
+                         ("warnings", "subject_name"), ("court_cases", "subject_name"),
+                         ("callouts", "suspect_name")]:
+            try:
+                for r in c.execute(f"SELECT {col} AS n, COUNT(*) AS k FROM {tbl} "
+                                   f"WHERE {col} IS NOT NULL AND {col}!='' GROUP BY {col} COLLATE NOCASE"):
+                    counts[r["n"]] = counts.get(r["n"], 0) + r["k"]
+            except Exception:
+                pass
+    out = [{"name": n, "count": k} for n, k in counts.items()]
+    out.sort(key=lambda x: -x["count"])
+    return out[:limit]
 
 
 def _row_to_callout(r):

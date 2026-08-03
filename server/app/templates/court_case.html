@@ -2,6 +2,7 @@
 {% block title %}Дело {{ case.case_no }} — {{ case.subject_name }}{% endblock %}
 {% block content %}
 <a class="back" href="{{ url_for('court') }}">← в судебный реестр</a>
+{% if case.subject_name %}<a class="back" style="margin-left:14px" href="{{ url_for('file_view', name=case.subject_name) }}">📁 Полное дело: {{ case.subject_name }} →</a>{% endif %}
 
 <div class="case-head">
   <h1>Уголовное дело · {{ case.subject_name }}</h1>

@@ -245,6 +245,7 @@ def callouts():
             "zone": request.form.get("zone", "").strip(),
             "description": request.form.get("description", "").strip(),
             "outcome": request.form.get("outcome", "").strip(),
+            "suspect_name": request.form.get("suspect_name", "").strip(),
         }
         cid, created = db.create_callout(data)
         if created:
@@ -265,6 +266,19 @@ def callout_view(cid):
     if not co:
         abort(404)
     return render_template("callout.html", co=co)
+
+
+@app.route("/files")
+def files():
+    return render_template("files.html", files=db.list_case_files())
+
+
+@app.route("/file/<path:name>")
+def file_view(name):
+    cf = db.case_file(name)
+    if not cf:
+        abort(404)
+    return render_template("file.html", cf=cf)
 
 
 @app.route("/citation/<int:cid>")

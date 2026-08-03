@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Дело — {{ cf.name }}{% endblock %}
+{% block content %}
+<a class="back" href="{{ url_for('files') }}">← ко всем делам</a>
+
+<div class="case-head">
+  <h1>Дело · {{ cf.name }}</h1>
+  <span class="tag">{{ cf.count }} записей</span>
+</div>
+<p class="muted">Полная цепочка событий по человеку, по времени.</p>
+
+<div class="timeline">
+  {% for it in cf.chain %}
+    {% set icon = {'callout':'🚨','arrest':'🚔','citation':'🎫','warning':'⚠️','court':'⚖'}[it.kind] %}
+    {% set route = {'callout':'callout_view','arrest':'case_view','citation':'citation_view','court':'court_case_view','warning':none}[it.kind] %}
+    <div class="tl-item tl-{{ it.kind }}">
+      <div class="tl-dot">{{ icon }}</div>
+      <div class="tl-body">
+        <div class="tl-head">
+          <b>{{ it.title }}</b>
+          {% if route %}<a class="tl-open" href="{{ url_for(route, cid=it.id) }}">открыть →</a>{% endif %}
+        </div>
+        <div class="muted small">
+          {% if it.kind == 'callout' %}{{ it.row.callout_type }} · {{ it.row.location or '—' }}
+          {% elif it.kind == 'arrest' %}{{ it.row.zone or '—' }}
+          {% elif it.kind == 'citation' %}{{ it.row.location or '—' }} · ${{ it.row.fine or 0 }}
+          {% elif it.kind == 'warning' %}{{ it.row.reason or '—' }}
+          {% elif it.kind == 'court' %}{{ it.title.replace('Суд: ','') }}
+          {% endif %}
+          · <span class="cs">{{ it.row.callsign or '' }}</span>
+          {% if it.when %} · {{ it.when[:16].replace('T',' ') }}{% endif %}
+        </div>
+      </div>
+    </div>
+  {% endfor %}
+</div>
+{% endblock %}

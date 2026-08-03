@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Дела{% endblock %}
+{% block content %}
+<h1>Дела (досье)</h1>
+<p class="muted">Все записи по каждому человеку в одном месте — вызовы, аресты, штрафы, суды.</p>
+
+{% if files %}
+<table class="tbl">
+  <thead><tr><th>Человек</th><th>Записей в деле</th></tr></thead>
+  <tbody>
+  {% for f in files %}
+    <tr onclick="location='{{ url_for('file_view', name=f.name) }}'">
+      <td><b>{{ f.name }}</b></td>
+      <td>{{ f.count }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% else %}
+  <p class="empty">Дел пока нет — появятся с записями.</p>
+{% endif %}
+{% endblock %}

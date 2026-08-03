@@ -1,9 +1,9 @@
 {
-  "launcher": "1.4.0",
+  "launcher": "1.4.1",
   "agent": "1.1.0",
   "enabled": true,
   "min_launcher": "1.0.0",
-  "notes": "Кнопка «Играть» запускает игру через RagePluginHook и ставит игровой плагин (документы NPC, транспорт, смена по диспетчеру). Плагин грузится и при запуске через Vinewood. Агент публикует данные, даже если не поймал запуск игры.",
+  "notes": "Кнопка «Играть» теперь запускает игру через Vinewood (со всеми его модами) и ставит наш плагин в LSPDFR. Плагин грузится при любом запуске игры. Агент публикует данные, даже если не поймал запуск игры.",
   "launcher_url": "https://github.com/osminoog09-star/dispatch-one-records/releases/latest/download/LAPD-Records-Launcher.exe",
   "agent_url": "https://github.com/osminoog09-star/dispatch-one-records/releases/latest/download/pdcomp_sync.exe"
 }

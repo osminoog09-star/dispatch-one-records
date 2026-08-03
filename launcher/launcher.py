@@ -18,7 +18,7 @@ import tkinter as tk
 from tkinter import messagebox
 
 APP_NAME = "LAPD Records"
-VERSION = "1.4.0"
+VERSION = "1.4.1"
 GITHUB_REPO = "osminoog09-star/dispatch-one-records"
 # Шлюз приёма данных (Cloudflare Worker) — вшивается при сборке, токена в клиенте нет.
 try:
@@ -590,7 +590,7 @@ class Launcher(tk.Tk):
         # ─── КНОПКА ИГРАТЬ ───
         self._button(self, "▶   ИГРАТЬ", self.play, GREEN, GREEN2,
                      big=True).pack(fill="x", padx=32, pady=(14, 4))
-        tk.Label(self, text="поставит плагин, запустит игру (RagePluginHook) и синхронизацию",
+        tk.Label(self, text="поставит плагин, запустит игру через Vinewood и синхронизацию",
                  bg=BG, fg=MUTED, font=("Segoe UI", 8)).pack()
 
         self.status = tk.Label(self, text="", bg=BG, fg=MUTED, font=("Segoe UI", 9))
@@ -815,21 +815,23 @@ class Launcher(tk.Tk):
             self.autostart_var.set(not on)
 
     def play(self):
-        # 1) поставить плагин (лаунчер от админа — права есть)
+        # 1) поставить плагин (лаунчер от админа — права есть).
+        #    Плагин лежит в plugins\LSPDFR и грузится при ЛЮБОМ запуске игры.
         pok, pmsg = install_plugin(self.game)
         log(f"play: плагин — {pmsg}")
         # 2) запустить агент (синхронизация/публикация)
         aok, amsg = start_agent()
-        # 3) запустить модовую игру через RagePluginHook; если нет — Vinewood
-        gok, gmsg = launch_game(self.game)
-        if not gok:
-            if start_vinewood():
-                gok, gmsg = True, "запуск через Vinewood"
+        # 3) запустить игру через Vinewood (он поднимает игру со своими модами).
+        #    Если Vinewood не найден — запасом напрямую через RagePluginHook.
+        if start_vinewood():
+            gok, gmsg = True, "запуск через Vinewood"
+        else:
+            gok, gmsg = launch_game(self.game)
         if gok:
             extra = "" if pok else f" (плагин: {pmsg})"
-            self._set_status(f"Запускаю игру — {gmsg}.{extra}", "#7fbf7f")
+            self._set_status(f"Запускаю игру — {gmsg}. Плагин готов.{extra}", "#7fbf7f")
         else:
-            self._set_status(f"Не удалось запустить игру: {gmsg}. "
+            self._set_status(f"Vinewood не найден и RagePluginHook тоже: {gmsg}. "
                              f"Агент: {amsg}.", "#e0a0a0")
 
     def open_logs(self):

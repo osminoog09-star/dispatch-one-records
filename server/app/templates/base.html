@@ -26,7 +26,9 @@
         <a href="{{ url_for('shifts') }}">Смены</a>
         <a href="{{ url_for('game_map') }}">Карта</a>
         <a href="{{ url_for('staff') }}">Персонал</a>
+        <a href="{{ url_for('tickets') }}" class="admin-only" style="display:none">Тикеты</a>
         <a href="{{ url_for('register') }}">Регистрация</a>
+        <span id="auth-slot" class="auth-slot"></span>
       </nav>
     </div>
   </header>
@@ -47,5 +49,7 @@
   </footer>
   <!-- Dispatch One Records — исходная система: github.com/osminoog09-star/dispatch-one-records
        Копирование оформления и кода без разрешения запрещено. build:{{ build_id }} -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="{{ url_for('static', filename='supa.js') }}"></script>
 </body>
 </html>

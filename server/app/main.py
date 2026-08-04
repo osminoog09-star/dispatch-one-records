@@ -286,6 +286,12 @@ def vehicles():
     return render_template("vehicles.html", vehicles=db.list_vehicles())
 
 
+@app.route("/tickets")
+def tickets():
+    # статичная страница-оболочка: данные тянет supabase-js на клиенте (RLS = только админ)
+    return render_template("tickets.html")
+
+
 @app.route("/vehicle/<plate>")
 def vehicle_view(plate):
     v = db.get_vehicle(plate)

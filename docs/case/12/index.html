@@ -26,7 +26,9 @@
         <a href="/dispatch-one-records/shifts">Смены</a>
         <a href="/dispatch-one-records/map">Карта</a>
         <a href="/dispatch-one-records/staff">Персонал</a>
+        <a href="/dispatch-one-records/tickets" class="admin-only" style="display:none">Тикеты</a>
         <a href="/dispatch-one-records/register">Регистрация</a>
+        <span id="auth-slot" class="auth-slot"></span>
       </nav>
     </div>
   </header>
@@ -239,5 +241,7 @@ function downloadDoc(){
   </footer>
   <!-- Dispatch One Records — исходная система: github.com/osminoog09-star/dispatch-one-records
        Копирование оформления и кода без разрешения запрещено. build:20260804 -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/dispatch-one-records/static/supa.js"></script>
 </body>
 </html>

@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Тикеты · LAPD</title>
+  <meta name="generator" content="Dispatch One Records — osminoog09-star">
+  <meta name="author" content="LAPD Records · osminoog09-star.github.io/dispatch-one-records">
+  <link rel="stylesheet" href="/dispatch-one-records/static/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="wrap">
+      <a class="brand" href="/dispatch-one-records/">
+        <span class="badge">★</span> LAPD <span class="sub">Records</span>
+      </a>
+      <nav>
+        <a href="/dispatch-one-records/">Главная</a>
+        <a href="/dispatch-one-records/files">Дела</a>
+        <a href="/dispatch-one-records/callouts">Вызовы</a>
+        <a href="/dispatch-one-records/cases">Задержания</a>
+        <a href="/dispatch-one-records/citations">Штрафы</a>
+        <a href="/dispatch-one-records/warnings">Предупреждения</a>
+        <a href="/dispatch-one-records/vehicles">Транспорт</a>
+        <a href="/dispatch-one-records/court">Суд</a>
+        <a href="/dispatch-one-records/shifts">Смены</a>
+        <a href="/dispatch-one-records/map">Карта</a>
+        <a href="/dispatch-one-records/staff">Персонал</a>
+        <a href="/dispatch-one-records/tickets" class="admin-only" style="display:none">Тикеты</a>
+        <a href="/dispatch-one-records/register">Регистрация</a>
+        <span id="auth-slot" class="auth-slot"></span>
+      </nav>
+    </div>
+  </header>
+
+  <main class="wrap">
+    
+      
+    
+    
+<h1>Тикеты поддержки</h1>
+<p class="muted">Обращения игроков из лаунчера. Ответ уходит игроку в чат поддержки.</p>
+
+<div id="tk-gate" class="muted">Проверяю доступ…</div>
+
+<div id="tk-app" style="display:none">
+  <div class="tk-wrap">
+    <div class="tk-list" id="tk-list"></div>
+    <div class="tk-chat" id="tk-chat"><p class="muted">Выбери обращение слева.</p></div>
+  </div>
+</div>
+
+<style>
+  .tk-wrap{display:flex;gap:14px;align-items:flex-start}
+  .tk-list{flex:0 0 260px;display:flex;flex-direction:column;gap:6px;max-height:70vh;overflow:auto}
+  .tk-item{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:10px 12px;cursor:pointer}
+  .tk-item:hover{border-color:#2f81f7}
+  .tk-item.active{border-color:#2f81f7;background:#1c232c}
+  .tk-chat{flex:1;background:#161b22;border:1px solid #30363d;border-radius:8px;padding:14px;min-height:300px}
+  .tk-msgs{display:flex;flex-direction:column;gap:8px;max-height:56vh;overflow:auto;margin-bottom:12px}
+  .tk-msg{padding:8px 12px;border-radius:8px;max-width:80%}
+  .tk-msg.me{background:#1c232c;align-self:flex-start}
+  .tk-msg.op{background:#12294a;align-self:flex-end}
+  .tk-reply{display:flex;gap:8px}
+  .tk-reply input{flex:1;background:#1c232c;border:1px solid #30363d;color:#e6edf3;border-radius:8px;padding:8px 10px}
+  .tk-reply button{background:#238636;color:#fff;border:0;border-radius:8px;padding:8px 14px;cursor:pointer}
+  .tk-reply button.muted{background:#30363d}
+  .tk-badge{font-size:11px;padding:1px 6px;border-radius:6px;background:#30363d}
+  .tk-badge.open{background:#238636}
+</style>
+
+<script>
+(function () {
+  let sb, curId = null;
+  function esc(s){return (s||"").replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));}
+
+  async function load() {
+    const { data: tickets } = await sb.from("tickets").select("*").order("created_at", { ascending: false });
+    const list = document.getElementById("tk-list");
+    if (!tickets || !tickets.length) { list.innerHTML = '<p class="muted">Обращений нет.</p>'; return; }
+    list.innerHTML = tickets.map(t =>
+      '<div class="tk-item' + (String(t.id)===String(curId)?' active':'') + '" data-id="' + t.id + '">' +
+        '<b>#' + t.id + ' ' + esc(t.title || "") + '</b> <span class="tk-badge ' + (t.status||'') + '">' + (t.status||'') + '</span>' +
+        '<br><span class="muted small">' + esc(t.callsign || "") + ' · ' + esc(t.created_by || "") + '</span></div>'
+    ).join("");
+    list.querySelectorAll(".tk-item").forEach(el => el.onclick = () => openTicket(el.dataset.id));
+  }
+
+  async function openTicket(id) {
+    curId = id;
+    document.querySelectorAll(".tk-item").forEach(x => x.classList.toggle("active", x.dataset.id === String(id)));
+    const { data: c } = await sb.from("ticket_comments").select("*").eq("ticket_id", id).order("created_at");
+    const chat = document.getElementById("tk-chat");
+    const msgs = (c || []).map(m =>
+      '<div class="tk-msg ' + (m.from_admin ? "op" : "me") + '"><b>' +
+      (m.from_admin ? "Оператор" : esc(m.author || "Игрок")) + ':</b> ' + esc(m.body || "") +
+      (m.attachment_url ? ' <a href="' + m.attachment_url + '" target="_blank">📎 вложение</a>' : "") + "</div>"
+    ).join("");
+    chat.innerHTML = '<div class="tk-msgs">' + (msgs || '<p class="muted">Сообщений нет.</p>') + "</div>" +
+      '<div class="tk-reply"><input id="tk-input" placeholder="Ответ игроку…">' +
+      '<button onclick="tkSend()">Отправить</button>' +
+      '<button class="muted" onclick="tkClose()">Закрыть тикет</button></div>';
+    const inp = document.getElementById("tk-input");
+    inp.addEventListener("keydown", e => { if (e.key === "Enter") tkSend(); });
+  }
+
+  window.tkSend = async function () {
+    const inp = document.getElementById("tk-input");
+    const body = inp.value.trim();
+    if (!body || !curId) return;
+    // берём client_id тикета — чтобы игрок увидел ответ в лаунчере (он читает по своему client_id)
+    const { data: t } = await sb.from("tickets").select("client_id").eq("id", curId).single();
+    const { error } = await sb.from("ticket_comments").insert({
+      ticket_id: curId, body: body, author: "Оператор", client_id: t && t.client_id,
+    });
+    if (error) { alert("Не отправилось: " + error.message); return; }
+    inp.value = "";
+    openTicket(curId);
+  };
+
+  window.tkClose = async function () {
+    if (!curId) return;
+    await sb.from("tickets").update({ status: "closed" }).eq("id", curId);
+    load();
+  };
+
+  document.addEventListener("lapd:auth", async function () {
+    sb = window.lapd.sb;
+    const gate = document.getElementById("tk-gate");
+    if (!window.lapd.admin) {
+      gate.innerHTML = "Только для админов. Войди через <b>Discord</b> (кнопка «Войти» вверху справа).";
+      return;
+    }
+    gate.style.display = "none";
+    document.getElementById("tk-app").style.display = "";
+    load();
+  });
+})();
+</script>
+
+  </main>
+
+  <footer class="wrap foot">
+    LAPD Records · данные синхронизируются из игры<br>
+    <span class="foot-attr">© Dispatch One Records · система разработана для LAPD ·
+      осминоог09-star</span>
+  </footer>
+  <!-- Dispatch One Records — исходная система: github.com/osminoog09-star/dispatch-one-records
+       Копирование оформления и кода без разрешения запрещено. build:20260804 -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/dispatch-one-records/static/supa.js"></script>
+</body>
+</html>

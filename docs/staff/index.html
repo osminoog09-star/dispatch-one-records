@@ -119,55 +119,60 @@
   .sb-edit{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:4px}
   .sb-edit select{background:#1c232c;border:1px solid #30363d;color:#e6edf3;border-radius:6px;padding:4px 6px;font-size:12px}
   .sb-badge{font-size:11px;padding:1px 8px;border-radius:6px;background:#12294a;color:#cdd9e5}
-  .sb-badge.role{background:#1c232c}
+  .sb-badge.dept{background:#21262d;color:#8b949e}
   .sb-ok{color:#3fb950;font-size:11px}
 </style>
 <script>
 (function () {
-  let sb, ranks = [], roles = [], profiles = {};
+  let sb, ranks = [], depts = [], profiles = {};
   function esc(s){return (s||"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
 
   async function loadRefs() {
-    const [rk, rl, pr] = await Promise.all([
-      sb.from("ranks").select("id,name,abbr,level").order("level"),
-      sb.from("roles").select("name,title").order("id"),
-      sb.from("officer_profiles").select("callsign,rank_id,role"),
+    const [rk, dp, pr] = await Promise.all([
+      sb.from("ranks").select("id,name,color,level").order("level", { ascending: false }),
+      sb.from("departments").select("id,name,color,ord").order("ord"),
+      sb.from("officer_profiles").select("callsign,rank_id,department_id"),
     ]);
-    ranks = rk.data || []; roles = rl.data || [];
+    ranks = rk.data || []; depts = dp.data || [];
     profiles = {}; (pr.data || []).forEach(p => profiles[(p.callsign||"").toLowerCase()] = p);
   }
 
-  function rankName(id){ const r = ranks.find(x=>x.id===id); return r ? r.name : null; }
-  function roleTitle(name){ const r = roles.find(x=>x.name===name); return r ? r.title : name; }
+  function rankBy(id){ return ranks.find(x=>x.id===id); }
+  function deptBy(id){ return depts.find(x=>x.id===id); }
 
   function renderReadonly(el, prof) {
     let h = "";
-    if (prof && prof.rank_id) h += '<span class="sb-badge">'+esc(rankName(prof.rank_id)||"")+'</span> ';
-    if (prof && prof.role && prof.role!=="officer") h += '<span class="sb-badge role">'+esc(roleTitle(prof.role))+'</span>';
+    if (prof && prof.rank_id) { const r = rankBy(prof.rank_id);
+      if (r) h += '<span class="sb-badge" style="background:'+(r.color||"#12294a")+'22;color:'+(r.color||"#cdd9e5")+'">'+esc(r.name)+'</span> '; }
+    if (prof && prof.department_id) { const d = deptBy(prof.department_id);
+      if (d) h += '<span class="sb-badge dept">'+esc(d.name)+'</span>'; }
     el.innerHTML = h;
   }
 
   function renderEditor(el, cs, prof) {
     const rankOpts = '<option value="">— звание —</option>' +
       ranks.map(r=>'<option value="'+r.id+'"'+(prof&&prof.rank_id===r.id?' selected':'')+'>'+esc(r.name)+'</option>').join("");
-    const roleOpts = roles.map(r=>'<option value="'+r.name+'"'+(prof&&prof.role===r.name?' selected':'')+'>'+esc(r.title)+'</option>').join("");
+    const deptOpts = '<option value="">— отдел —</option>' +
+      depts.map(d=>'<option value="'+d.id+'"'+(prof&&prof.department_id===d.id?' selected':'')+'>'+esc(d.name)+'</option>').join("");
     el.innerHTML = '<select class="sb-rank">'+rankOpts+'</select>' +
-                   '<select class="sb-role">'+roleOpts+'</select><span class="sb-ok"></span>';
-    const rankSel = el.querySelector(".sb-rank"), roleSel = el.querySelector(".sb-role"), ok = el.querySelector(".sb-ok");
+                   '<select class="sb-dept">'+deptOpts+'</select><span class="sb-ok"></span>';
+    const rankSel = el.querySelector(".sb-rank"), deptSel = el.querySelector(".sb-dept"), ok = el.querySelector(".sb-ok");
     async function save() {
       const rank_id = rankSel.value ? parseInt(rankSel.value) : null;
-      const role = roleSel.value || "officer";
+      const department_id = deptSel.value ? parseInt(deptSel.value) : null;
       const me = (window.lapd.userName || "админ");
+      ok.textContent = "…"; ok.style.color = "#8b949e";
       const { error } = await sb.from("officer_profiles").upsert(
-        { callsign: cs, rank_id: rank_id, role: role, updated_at: new Date().toISOString(), updated_by: me },
+        { callsign: cs, rank_id: rank_id, department_id: department_id,
+          updated_at: new Date().toISOString(), updated_by: me },
         { onConflict: "callsign" });
-      if (error) { ok.textContent = "ошибка"; ok.style.color = "#f85149"; return; }
-      ok.textContent = "✓ сохранено"; ok.style.color = "#3fb950";
+      if (error) { ok.textContent = "ошибка: " + error.message; ok.style.color = "#f85149"; return; }
+      ok.textContent = "✓"; ok.style.color = "#3fb950";
       try { await sb.rpc("log_action", { _action: "rank.set", _entity: "officer", _entity_id: cs,
-        _details: { rank_id: rank_id, role: role } }); } catch(e){}
-      setTimeout(()=>ok.textContent="", 2000);
+        _details: { rank_id: rank_id, department_id: department_id } }); } catch(e){}
+      setTimeout(()=>{ ok.textContent=""; }, 1800);
     }
-    rankSel.onchange = save; roleSel.onchange = save;
+    rankSel.onchange = save; deptSel.onchange = save;
   }
 
   document.addEventListener("lapd:auth", async function () {

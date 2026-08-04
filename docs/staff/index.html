@@ -63,6 +63,7 @@
 
     
       <div class="staff-meta">
+        <div class="sb-edit" data-cs="1-ADAM-13"></div>
         <span class="tag rank">Watch Commander</span>
         <div class="muted small">Командование</div>
       </div>
@@ -83,6 +84,7 @@
 
     
       <div class="staff-meta">
+        <div class="sb-edit" data-cs="7-WILLIAM-1"></div>
         <span class="tag rank">Detective I</span>
         <div class="muted small">Patrol Division</div>
       </div>
@@ -103,6 +105,7 @@
 
     
       <div class="staff-meta">
+        <div class="sb-edit" data-cs="1-ADAM-12"></div>
         
         <div class="muted small">—</div>
       </div>
@@ -111,6 +114,76 @@
   
 </div>
 
+
+<style>
+  .sb-edit{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:4px}
+  .sb-edit select{background:#1c232c;border:1px solid #30363d;color:#e6edf3;border-radius:6px;padding:4px 6px;font-size:12px}
+  .sb-badge{font-size:11px;padding:1px 8px;border-radius:6px;background:#12294a;color:#cdd9e5}
+  .sb-badge.role{background:#1c232c}
+  .sb-ok{color:#3fb950;font-size:11px}
+</style>
+<script>
+(function () {
+  let sb, ranks = [], roles = [], profiles = {};
+  function esc(s){return (s||"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
+
+  async function loadRefs() {
+    const [rk, rl, pr] = await Promise.all([
+      sb.from("ranks").select("id,name,abbr,level").order("level"),
+      sb.from("roles").select("name,title").order("id"),
+      sb.from("officer_profiles").select("callsign,rank_id,role"),
+    ]);
+    ranks = rk.data || []; roles = rl.data || [];
+    profiles = {}; (pr.data || []).forEach(p => profiles[(p.callsign||"").toLowerCase()] = p);
+  }
+
+  function rankName(id){ const r = ranks.find(x=>x.id===id); return r ? r.name : null; }
+  function roleTitle(name){ const r = roles.find(x=>x.name===name); return r ? r.title : name; }
+
+  function renderReadonly(el, prof) {
+    let h = "";
+    if (prof && prof.rank_id) h += '<span class="sb-badge">'+esc(rankName(prof.rank_id)||"")+'</span> ';
+    if (prof && prof.role && prof.role!=="officer") h += '<span class="sb-badge role">'+esc(roleTitle(prof.role))+'</span>';
+    el.innerHTML = h;
+  }
+
+  function renderEditor(el, cs, prof) {
+    const rankOpts = '<option value="">— звание —</option>' +
+      ranks.map(r=>'<option value="'+r.id+'"'+(prof&&prof.rank_id===r.id?' selected':'')+'>'+esc(r.name)+'</option>').join("");
+    const roleOpts = roles.map(r=>'<option value="'+r.name+'"'+(prof&&prof.role===r.name?' selected':'')+'>'+esc(r.title)+'</option>').join("");
+    el.innerHTML = '<select class="sb-rank">'+rankOpts+'</select>' +
+                   '<select class="sb-role">'+roleOpts+'</select><span class="sb-ok"></span>';
+    const rankSel = el.querySelector(".sb-rank"), roleSel = el.querySelector(".sb-role"), ok = el.querySelector(".sb-ok");
+    async function save() {
+      const rank_id = rankSel.value ? parseInt(rankSel.value) : null;
+      const role = roleSel.value || "officer";
+      const me = (window.lapd.userName || "админ");
+      const { error } = await sb.from("officer_profiles").upsert(
+        { callsign: cs, rank_id: rank_id, role: role, updated_at: new Date().toISOString(), updated_by: me },
+        { onConflict: "callsign" });
+      if (error) { ok.textContent = "ошибка"; ok.style.color = "#f85149"; return; }
+      ok.textContent = "✓ сохранено"; ok.style.color = "#3fb950";
+      try { await sb.rpc("log_action", { _action: "rank.set", _entity: "officer", _entity_id: cs,
+        _details: { rank_id: rank_id, role: role } }); } catch(e){}
+      setTimeout(()=>ok.textContent="", 2000);
+    }
+    rankSel.onchange = save; roleSel.onchange = save;
+  }
+
+  document.addEventListener("lapd:auth", async function () {
+    sb = window.lapd.sb;
+    const cells = document.querySelectorAll(".sb-edit");
+    if (!cells.length) return;
+    try { await loadRefs(); } catch(e){ return; }
+    cells.forEach(function (el) {
+      const cs = el.getAttribute("data-cs") || "";
+      const prof = profiles[cs.toLowerCase()];
+      if (window.lapd.admin) renderEditor(el, cs, prof);
+      else renderReadonly(el, prof);
+    });
+  });
+})();
+</script>
 
   </main>
 

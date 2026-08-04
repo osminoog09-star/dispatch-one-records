@@ -38,6 +38,7 @@
       const admin = await isAdmin();
       const name = (s.user.user_metadata && (s.user.user_metadata.full_name || s.user.user_metadata.name))
                    || s.user.email || "вход";
+      window.lapd.userName = name;
       if (slot) {
         slot.innerHTML = '<span class="auth-user">' + name + (admin ? " · админ" : "") +
           '</span> <a href="#" class="auth-link" onclick="lapdLogout();return false">выйти</a>';

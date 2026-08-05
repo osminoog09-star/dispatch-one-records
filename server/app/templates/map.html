@@ -17,9 +17,31 @@
 
 <div class="map-wrap">
   <div class="map-box">
+    <div class="map-hud">
+      <span>LIVE PATROL MAP</span>
+      <b>San Andreas · LSPDFR zones</b>
+    </div>
     <svg viewBox="0 0 640 800" class="ls-map" preserveAspectRatio="xMidYMid meet"
          xmlns="http://www.w3.org/2000/svg">
-      <rect x="0" y="0" width="640" height="800" fill="#0b1420"/>
+      <defs>
+        <radialGradient id="oceanGlow" cx="50%" cy="42%" r="68%">
+          <stop offset="0%" stop-color="#142239"/>
+          <stop offset="58%" stop-color="#07111f"/>
+          <stop offset="100%" stop-color="#040811"/>
+        </radialGradient>
+        <filter id="softGlow" x="-35%" y="-35%" width="170%" height="170%">
+          <feGaussianBlur stdDeviation="5" result="blur"/>
+          <feMerge>
+            <feMergeNode in="blur"/>
+            <feMergeNode in="SourceGraphic"/>
+          </feMerge>
+        </filter>
+        <pattern id="mapGrid" width="32" height="32" patternUnits="userSpaceOnUse">
+          <path d="M32 0H0V32" fill="none" stroke="#1b2b42" stroke-width=".7" opacity=".36"/>
+        </pattern>
+      </defs>
+      <rect x="0" y="0" width="640" height="800" fill="url(#oceanGlow)"/>
+      <rect x="0" y="0" width="640" height="800" fill="url(#mapGrid)" opacity=".55"/>
 
       <!-- контур острова -->
       <path d="M232,44 C300,26 372,34 424,68 C470,98 498,150 512,208
@@ -29,7 +51,31 @@
                C96,626 92,572 100,518 C106,476 104,436 92,398
                C78,352 74,304 86,256 C100,198 132,142 174,100
                C192,80 212,58 232,44 Z"
-            fill="#182335" stroke="#3d5875" stroke-width="2"/>
+            fill="#142235" stroke="#527196" stroke-width="2.2" filter="url(#softGlow)"/>
+      <path d="M232,44 C300,26 372,34 424,68 C470,98 498,150 512,208
+               C524,258 520,306 508,352 C498,392 500,430 514,466
+               C532,512 540,560 528,606 C514,660 476,704 424,732
+               C372,760 310,772 252,762 C196,752 150,720 122,672
+               C96,626 92,572 100,518 C106,476 104,436 92,398
+               C78,352 74,304 86,256 C100,198 132,142 174,100
+               C192,80 212,58 232,44 Z"
+            fill="none" stroke="#7aa7d8" stroke-opacity=".28" stroke-width="7"/>
+
+      <!-- дороги/MDT-линии: условная игровая сеть, чтобы карта читалась как нормальная карта -->
+      <g class="map-roads">
+        <path class="road major" d="M238,62 C228,128 254,192 292,244 C336,304 366,356 364,438 C362,526 352,612 378,724"/>
+        <path class="road major" d="M112,392 C180,398 260,424 328,474 C390,520 462,560 520,590"/>
+        <path class="road" d="M170,118 C222,162 278,194 398,204 C446,208 480,236 500,272"/>
+        <path class="road" d="M134,562 C210,548 280,548 374,568 C426,580 474,602 518,632"/>
+        <path class="road" d="M178,652 C246,632 320,620 424,636"/>
+        <path class="road" d="M220,468 C280,500 332,520 430,510"/>
+        <path class="road thin" d="M110,438 C178,442 244,456 306,470"/>
+        <path class="road thin" d="M396,506 C426,468 452,430 476,386"/>
+      </g>
+      <g class="map-city-grid">
+        <path d="M232,508 L462,486 M220,548 L494,526 M214,588 L510,566 M232,628 L500,608 M256,670 L438,650"/>
+        <path d="M250,492 L276,690 M304,488 L324,704 M360,498 L376,686 M420,512 L438,650"/>
+      </g>
 
       <!-- граница округов -->
       <path d="M96,468 C180,452 300,448 400,456 C450,460 490,464 516,470"
@@ -41,7 +87,8 @@
       {% for z in zones %}
         <g class="zone reg-{{ z.region }} {{ 'has-data' if z.count else '' }}"
            data-code="{{ z.code }}" data-name="{{ z.name }}" data-ru="{{ z.ru }}"
-           data-count="{{ z.count }}" data-arrests="{{ z.arrests }}" data-cits="{{ z.citations }}">
+           data-region="{{ z.region }}" data-count="{{ z.count }}" data-arrests="{{ z.arrests }}" data-cits="{{ z.citations }}">
+          <title>{{ z.ru }} · {{ z.name }}</title>
           <polygon points="{{ z.poly }}" fill-opacity="{{ 0.3 + z.intensity * 0.6 }}"/>
           {% if z.count %}
             <circle cx="{{ z.cx }}" cy="{{ z.cy }}" r="{{ 9 + z.intensity * 8 }}"
@@ -66,6 +113,39 @@
           <div><dt>Штрафов</dt><dd id="zi-cit">0</dd></div>
           <div><dt>Всего</dt><dd id="zi-all">0</dd></div>
         </dl>
+        <div class="assign-panel">
+          <h3>Назначить патруль</h3>
+          <label class="assign-field">
+            <span>Офицер / юнит</span>
+            <select id="assign-unit">
+              {% if officers %}
+                {% for o in officers %}
+                  <option value="{{ o.callsign }} — {{ o.name or o.officer_name or 'офицер' }}">{{ o.callsign }} · {{ o.name or o.officer_name or 'офицер' }}</option>
+                {% endfor %}
+              {% else %}
+                <option value="7-WILLIAM-1 — Patrol Unit">7-WILLIAM-1 · Patrol Unit</option>
+              {% endif %}
+            </select>
+          </label>
+          <label class="assign-field">
+            <span>Режим</span>
+            <select id="assign-mode">
+              <option value="Патруль">Патруль</option>
+              <option value="Усиление">Усиление</option>
+              <option value="Приоритет">Приоритет</option>
+              <option value="Наблюдение">Наблюдение</option>
+            </select>
+          </label>
+          <button type="button" class="btn primary" id="assign-save">Закрепить за зоной</button>
+          <p class="muted small assign-note">Назначения сохраняются в браузере для этой карты.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Назначенные зоны</h3>
+      <div id="assign-list" class="assign-list">
+        <p class="muted small">Пока нет назначений.</p>
       </div>
     </div>
 
@@ -95,8 +175,30 @@
 </div>
 
 <script>
+var selectedZone = null;
+var assignmentKey = 'lapd-map-zone-assignments-v1';
+function loadAssignments(){
+  try { return JSON.parse(localStorage.getItem(assignmentKey) || '{}'); }
+  catch(e){ return {}; }
+}
+function saveAssignments(data){
+  localStorage.setItem(assignmentKey, JSON.stringify(data));
+}
+function renderAssignments(){
+  var data = loadAssignments();
+  var box = document.getElementById('assign-list');
+  var rows = Object.keys(data).sort().map(function(code){
+    var a = data[code];
+    return '<div class="assign-row" data-zone-code="'+code+'"><b>'+a.zone+'</b><span>'+a.unit+'</span><em>'+a.mode+'</em></div>';
+  });
+  box.innerHTML = rows.length ? rows.join('') : '<p class="muted small">Пока нет назначений.</p>';
+  document.querySelectorAll('.zone').forEach(function(g){
+    g.classList.toggle('assigned', Boolean(data[g.dataset.code]));
+  });
+}
 document.querySelectorAll('.zone').forEach(function(g){
   g.addEventListener('click', function(){
+    selectedZone = g;
     document.querySelectorAll('.zone').forEach(function(z){ z.classList.remove('sel'); });
     g.classList.add('sel');
     document.getElementById('zi-name').textContent = g.dataset.ru;
@@ -106,7 +208,24 @@ document.querySelectorAll('.zone').forEach(function(g){
     document.getElementById('zi-arr').textContent = g.dataset.arrests;
     document.getElementById('zi-cit').textContent = g.dataset.cits;
     document.getElementById('zi-all').textContent = g.dataset.count;
+    var current = loadAssignments()[g.dataset.code];
+    if (current) {
+      document.getElementById('assign-unit').value = current.unit;
+      document.getElementById('assign-mode').value = current.mode;
+    }
   });
 });
+document.getElementById('assign-save').addEventListener('click', function(){
+  if (!selectedZone) return;
+  var data = loadAssignments();
+  data[selectedZone.dataset.code] = {
+    zone: selectedZone.dataset.ru,
+    unit: document.getElementById('assign-unit').value,
+    mode: document.getElementById('assign-mode').value
+  };
+  saveAssignments(data);
+  renderAssignments();
+});
+renderAssignments();
 </script>
 {% endblock %}

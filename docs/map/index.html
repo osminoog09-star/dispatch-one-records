@@ -77,9 +77,31 @@
 
 <div class="map-wrap">
   <div class="map-box">
+    <div class="map-hud">
+      <span>LIVE PATROL MAP</span>
+      <b>San Andreas · LSPDFR zones</b>
+    </div>
     <svg viewBox="0 0 640 800" class="ls-map" preserveAspectRatio="xMidYMid meet"
          xmlns="http://www.w3.org/2000/svg">
-      <rect x="0" y="0" width="640" height="800" fill="#0b1420"/>
+      <defs>
+        <radialGradient id="oceanGlow" cx="50%" cy="42%" r="68%">
+          <stop offset="0%" stop-color="#142239"/>
+          <stop offset="58%" stop-color="#07111f"/>
+          <stop offset="100%" stop-color="#040811"/>
+        </radialGradient>
+        <filter id="softGlow" x="-35%" y="-35%" width="170%" height="170%">
+          <feGaussianBlur stdDeviation="5" result="blur"/>
+          <feMerge>
+            <feMergeNode in="blur"/>
+            <feMergeNode in="SourceGraphic"/>
+          </feMerge>
+        </filter>
+        <pattern id="mapGrid" width="32" height="32" patternUnits="userSpaceOnUse">
+          <path d="M32 0H0V32" fill="none" stroke="#1b2b42" stroke-width=".7" opacity=".36"/>
+        </pattern>
+      </defs>
+      <rect x="0" y="0" width="640" height="800" fill="url(#oceanGlow)"/>
+      <rect x="0" y="0" width="640" height="800" fill="url(#mapGrid)" opacity=".55"/>
 
       <!-- контур острова -->
       <path d="M232,44 C300,26 372,34 424,68 C470,98 498,150 512,208
@@ -89,7 +111,31 @@
                C96,626 92,572 100,518 C106,476 104,436 92,398
                C78,352 74,304 86,256 C100,198 132,142 174,100
                C192,80 212,58 232,44 Z"
-            fill="#182335" stroke="#3d5875" stroke-width="2"/>
+            fill="#142235" stroke="#527196" stroke-width="2.2" filter="url(#softGlow)"/>
+      <path d="M232,44 C300,26 372,34 424,68 C470,98 498,150 512,208
+               C524,258 520,306 508,352 C498,392 500,430 514,466
+               C532,512 540,560 528,606 C514,660 476,704 424,732
+               C372,760 310,772 252,762 C196,752 150,720 122,672
+               C96,626 92,572 100,518 C106,476 104,436 92,398
+               C78,352 74,304 86,256 C100,198 132,142 174,100
+               C192,80 212,58 232,44 Z"
+            fill="none" stroke="#7aa7d8" stroke-opacity=".28" stroke-width="7"/>
+
+      <!-- дороги/MDT-линии: условная игровая сеть, чтобы карта читалась как нормальная карта -->
+      <g class="map-roads">
+        <path class="road major" d="M238,62 C228,128 254,192 292,244 C336,304 366,356 364,438 C362,526 352,612 378,724"/>
+        <path class="road major" d="M112,392 C180,398 260,424 328,474 C390,520 462,560 520,590"/>
+        <path class="road" d="M170,118 C222,162 278,194 398,204 C446,208 480,236 500,272"/>
+        <path class="road" d="M134,562 C210,548 280,548 374,568 C426,580 474,602 518,632"/>
+        <path class="road" d="M178,652 C246,632 320,620 424,636"/>
+        <path class="road" d="M220,468 C280,500 332,520 430,510"/>
+        <path class="road thin" d="M110,438 C178,442 244,456 306,470"/>
+        <path class="road thin" d="M396,506 C426,468 452,430 476,386"/>
+      </g>
+      <g class="map-city-grid">
+        <path d="M232,508 L462,486 M220,548 L494,526 M214,588 L510,566 M232,628 L500,608 M256,670 L438,650"/>
+        <path d="M250,492 L276,690 M304,488 L324,704 M360,498 L376,686 M420,512 L438,650"/>
+      </g>
 
       <!-- граница округов -->
       <path d="M96,468 C180,452 300,448 400,456 C450,460 490,464 516,470"
@@ -101,7 +147,8 @@
       
         <g class="zone reg-blaine "
            data-code="PALETO" data-name="Paleto Bay" data-ru="Палето-Бэй"
-           data-count="0" data-arrests="0" data-cits="0">
+           data-region="blaine" data-count="0" data-arrests="0" data-cits="0">
+          <title>Палето-Бэй · Paleto Bay</title>
           <polygon points="196,60 292,52 316,96 288,132 214,132 180,102" fill-opacity="0.3"/>
           
             <text x="247.66666666666666" y="98.66666666666667" class="z-label">Палето-Бэй</text>
@@ -110,7 +157,8 @@
       
         <g class="zone reg-blaine "
            data-code="MTCHIL" data-name="Mount Chiliad" data-ru="Гора Чилиад"
-           data-count="0" data-arrests="0" data-cits="0">
+           data-region="blaine" data-count="0" data-arrests="0" data-cits="0">
+          <title>Гора Чилиад · Mount Chiliad</title>
           <polygon points="140,120 214,132 236,186 186,216 130,190 116,150" fill-opacity="0.3"/>
           
             <text x="170.33333333333334" y="168.66666666666666" class="z-label">Гора Чилиад</text>
@@ -119,7 +167,8 @@
       
         <g class="zone reg-blaine "
            data-code="PALFOR" data-name="Paleto Forest" data-ru="Лес Палето"
-           data-count="0" data-arrests="0" data-cits="0">
+           data-region="blaine" data-count="0" data-arrests="0" data-cits="0">
+          <title>Лес Палето · Paleto Forest</title>
           <polygon points="236,186 300,150 336,186 316,232 250,236" fill-opacity="0.3"/>
           
             <text x="287.6" y="201.0" class="z-label">Лес Палето</text>
@@ -128,7 +177,8 @@
       
         <g class="zone reg-blaine "
            data-code="GRAPES" data-name="Grapeseed" data-ru="Грейпсид"
-           data-count="0" data-arrests="0" data-cits="0">
+           data-region="blaine" data-count="0" data-arrests="0" data-cits="0">
+          <title>Грейпсид · Grapeseed</title>
           <polygon points="392,128 468,146 486,200 440,224 388,196" fill-opacity="0.3"/>
           
             <text x="434.8" y="181.8" class="z-label">Грейпсид</text>
@@ -137,7 +187,8 @@
       
         <g class="zone reg-blaine "
            data-code="SANDY" data-name="Sandy Shores" data-ru="Сэнди-Шорс"
-           data-count="0" data-arrests="0" data-cits="0">
+           data-region="blaine" data-count="0" data-arrests="0" data-cits="0">
+          <title>Сэнди-Шорс · Sandy Shores</title>
           <polygon points="420,232 486,220 508,272 470,312 412,296" fill-opacity="0.3"/>
           
             <text x="459.2" y="269.4" class="z-label">Сэнди-Шорс</text>
@@ -146,7 +197,8 @@
       
         <g class="zone reg-blaine "
            data-code="ALAMO" data-name="Alamo Sea" data-ru="Озеро Аламо"
-           data-count="0" data-arrests="0" data-cits="0">
+           data-region="blaine" data-count="0" data-arrests="0" data-cits="0">
+          <title>Озеро Аламо · Alamo Sea</title>
           <polygon points="306,214 396,206 424,250 396,296 314,290 288,250" fill-opacity="0.3"/>
           
             <text x="354.0" y="254.0" class="z-label">Озеро Аламо</text>
@@ -155,7 +207,8 @@
       
         <g class="zone reg-blaine "
            data-code="HARMO" data-name="Harmony" data-ru="Хармони"
-           data-count="0" data-arrests="0" data-cits="0">
+           data-region="blaine" data-count="0" data-arrests="0" data-cits="0">
+          <title>Хармони · Harmony</title>
           <polygon points="250,264 306,258 314,306 262,318 236,290" fill-opacity="0.3"/>
           
             <text x="273.6" y="290.2" class="z-label">Хармони</text>
@@ -164,7 +217,8 @@
       
         <g class="zone reg-blaine "
            data-code="GRANDSEN" data-name="Grand Senora Desert" data-ru="Пустыня Гранд-Сенора"
-           data-count="0" data-arrests="0" data-cits="0">
+           data-region="blaine" data-count="0" data-arrests="0" data-cits="0">
+          <title>Пустыня Гранд-Сенора · Grand Senora Desert</title>
           <polygon points="314,306 412,300 442,352 396,392 320,380 296,340" fill-opacity="0.3"/>
           
             <text x="363.3333333333333" y="348.0" class="z-label">Пустыня Гранд-Сенора</text>
@@ -173,7 +227,8 @@
       
         <g class="zone reg-blaine "
            data-code="ARMYB" data-name="Fort Zancudo" data-ru="Форт-Занкудо"
-           data-count="0" data-arrests="0" data-cits="0">
+           data-region="blaine" data-count="0" data-arrests="0" data-cits="0">
+          <title>Форт-Занкудо · Fort Zancudo</title>
           <polygon points="150,300 226,306 238,356 172,368 140,340" fill-opacity="0.3"/>
           
             <text x="185.2" y="337.0" class="z-label">Форт-Занкудо</text>
@@ -182,7 +237,8 @@
       
         <g class="zone reg-county "
            data-code="CHU" data-name="Chumash" data-ru="Чумаш"
-           data-count="0" data-arrests="0" data-cits="0">
+           data-region="county" data-count="0" data-arrests="0" data-cits="0">
+          <title>Чумаш · Chumash</title>
           <polygon points="104,352 168,368 178,420 116,436 92,396" fill-opacity="0.3"/>
           
             <text x="131.6" y="397.4" class="z-label">Чумаш</text>
@@ -191,7 +247,8 @@
       
         <g class="zone reg-county "
            data-code="TONGVAH" data-name="Tongva Hills" data-ru="Холмы Тонгва"
-           data-count="0" data-arrests="0" data-cits="0">
+           data-region="county" data-count="0" data-arrests="0" data-cits="0">
+          <title>Холмы Тонгва · Tongva Hills</title>
           <polygon points="196,376 268,368 288,414 232,440 190,420" fill-opacity="0.3"/>
           
             <text x="234.8" y="406.6" class="z-label">Холмы Тонгва</text>
@@ -200,7 +257,8 @@
       
         <g class="zone reg-county "
            data-code="BANHAMC" data-name="Banham Canyon" data-ru="Каньон Бэнхэм"
-           data-count="0" data-arrests="0" data-cits="0">
+           data-region="county" data-count="0" data-arrests="0" data-cits="0">
+          <title>Каньон Бэнхэм · Banham Canyon</title>
           <polygon points="150,430 216,440 226,486 162,498 138,466" fill-opacity="0.3"/>
           
             <text x="178.4" y="467.0" class="z-label">Каньон Бэнхэм</text>
@@ -209,7 +267,8 @@
       
         <g class="zone reg-county "
            data-code="PALHIGH" data-name="Palomino Highlands" data-ru="Паломино"
-           data-count="0" data-arrests="0" data-cits="0">
+           data-region="county" data-count="0" data-arrests="0" data-cits="0">
+          <title>Паломино · Palomino Highlands</title>
           <polygon points="396,392 470,384 494,436 436,462 392,438" fill-opacity="0.3"/>
           
             <text x="437.6" y="425.4" class="z-label">Паломино</text>
@@ -218,7 +277,8 @@
       
         <g class="zone reg-county "
            data-code="DAVIS_Q" data-name="Davis Quartz" data-ru="Дэвис-Кварц"
-           data-count="0" data-arrests="0" data-cits="0">
+           data-region="county" data-count="0" data-arrests="0" data-cits="0">
+          <title>Дэвис-Кварц · Davis Quartz</title>
           <polygon points="320,380 392,392 396,438 330,450 306,414" fill-opacity="0.3"/>
           
             <text x="348.8" y="417.8" class="z-label">Дэвис-Кварц</text>
@@ -227,7 +287,8 @@
       
         <g class="zone reg-city "
            data-code="DTVINE" data-name="Downtown Vinewood" data-ru="Даунтаун Вайнвуд"
-           data-count="0" data-arrests="0" data-cits="0">
+           data-region="city" data-count="0" data-arrests="0" data-cits="0">
+          <title>Даунтаун Вайнвуд · Downtown Vinewood</title>
           <polygon points="306,470 380,464 396,506 330,520 300,502" fill-opacity="0.3"/>
           
             <text x="342.4" y="495.4" class="z-label">Даунтаун Вайнвуд</text>
@@ -236,7 +297,8 @@
       
         <g class="zone reg-city "
            data-code="VINE" data-name="Vinewood Hills" data-ru="Холмы Вайнвуд"
-           data-count="0" data-arrests="0" data-cits="0">
+           data-region="city" data-count="0" data-arrests="0" data-cits="0">
+          <title>Холмы Вайнвуд · Vinewood Hills</title>
           <polygon points="232,452 306,470 300,506 236,516 216,486" fill-opacity="0.3"/>
           
             <text x="258.0" y="489.0" class="z-label">Холмы Вайнвуд</text>
@@ -245,7 +307,8 @@
       
         <g class="zone reg-city "
            data-code="MIRR" data-name="Mirror Park" data-ru="Миррор-Парк"
-           data-count="0" data-arrests="0" data-cits="0">
+           data-region="city" data-count="0" data-arrests="0" data-cits="0">
+          <title>Миррор-Парк · Mirror Park</title>
           <polygon points="396,506 452,498 468,540 410,552 390,530" fill-opacity="0.3"/>
           
             <text x="423.2" y="528.2" class="z-label">Миррор-Парк</text>
@@ -254,7 +317,8 @@
       
         <g class="zone reg-city "
            data-code="DELPE" data-name="Del Perro" data-ru="Дель-Перро"
-           data-count="0" data-arrests="0" data-cits="0">
+           data-region="city" data-count="0" data-arrests="0" data-cits="0">
+          <title>Дель-Перро · Del Perro</title>
           <polygon points="152,506 216,498 228,544 168,558 142,534" fill-opacity="0.3"/>
           
             <text x="181.2" y="531.0" class="z-label">Дель-Перро</text>
@@ -263,7 +327,8 @@
       
         <g class="zone reg-city "
            data-code="DOWNT" data-name="Downtown" data-ru="Даунтаун"
-           data-count="0" data-arrests="0" data-cits="0">
+           data-region="city" data-count="0" data-arrests="0" data-cits="0">
+          <title>Даунтаун · Downtown</title>
           <polygon points="300,520 366,516 380,558 316,570 292,548" fill-opacity="0.3"/>
           
             <text x="330.8" y="545.4" class="z-label">Даунтаун</text>
@@ -272,7 +337,8 @@
       
         <g class="zone reg-city "
            data-code="MISSION" data-name="Mission Row" data-ru="Мишн-Роу"
-           data-count="0" data-arrests="0" data-cits="0">
+           data-region="city" data-count="0" data-arrests="0" data-cits="0">
+          <title>Мишн-Роу · Mission Row</title>
           <polygon points="366,556 424,550 436,590 378,602 360,580" fill-opacity="0.3"/>
           
             <text x="392.8" y="578.6" class="z-label">Мишн-Роу</text>
@@ -281,7 +347,8 @@
       
         <g class="zone reg-city "
            data-code="VESP" data-name="Vespucci Beach" data-ru="Пляж Веспуччи"
-           data-count="0" data-arrests="0" data-cits="0">
+           data-region="city" data-count="0" data-arrests="0" data-cits="0">
+          <title>Пляж Веспуччи · Vespucci Beach</title>
           <polygon points="140,560 200,552 212,600 154,614 128,588" fill-opacity="0.3"/>
           
             <text x="166.8" y="585.8" class="z-label">Пляж Веспуччи</text>
@@ -290,7 +357,8 @@
       
         <g class="zone reg-city "
            data-code="LMESA" data-name="La Mesa" data-ru="Ла-Меса"
-           data-count="0" data-arrests="0" data-cits="0">
+           data-region="city" data-count="0" data-arrests="0" data-cits="0">
+          <title>Ла-Меса · La Mesa</title>
           <polygon points="424,548 480,542 494,584 436,596 418,574" fill-opacity="0.3"/>
           
             <text x="450.4" y="571.8" class="z-label">Ла-Меса</text>
@@ -299,7 +367,8 @@
       
         <g class="zone reg-city "
            data-code="STRAW" data-name="Strawberry" data-ru="Строберри"
-           data-count="0" data-arrests="0" data-cits="0">
+           data-region="city" data-count="0" data-arrests="0" data-cits="0">
+          <title>Строберри · Strawberry</title>
           <polygon points="268,578 336,570 348,614 284,626 258,602" fill-opacity="0.3"/>
           
             <text x="298.8" y="601.0" class="z-label">Строберри</text>
@@ -308,7 +377,8 @@
       
         <g class="zone reg-city "
            data-code="RANCHO" data-name="Rancho" data-ru="Ранчо"
-           data-count="0" data-arrests="0" data-cits="0">
+           data-region="city" data-count="0" data-arrests="0" data-cits="0">
+          <title>Ранчо · Rancho</title>
           <polygon points="348,606 410,598 424,640 360,652 340,630" fill-opacity="0.3"/>
           
             <text x="376.4" y="628.2" class="z-label">Ранчо</text>
@@ -317,7 +387,8 @@
       
         <g class="zone reg-city "
            data-code="EBURO" data-name="El Burro Heights" data-ru="Эль-Бурро-Хайтс"
-           data-count="0" data-arrests="0" data-cits="0">
+           data-region="city" data-count="0" data-arrests="0" data-cits="0">
+          <title>Эль-Бурро-Хайтс · El Burro Heights</title>
           <polygon points="440,596 502,588 516,632 456,646 432,622" fill-opacity="0.3"/>
           
             <text x="469.2" y="619.8" class="z-label">Эль-Бурро-Хайтс</text>
@@ -326,7 +397,8 @@
       
         <g class="zone reg-city has-data"
            data-code="DAVIS" data-name="Davis" data-ru="Дэвис"
-           data-count="2" data-arrests="1" data-cits="1">
+           data-region="city" data-count="2" data-arrests="1" data-cits="1">
+          <title>Дэвис · Davis</title>
           <polygon points="290,626 354,618 366,662 302,674 278,650" fill-opacity="0.8999999999999999"/>
           
             <circle cx="318.0" cy="646.0" r="17.0"
@@ -337,7 +409,8 @@
       
         <g class="zone reg-city "
            data-code="LOSPUER" data-name="Puerto Del Sol" data-ru="Пуэрто-Дель-Соль"
-           data-count="0" data-arrests="0" data-cits="0">
+           data-region="city" data-count="0" data-arrests="0" data-cits="0">
+          <title>Пуэрто-Дель-Соль · Puerto Del Sol</title>
           <polygon points="180,614 244,606 258,650 196,664 170,640" fill-opacity="0.3"/>
           
             <text x="209.6" y="637.8" class="z-label">Пуэрто-Дель-Соль</text>
@@ -346,7 +419,8 @@
       
         <g class="zone reg-city "
            data-code="AIRP" data-name="LS International Airport" data-ru="Аэропорт"
-           data-count="0" data-arrests="0" data-cits="0">
+           data-region="city" data-count="0" data-arrests="0" data-cits="0">
+          <title>Аэропорт · LS International Airport</title>
           <polygon points="232,656 316,648 330,700 246,712 216,684" fill-opacity="0.3"/>
           
             <text x="268.0" y="683.0" class="z-label">Аэропорт</text>
@@ -355,7 +429,8 @@
       
         <g class="zone reg-city "
            data-code="ELYSIAN" data-name="Elysian Island" data-ru="Остров Элизиан"
-           data-count="0" data-arrests="0" data-cits="0">
+           data-region="city" data-count="0" data-arrests="0" data-cits="0">
+          <title>Остров Элизиан · Elysian Island</title>
           <polygon points="330,690 400,682 414,726 344,738 320,714" fill-opacity="0.3"/>
           
             <text x="361.6" y="713.0" class="z-label">Остров Элизиан</text>
@@ -364,7 +439,8 @@
       
         <g class="zone reg-city "
            data-code="BANNING" data-name="Banning" data-ru="Бэннинг"
-           data-count="0" data-arrests="0" data-cits="0">
+           data-region="city" data-count="0" data-arrests="0" data-cits="0">
+          <title>Бэннинг · Banning</title>
           <polygon points="258,644 320,638 330,678 268,690 246,668" fill-opacity="0.3"/>
           
             <text x="284.4" y="666.6" class="z-label">Бэннинг</text>
@@ -385,6 +461,39 @@
           <div><dt>Штрафов</dt><dd id="zi-cit">0</dd></div>
           <div><dt>Всего</dt><dd id="zi-all">0</dd></div>
         </dl>
+        <div class="assign-panel">
+          <h3>Назначить патруль</h3>
+          <label class="assign-field">
+            <span>Офицер / юнит</span>
+            <select id="assign-unit">
+              
+                
+                  <option value="7-WILLIAM-1 — Denis Sherman">7-WILLIAM-1 · Denis Sherman</option>
+                
+                  <option value="1-ADAM-13 — ReeTest">1-ADAM-13 · ReeTest</option>
+                
+              
+            </select>
+          </label>
+          <label class="assign-field">
+            <span>Режим</span>
+            <select id="assign-mode">
+              <option value="Патруль">Патруль</option>
+              <option value="Усиление">Усиление</option>
+              <option value="Приоритет">Приоритет</option>
+              <option value="Наблюдение">Наблюдение</option>
+            </select>
+          </label>
+          <button type="button" class="btn primary" id="assign-save">Закрепить за зоной</button>
+          <p class="muted small assign-note">Назначения сохраняются в браузере для этой карты.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Назначенные зоны</h3>
+      <div id="assign-list" class="assign-list">
+        <p class="muted small">Пока нет назначений.</p>
       </div>
     </div>
 
@@ -412,8 +521,30 @@
 </div>
 
 <script>
+var selectedZone = null;
+var assignmentKey = 'lapd-map-zone-assignments-v1';
+function loadAssignments(){
+  try { return JSON.parse(localStorage.getItem(assignmentKey) || '{}'); }
+  catch(e){ return {}; }
+}
+function saveAssignments(data){
+  localStorage.setItem(assignmentKey, JSON.stringify(data));
+}
+function renderAssignments(){
+  var data = loadAssignments();
+  var box = document.getElementById('assign-list');
+  var rows = Object.keys(data).sort().map(function(code){
+    var a = data[code];
+    return '<div class="assign-row" data-zone-code="'+code+'"><b>'+a.zone+'</b><span>'+a.unit+'</span><em>'+a.mode+'</em></div>';
+  });
+  box.innerHTML = rows.length ? rows.join('') : '<p class="muted small">Пока нет назначений.</p>';
+  document.querySelectorAll('.zone').forEach(function(g){
+    g.classList.toggle('assigned', Boolean(data[g.dataset.code]));
+  });
+}
 document.querySelectorAll('.zone').forEach(function(g){
   g.addEventListener('click', function(){
+    selectedZone = g;
     document.querySelectorAll('.zone').forEach(function(z){ z.classList.remove('sel'); });
     g.classList.add('sel');
     document.getElementById('zi-name').textContent = g.dataset.ru;
@@ -423,8 +554,25 @@ document.querySelectorAll('.zone').forEach(function(g){
     document.getElementById('zi-arr').textContent = g.dataset.arrests;
     document.getElementById('zi-cit').textContent = g.dataset.cits;
     document.getElementById('zi-all').textContent = g.dataset.count;
+    var current = loadAssignments()[g.dataset.code];
+    if (current) {
+      document.getElementById('assign-unit').value = current.unit;
+      document.getElementById('assign-mode').value = current.mode;
+    }
   });
 });
+document.getElementById('assign-save').addEventListener('click', function(){
+  if (!selectedZone) return;
+  var data = loadAssignments();
+  data[selectedZone.dataset.code] = {
+    zone: selectedZone.dataset.ru,
+    unit: document.getElementById('assign-unit').value,
+    mode: document.getElementById('assign-mode').value
+  };
+  saveAssignments(data);
+  renderAssignments();
+});
+renderAssignments();
 </script>
 
   </main>

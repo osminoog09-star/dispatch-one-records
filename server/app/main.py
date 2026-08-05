@@ -133,7 +133,8 @@ def game_map():
                         "citations": sum(z["citations"] for z in rz),
                         "count": sum(z["count"] for z in rz)})
 
-    return render_template("map.html", zones=zones, top_zones=top_zones, regions=regions)
+    return render_template("map.html", zones=zones, top_zones=top_zones,
+                           regions=regions, officers=db.list_officers_with_stats())
 
 
 def _server_dir():

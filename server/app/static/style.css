@@ -137,14 +137,23 @@ h3{font-size:14px;margin:0 0 .5em;color:var(--muted);text-transform:uppercase;le
 @media(max-width:760px){.doc-body{grid-template-columns:1fr}}
 
 /* Карта */
-.map-wrap{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(240px,1fr);gap:20px;align-items:start}
-.map-box{background:#0b1420;border:1px solid var(--border);border-radius:12px;padding:8px;
+.map-wrap{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(280px,1fr);gap:20px;align-items:start}
+.map-box{position:relative;background:#0b1420;border:1px solid var(--border);border-radius:12px;padding:8px;
   max-height:76vh;overflow:hidden;display:flex;justify-content:center}
+.map-hud{position:absolute;left:18px;top:18px;z-index:2;display:flex;gap:10px;align-items:center;
+  padding:8px 10px;border:1px solid rgba(94,143,205,.35);border-radius:999px;
+  background:rgba(6,12,22,.72);backdrop-filter:blur(8px);box-shadow:0 0 22px rgba(45,120,220,.15)}
+.map-hud span{font-size:11px;letter-spacing:.12em;color:#7db5ff;font-weight:800}
+.map-hud b{font-size:12px;color:#dceaff}
 .ls-map{width:100%;height:auto;max-height:72vh;display:block}
 .zone{cursor:pointer}
+.zone polygon{stroke:#263c58;stroke-width:1;transition:fill-opacity .15s,stroke .15s,filter .15s}
+.zone:hover polygon{fill-opacity:.82;stroke:#7fb6ff;filter:drop-shadow(0 0 7px rgba(80,150,255,.36))}
+.zone.sel polygon{stroke:var(--accent);stroke-width:3;filter:drop-shadow(0 0 12px rgba(59,130,246,.55))}
+.zone.assigned polygon{stroke:#22c55e;stroke-width:2}
 .zone circle{transition:fill-opacity .15s}
-.zone:hover circle:first-child{fill-opacity:.85}
-.zone.sel circle:first-child{stroke:var(--accent);stroke-width:2.5}
+.zone:hover circle:first-child{fill-opacity:.95}
+.zone.sel circle:first-child{stroke:#fff;stroke-width:2.5}
 .z-label{fill:#8fa6c2;font-size:11px;text-anchor:middle;pointer-events:none;
   font-family:system-ui,sans-serif}
 .zone.has-data .z-label{fill:#e8ecf1;font-weight:600}
@@ -155,7 +164,21 @@ h3{font-size:14px;margin:0 0 .5em;color:var(--muted);text-transform:uppercase;le
 .geo-label.sea{font-size:12px;text-anchor:start}
 .geo-region{fill:#6b8bab;font-size:10px;letter-spacing:2px;pointer-events:none;
   font-family:system-ui,sans-serif;font-weight:700}
+.map-roads .road{fill:none;stroke:#31465f;stroke-width:3;stroke-linecap:round;stroke-linejoin:round;opacity:.68}
+.map-roads .road.major{stroke:#567aa3;stroke-width:4;opacity:.72}
+.map-roads .road.thin{stroke:#25364b;stroke-width:2;opacity:.62}
+.map-city-grid path{fill:none;stroke:#22334a;stroke-width:1.1;opacity:.62}
 .map-side{display:flex;flex-direction:column;gap:14px}
+.assign-panel{margin-top:14px;padding-top:14px;border-top:1px solid var(--border)}
+.assign-field{display:block;margin-bottom:10px;color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.3px}
+.assign-field span{display:block;margin-bottom:5px}
+.assign-field select{width:100%;background:var(--surface2);color:var(--text);border:1px solid var(--border);
+  border-radius:8px;padding:8px 10px;font-size:14px}
+.assign-note{margin:8px 0 0}
+.assign-list{display:flex;flex-direction:column;gap:8px}
+.assign-row{display:grid;grid-template-columns:1fr;gap:2px;background:var(--surface2);border:1px solid var(--border);
+  border-left:3px solid var(--ok);border-radius:10px;padding:10px 12px}
+.assign-row b{font-size:13px}.assign-row span{color:var(--text);font-size:13px}.assign-row em{color:var(--muted);font-style:normal;font-size:12px}
 @media(max-width:820px){.map-wrap{grid-template-columns:1fr}.map-box{max-height:none}.ls-map{max-height:none}}
 
 .staff-list{display:flex;flex-direction:column;gap:10px}

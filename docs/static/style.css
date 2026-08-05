@@ -137,52 +137,36 @@ h3{font-size:14px;margin:0 0 .5em;color:var(--muted);text-transform:uppercase;le
 @media(max-width:760px){.doc-body{grid-template-columns:1fr}}
 
 /* Карта */
-.map-wrap{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(280px,1fr);gap:20px;align-items:start}
-.map-box{position:relative;background:#0b1420;border:1px solid var(--border);border-radius:12px;padding:8px;
-  min-height:620px;max-height:76vh;overflow:hidden;display:flex;justify-content:center}
-.map-box::before{content:"";position:absolute;inset:0;z-index:0;
-  background:radial-gradient(circle at 50% 45%,rgba(42,100,170,.18),rgba(2,6,12,.70) 72%);
-  pointer-events:none}
-.map-hud{position:absolute;left:18px;top:18px;z-index:2;display:flex;gap:10px;align-items:center;
-  padding:8px 10px;border:1px solid rgba(94,143,205,.35);border-radius:999px;
-  background:rgba(6,12,22,.72);backdrop-filter:blur(8px);box-shadow:0 0 22px rgba(45,120,220,.15)}
-.map-hud span{font-size:11px;letter-spacing:.12em;color:#7db5ff;font-weight:800}
-.map-hud b{font-size:12px;color:#dceaff}
-.map-hud a{font-size:12px;color:#7db5ff;border-left:1px solid rgba(125,181,255,.24);padding-left:10px}
-.gta-map-frame{position:absolute;z-index:0;left:-18%;top:-11%;width:136%;height:124%;border:0;
-  filter:saturate(1.08) contrast(1.08) brightness(.62);opacity:.86;pointer-events:none;background:#07111d}
-.ls-map{position:relative;z-index:1;width:100%;height:100%;max-height:72vh;display:block}
-.zone-overlay{mix-blend-mode:screen}
-.zone{cursor:pointer}
-.zone polygon{stroke:#5d90d0;stroke-opacity:.58;stroke-width:1.2;transition:fill-opacity .15s,stroke .15s,filter .15s}
-.zone:hover polygon{fill-opacity:.78;stroke:#9dcbff;filter:drop-shadow(0 0 8px rgba(80,150,255,.54))}
-.zone.sel polygon{stroke:var(--accent);stroke-width:3;filter:drop-shadow(0 0 12px rgba(59,130,246,.55))}
-.zone.assigned polygon{stroke:#22c55e;stroke-width:2}
-.zone circle{transition:fill-opacity .15s}
-.zone:hover circle:first-child{fill-opacity:.95}
-.zone.sel circle:first-child{stroke:#fff;stroke-width:2.5}
-.z-label{fill:#8fa6c2;font-size:11px;text-anchor:middle;pointer-events:none;
-  font-family:system-ui,sans-serif}
-.zone.has-data .z-label{fill:#e8ecf1;font-weight:600}
-.z-count{fill:#fff;font-size:12px;font-weight:700;text-anchor:middle;pointer-events:none;
-  font-family:system-ui,sans-serif}
-.geo-label{fill:#5f7f9e;font-size:11px;text-anchor:middle;pointer-events:none;
-  font-family:system-ui,sans-serif;font-style:italic}
-.geo-label.sea{font-size:12px;text-anchor:start}
-.geo-region{fill:#6b8bab;font-size:10px;letter-spacing:2px;pointer-events:none;
-  font-family:system-ui,sans-serif;font-weight:700}
-.map-side{display:flex;flex-direction:column;gap:14px}
-.assign-panel{margin-top:14px;padding-top:14px;border-top:1px solid var(--border)}
-.assign-field{display:block;margin-bottom:10px;color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.3px}
-.assign-field span{display:block;margin-bottom:5px}
-.assign-field select{width:100%;background:var(--surface2);color:var(--text);border:1px solid var(--border);
-  border-radius:8px;padding:8px 10px;font-size:14px}
-.assign-note{margin:8px 0 0}
-.assign-list{display:flex;flex-direction:column;gap:8px}
-.assign-row{display:grid;grid-template-columns:1fr;gap:2px;background:var(--surface2);border:1px solid var(--border);
-  border-left:3px solid var(--ok);border-radius:10px;padding:10px 12px}
-.assign-row b{font-size:13px}.assign-row span{color:var(--text);font-size:13px}.assign-row em{color:var(--muted);font-style:normal;font-size:12px}
-@media(max-width:820px){.map-wrap{grid-template-columns:1fr}.map-box{max-height:none}.ls-map{max-height:none}}
+.clean-map-shell{position:relative;min-height:72vh;border:1px solid #26374c;border-radius:16px;
+  overflow:hidden;background:#07101b;box-shadow:var(--shadow),inset 0 0 70px -28px #2b74bd}
+.clean-map-shell::before{content:"";position:absolute;inset:0;z-index:2;pointer-events:none;
+  background:linear-gradient(180deg,rgba(3,8,15,.10),rgba(3,8,15,.30)),
+    radial-gradient(circle at 50% 12%,rgba(78,141,220,.16),transparent 38%)}
+.clean-map-toolbar{position:absolute;left:16px;right:16px;top:16px;z-index:500;display:flex;
+  align-items:center;justify-content:space-between;gap:12px;pointer-events:none}
+.clean-map-toolbar>div:first-child{display:flex;align-items:center;gap:10px;padding:9px 12px;
+  border:1px solid rgba(111,161,226,.35);border-radius:999px;background:rgba(5,12,22,.72);
+  backdrop-filter:blur(10px);box-shadow:0 0 26px rgba(43,116,189,.18)}
+.clean-map-toolbar span{font-size:11px;letter-spacing:.13em;color:#8ec5ff;font-weight:800}
+.clean-map-toolbar b{font-size:12px;color:#e4f0ff}
+.map-layer-switch{display:flex;gap:6px;padding:5px;border:1px solid rgba(111,161,226,.28);
+  border-radius:10px;background:rgba(5,12,22,.72);backdrop-filter:blur(10px);pointer-events:auto}
+.map-layer-switch button{height:30px;padding:0 11px;border:0;border-radius:7px;background:transparent;
+  color:#9aa8b9;font-weight:700;font-size:12px;cursor:pointer}
+.map-layer-switch button:hover{color:#fff;background:rgba(255,255,255,.08)}
+.map-layer-switch button.on{background:linear-gradient(135deg,#4c8dff,#2563eb);color:#fff;
+  box-shadow:0 5px 18px -8px #4c8dff}
+.clean-map{position:absolute;inset:0;z-index:1;background:#050b12}
+.clean-map .leaflet-tile{filter:saturate(1.08) contrast(1.05) brightness(.72)}
+.clean-map .leaflet-control-zoom{border:1px solid rgba(111,161,226,.25);box-shadow:var(--shadow)}
+.clean-map .leaflet-control-zoom a{background:rgba(13,22,34,.92);color:#e7edf4;border-bottom-color:#26374c}
+.clean-map .leaflet-control-zoom a:hover{background:#1b2838;color:#fff}
+.clean-map .leaflet-control-attribution{background:rgba(5,12,22,.70);color:#8b95a4}
+.clean-map .leaflet-control-attribution a{color:#8ec5ff}
+@media(max-width:820px){
+  .clean-map-shell{min-height:68vh;border-radius:12px}
+  .clean-map-toolbar{align-items:flex-start;flex-direction:column}
+}
 
 .staff-list{display:flex;flex-direction:column;gap:10px}
 .staff-row{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;
@@ -366,13 +350,6 @@ nav{align-items:center}
 .nav-drop:hover .nav-menu{display:flex}
 .nav-menu a{margin:0;display:block;padding:9px 12px;border-radius:8px;color:var(--muted)}
 .nav-menu a:hover{background:var(--surface2);color:var(--text)}
-
-/* ---- карта: более «дорогая» рамка (без копирайтных ассетов) ---- */
-.map-box{background:radial-gradient(120% 120% at 50% 0%,#0e1b2e 0%,#08111d 55%,#060b13 100%);
-  border-radius:16px;box-shadow:var(--shadow),inset 0 0 60px -20px #1b3a5e;padding:12px}
-.map-box::after{content:"";position:absolute}
-.z-label{font-weight:600}
-.zone.has-data .z-label{fill:#f0f5fb}
 
 /* фикс: выпадашка не пропадает при движении курсора к пунктам */
 .nav-menu{top:100%}

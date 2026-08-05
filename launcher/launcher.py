@@ -18,7 +18,7 @@ import tkinter as tk
 from tkinter import messagebox
 
 APP_NAME = "LAPD Records"
-VERSION = "1.4.4"
+VERSION = "1.4.5"
 GITHUB_REPO = "osminoog09-star/dispatch-one-records"
 # Шлюз приёма данных (Cloudflare Worker) — вшивается при сборке, токена в клиенте нет.
 try:
@@ -790,9 +790,10 @@ class Launcher(tk.Tk):
         self.upd_notes = tk.Label(ui, text="", bg=CARD, fg=MUTED, font=("Segoe UI", 8),
                                   anchor="w", justify="left", wraplength=480)
         self.upd_notes.pack(fill="x", pady=(2, 0))
+        # кнопка обновления скрыта: лаунчер обновляется сам при запуске.
+        # объект оставлен (на него ссылается _check_update_async), но не показывается.
         self.upd_btn = self._button(ui, "Проверить обновления", self.do_update,
                                     CARD2, BORDER, small=True)
-        self.upd_btn.pack(anchor="w", pady=(10, 0))
 
         # ─── АВТОЗАПУСК АГЕНТА ───
         self.autostart_var = tk.BooleanVar(value=autostart_enabled())
@@ -821,7 +822,7 @@ class Launcher(tk.Tk):
         # ─── ФУТЕР ───
         bottom = tk.Frame(self, bg=BG)
         bottom.pack(side="bottom", pady=14)
-        for txt, cmd in (("💬 Поддержка", self.support_chat),
+        for txt, cmd in (("Поддержка", self.support_chat),
                          ("Открыть логи", self.open_logs), ("Открыть сайт", self.open_site)):
             b = tk.Label(bottom, text=txt, bg=BG, fg=MUTED, font=("Segoe UI", 8), cursor="hand2")
             b.pack(side="left", padx=10)
@@ -926,7 +927,7 @@ class Launcher(tk.Tk):
 
         btns = tk.Frame(dlg, bg=BG)
         btns.pack(fill="x", padx=24, pady=(4, 6))
-        self._button(btns, "📎 Прикрепить скриншот", pick, CARD2, BORDER, small=True).pack(side="left")
+        self._button(btns, "Прикрепить скриншот", pick, CARD2, BORDER, small=True).pack(side="left")
 
         result = tk.Label(dlg, text="", bg=BG, fg=MUTED, font=("Segoe UI", 9), wraplength=410)
         result.pack(pady=(2, 0))
@@ -962,7 +963,7 @@ class Launcher(tk.Tk):
 
         top = tk.Frame(dlg, bg=CARD)
         top.pack(fill="x")
-        tk.Label(top, text="🟢  Поддержка LAPD", bg=CARD, fg=TEXT,
+        tk.Label(top, text="● Поддержка LAPD", bg=CARD, fg=TEXT,
                  font=("Segoe UI Semibold", 13)).pack(anchor="w", padx=16, pady=(12, 0))
         tk.Label(top, text="Опиши проблему — оператор ответит здесь.", bg=CARD, fg=MUTED,
                  font=("Segoe UI", 8)).pack(anchor="w", padx=16, pady=(0, 12))
@@ -989,7 +990,7 @@ class Launcher(tk.Tk):
                 who = "Оператор" if r.get("from_admin") else "Вы"
                 add(f"{who}: {r.get('body', '')}", "op" if r.get("from_admin") else "me")
                 if r.get("attachment_url"):
-                    add("📎 " + r["attachment_url"], "sys")
+                    add("вложение: " + r["attachment_url"], "sys")
             state["seen"] = len(rows)
 
         def load_history():
@@ -1038,7 +1039,7 @@ class Launcher(tk.Tk):
             p = os.path.join(self.game, "RagePluginHook.log") if self.game else None
             if p and os.path.exists(p):
                 state["att"] = p
-                att_lbl.config(text="📎 приложен RagePluginHook.log")
+                att_lbl.config(text="приложен RagePluginHook.log")
             else:
                 att_lbl.config(text="RagePluginHook.log не найден", fg=REDT)
 
@@ -1063,7 +1064,7 @@ class Launcher(tk.Tk):
                     def done():
                         add(f"Вы: {text}" if text else "Вы: (вложение)", "me")
                         if att_url:
-                            add("📎 " + att_url, "sys")
+                            add("вложение: " + att_url, "sys")
                         att_lbl.config(text="")
                         send_btn.config(state="normal")
                     dlg.after(0, done)
@@ -1074,7 +1075,7 @@ class Launcher(tk.Tk):
 
         bar = tk.Frame(dlg, bg=BG)
         bar.pack(fill="x", padx=14, pady=(0, 4))
-        self._button(bar, "📎 Лог RPH", attach_log, CARD2, BORDER, small=True).pack(side="left")
+        self._button(bar, "Приложить лог", attach_log, CARD2, BORDER, small=True).pack(side="left")
         self._button(bar, "Закрыть обращение",
                      lambda: (sb_close_ticket(state["ticket"]) if state["ticket"] else None,
                               add("Обращение закрыто.", "sys")), CARD2, BORDER, small=True).pack(side="right")
@@ -1145,9 +1146,9 @@ class Launcher(tk.Tk):
                 self.after(0, lambda: (self._set_status(f"Обновлено до {m.get('launcher')} — перезапуск…", "#7fbf7f"),
                                        self.after(1000, self.destroy)))
                 return
-            # авто не вышло (напр. запуск из исходников) — оставим кнопку как запас
-            self.after(0, lambda: (self.upd_label.config(text=f"● Обновление {m.get('launcher')} готово — нажми кнопку", fg="#e3b341"),
-                                   self.upd_btn.config(state="normal", text=f"⬇ Обновить до {m.get('launcher')}")))
+            # авто не вышло (напр. запуск из исходников) — попросим перезапустить
+            self.after(0, lambda: self.upd_label.config(
+                text=f"● Обновление {m.get('launcher')} — перезапусти лаунчер", fg="#e3b341"))
             return
 
         # агент обновляем САМИ, тихо (безопасно, перезапуск не нужен)

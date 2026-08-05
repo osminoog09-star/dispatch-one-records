@@ -1,9 +1,9 @@
 {
-  "launcher": "1.4.4",
+  "launcher": "1.4.5",
   "agent": "1.1.0",
   "enabled": true,
   "min_launcher": "1.0.0",
-  "notes": "Чат-поддержка в лаунчере (кнопка «💬 Поддержка»): напиши в поддержку, приложи лог, получи ответ оператора. Авто-обновление, авто-поиск игры/Vinewood.",
+  "notes": "Чат-поддержка (кнопка «Поддержка»): напиши в поддержку, приложи лог, получи ответ. Обновление ставится само при запуске. Авто-поиск игры/Vinewood.",
   "launcher_url": "https://github.com/osminoog09-star/dispatch-one-records/releases/latest/download/LAPD-Records-Launcher.exe",
   "agent_url": "https://github.com/osminoog09-star/dispatch-one-records/releases/latest/download/pdcomp_sync.exe"
 }

@@ -18,7 +18,7 @@ import tkinter as tk
 from tkinter import messagebox
 
 APP_NAME = "LAPD Records"
-VERSION = "1.4.6"
+VERSION = "1.4.7"
 GITHUB_REPO = "osminoog09-star/dispatch-one-records"
 # Шлюз приёма данных (Cloudflare Worker) — вшивается при сборке, токена в клиенте нет.
 try:
@@ -970,36 +970,84 @@ class Launcher(tk.Tk):
         send_btn.pack(fill="x", padx=24, pady=(4, 16))
 
     def support_chat(self):
-        """Чат-поддержка: игрок пишет, прикладывает лог/скрин, видит ответы оператора."""
+        """Чат-поддержка: игрок пишет, лог прикладывается автоматически, видит ответы оператора."""
         dlg = tk.Toplevel(self)
         dlg.title("Поддержка LAPD")
-        dlg.geometry("460x580")
+        dlg.geometry("480x620")
+        dlg.minsize(430, 500)
         dlg.configure(bg=BG)
         dlg.transient(self)
 
+        state = {"ticket": None, "seen": 0, "att": None, "alive": True}
+
+        def rph_log():
+            p = os.path.join(self.game, "RagePluginHook.log") if self.game else None
+            return p if (p and os.path.exists(p)) else None
+
+        # ── ШАПКА ──
         top = tk.Frame(dlg, bg=CARD)
-        top.pack(fill="x")
+        top.pack(side="top", fill="x")
         tk.Label(top, text="● Поддержка LAPD", bg=CARD, fg=TEXT,
                  font=("Segoe UI Semibold", 13)).pack(anchor="w", padx=16, pady=(12, 0))
-        tk.Label(top, text="Опиши проблему — оператор ответит здесь.", bg=CARD, fg=MUTED,
-                 font=("Segoe UI", 8)).pack(anchor="w", padx=16, pady=(0, 12))
+        tk.Label(top, text="Опиши проблему — оператор ответит здесь. Лог игры приложится сам.",
+                 bg=CARD, fg=MUTED, font=("Segoe UI", 8), wraplength=440,
+                 justify="left").pack(anchor="w", padx=16, pady=(0, 12))
 
+        # ── НИЗ: сначала прибиваем к низу, чтобы поле ввода всегда было видно ──
+        send_row = tk.Frame(dlg, bg=BG)
+        send_row.pack(side="bottom", fill="x", padx=14, pady=(4, 12))
+        send_btn = self._button(send_row, "Отправить", lambda: send(), ACCENT, ACCENT2)
+        send_btn.pack(side="right")
+        inp_wrap = tk.Frame(send_row, bg=BORDER)
+        inp_wrap.pack(side="left", fill="x", expand=True, padx=(0, 8))
+        inp = tk.Entry(inp_wrap, bg=CARD2, fg=TEXT, insertbackground=ACCENT, relief="flat",
+                       font=("Segoe UI", 11))
+        inp.pack(fill="x", padx=1, pady=1, ipady=7)
+        inp.bind("<Return>", lambda e: send())
+
+        att_lbl = tk.Label(dlg, text="", bg=BG, fg=OKGRN, font=("Segoe UI", 8), anchor="w")
+        att_lbl.pack(side="bottom", fill="x", padx=16)
+
+        bar = tk.Frame(dlg, bg=BG)
+        bar.pack(side="bottom", fill="x", padx=14, pady=(6, 2))
+
+        # ── СЕРЕДИНА: лента сообщений ──
         box = tk.Frame(dlg, bg=BORDER)
-        box.pack(fill="both", expand=True, padx=14, pady=(10, 6))
+        box.pack(side="top", fill="both", expand=True, padx=14, pady=(10, 6))
         msgs = tk.Text(box, bg=CARD, fg=TEXT, relief="flat", font=("Segoe UI", 10),
-                       wrap="word", state="disabled", padx=10, pady=8)
+                       wrap="word", state="disabled", padx=10, pady=8, height=8)
         msgs.pack(fill="both", expand=True, padx=1, pady=1)
         msgs.tag_config("me", foreground="#4c8dff")
         msgs.tag_config("op", foreground="#3fb950")
         msgs.tag_config("sys", foreground=MUTED, font=("Segoe UI", 8))
-
-        state = {"ticket": None, "seen": 0, "att": None, "alive": True}
 
         def add(text, tag):
             msgs.config(state="normal")
             msgs.insert("end", text + "\n\n", tag)
             msgs.config(state="disabled")
             msgs.see("end")
+
+        def set_att(path):
+            state["att"] = path
+            if path:
+                att_lbl.config(text="✓ приложится: " + os.path.basename(path), fg=OKGRN)
+            else:
+                att_lbl.config(text="")
+
+        def toggle_log():
+            if state["att"]:
+                set_att(None)
+            else:
+                p = rph_log()
+                if p:
+                    set_att(p)
+                else:
+                    att_lbl.config(text="RagePluginHook.log не найден", fg=REDT)
+
+        self._button(bar, "Приложить лог", toggle_log, CARD2, BORDER, small=True).pack(side="left")
+        self._button(bar, "Закрыть обращение",
+                     lambda: (sb_close_ticket(state["ticket"]) if state["ticket"] else None,
+                              add("Обращение закрыто.", "sys")), CARD2, BORDER, small=True).pack(side="right")
 
         def _render_new(rows):
             for r in rows[state["seen"]:]:
@@ -1008,23 +1056,6 @@ class Launcher(tk.Tk):
                 if r.get("attachment_url"):
                     add("вложение: " + r["attachment_url"], "sys")
             state["seen"] = len(rows)
-
-        def load_history():
-            try:
-                tid = sb_open_ticket_id()
-                rows = sb_list_comments(tid) if tid else []
-            except Exception as e:
-                dlg.after(0, lambda: add(f"Нет связи с поддержкой: {e}", "sys"))
-                return
-
-            def render():
-                state["ticket"] = tid
-                if tid:
-                    _render_new(rows)
-                else:
-                    add("Напиши сообщение — создадим обращение.", "sys")
-                dlg.after(2000, poll)
-            dlg.after(0, render)
 
         def poll():
             if not state["alive"]:
@@ -1048,16 +1079,25 @@ class Launcher(tk.Tk):
                 dlg.after(0, render)
             threading.Thread(target=work, daemon=True).start()
 
-        att_lbl = tk.Label(dlg, text="", bg=BG, fg=OKGRN, font=("Segoe UI", 8))
-        att_lbl.pack()
+        def load_history():
+            try:
+                tid = sb_open_ticket_id()
+                rows = sb_list_comments(tid) if tid else []
+            except Exception as e:
+                dlg.after(0, lambda: add(f"Нет связи с поддержкой: {e}", "sys"))
+                return
 
-        def attach_log():
-            p = os.path.join(self.game, "RagePluginHook.log") if self.game else None
-            if p and os.path.exists(p):
-                state["att"] = p
-                att_lbl.config(text="приложен RagePluginHook.log")
-            else:
-                att_lbl.config(text="RagePluginHook.log не найден", fg=REDT)
+            def render():
+                state["ticket"] = tid
+                if tid:
+                    _render_new(rows)
+                else:
+                    add("Опиши проблему и нажми «Отправить».", "sys")
+                    if rph_log():
+                        set_att(rph_log())   # сразу предлагаем передать лог
+                        add("Лог RagePluginHook.log приложится к сообщению автоматически.", "sys")
+                dlg.after(1500, poll)
+            dlg.after(0, render)
 
         def send():
             text = inp.get().strip()
@@ -1065,23 +1105,23 @@ class Launcher(tk.Tk):
                 return
             inp.delete(0, "end")
             send_btn.config(state="disabled")
+            att_path = state["att"]
 
             def work():
                 try:
                     if not state["ticket"]:
                         state["ticket"] = sb_create_ticket(text or "Обращение")
                     att_url = None
-                    if state["att"]:
-                        data = open(state["att"], "rb").read()
-                        nm = f"{_client_id()}/{int(time.time())}_{os.path.basename(state['att'])}"
+                    if att_path:
+                        data = open(att_path, "rb").read()
+                        nm = f"{_client_id()}/{int(time.time())}_{os.path.basename(att_path)}"
                         att_url = sb_upload(nm, data, "text/plain")
                     sb_add_comment(state["ticket"], text or "(вложение)", att_url)
-                    state["att"] = None
                     def done():
                         add(f"Вы: {text}" if text else "Вы: (вложение)", "me")
                         if att_url:
                             add("вложение: " + att_url, "sys")
-                        att_lbl.config(text="")
+                        set_att(None)
                         send_btn.config(state="normal")
                     dlg.after(0, done)
                 except Exception as e:
@@ -1089,27 +1129,12 @@ class Launcher(tk.Tk):
                                           send_btn.config(state="normal")))
             threading.Thread(target=work, daemon=True).start()
 
-        bar = tk.Frame(dlg, bg=BG)
-        bar.pack(fill="x", padx=14, pady=(0, 4))
-        self._button(bar, "Приложить лог", attach_log, CARD2, BORDER, small=True).pack(side="left")
-        self._button(bar, "Закрыть обращение",
-                     lambda: (sb_close_ticket(state["ticket"]) if state["ticket"] else None,
-                              add("Обращение закрыто.", "sys")), CARD2, BORDER, small=True).pack(side="right")
-
-        inp_wrap = tk.Frame(dlg, bg=BORDER)
-        inp_wrap.pack(fill="x", padx=14, pady=(0, 6))
-        inp = tk.Entry(inp_wrap, bg=CARD2, fg=TEXT, insertbackground=ACCENT, relief="flat",
-                       font=("Segoe UI", 11))
-        inp.pack(side="left", fill="x", expand=True, padx=1, pady=1, ipady=6)
-        inp.bind("<Return>", lambda e: send())
-        send_btn = self._button(dlg, "Отправить", send, ACCENT, ACCENT2)
-        send_btn.pack(fill="x", padx=14, pady=(0, 14))
-
         def on_close():
             state["alive"] = False
             dlg.destroy()
         dlg.protocol("WM_DELETE_WINDOW", on_close)
 
+        inp.focus_set()
         threading.Thread(target=load_history, daemon=True).start()
 
     def save_identity(self):

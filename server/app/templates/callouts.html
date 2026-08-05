@@ -55,11 +55,12 @@
   <tbody>
   {% for c in callouts %}
     <tr onclick="location='{{ url_for('callout_view', cid=c.id) }}'">
-      <td>#{{ c.id }}</td>
-      <td><b>{{ c.callout_type or '—' }}</b></td>
+      <td><a class="row-link" href="{{ url_for('callout_view', cid=c.id) }}" onclick="event.stopPropagation()">#{{ c.id }}</a></td>
+      <td><b>{{ c.callout_type or '—' }}</b>
+        {% if c.suspect_name %}<div class="muted small">Связано: <a href="{{ url_for('file_view', name=c.suspect_name) }}" onclick="event.stopPropagation()">{{ c.suspect_name }}</a></div>{% endif %}</td>
       <td>{% if c.priority %}<span class="tag {{ 'wanted' if c.priority=='1' }}">{{ c.priority_ru }}</span>{% else %}—{% endif %}</td>
       <td>{{ c.location or '—' }}{% if c.zone %} <span class="muted">· {{ c.zone }}</span>{% endif %}</td>
-      <td><span class="cs">{{ c.callsign or '—' }}</span></td>
+      <td>{% if c.callsign %}<a class="cs" href="{{ url_for('officer_view', callsign=c.callsign) }}" onclick="event.stopPropagation()">{{ c.callsign }}</a>{% else %}—{% endif %}</td>
       <td class="muted">{{ c.occurred_fmt }}</td>
     </tr>
   {% endfor %}

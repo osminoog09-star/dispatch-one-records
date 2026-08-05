@@ -14,10 +14,10 @@
   {% for w in warnings %}
     <tr>
       <td>#{{ w.id }}</td>
-      <td>{{ w.subject_name }}</td>
+      <td><a class="row-link" href="{{ url_for('file_view', name=w.subject_name) }}">{{ w.subject_name }}</a></td>
       <td>{{ w.reason or '—' }}</td>
       <td>{{ w.location or '—' }}</td>
-      <td><span class="cs">{{ w.callsign or '—' }}</span></td>
+      <td>{% if w.callsign %}<a class="cs" href="{{ url_for('officer_view', callsign=w.callsign) }}">{{ w.callsign }}</a>{% else %}—{% endif %}</td>
       <td class="muted">{{ w.issued_fmt }}</td>
     </tr>
   {% endfor %}

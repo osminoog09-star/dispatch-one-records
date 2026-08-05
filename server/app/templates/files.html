@@ -6,12 +6,42 @@
 
 {% if files %}
 <table class="tbl">
-  <thead><tr><th>Человек</th><th>Записей в деле</th></tr></thead>
+  <thead><tr><th>Человек</th><th>Связанные записи</th><th>Последнее событие</th><th>Когда</th><th></th></tr></thead>
   <tbody>
   {% for f in files %}
+    {% set route = {'callout':'callout_view','arrest':'case_view','citation':'citation_view','court':'court_case_view','warning':none}[f.latest.kind] if f.latest else none %}
     <tr onclick="location='{{ url_for('file_view', name=f.name) }}'">
-      <td><b>{{ f.name }}</b></td>
-      <td>{{ f.count }}</td>
+      <td>
+        <a class="row-link" href="{{ url_for('file_view', name=f.name) }}" onclick="event.stopPropagation()"><b>{{ f.name }}</b></a>
+        <div class="muted small">Досье: {{ f.count }} записей</div>
+      </td>
+      <td>
+        <div class="record-pills">
+          {% if f.callouts %}<span>Вызовы {{ f.callouts }}</span>{% endif %}
+          {% if f.arrests %}<span>Аресты {{ f.arrests }}</span>{% endif %}
+          {% if f.citations %}<span>Штрафы {{ f.citations }}</span>{% endif %}
+          {% if f.warnings %}<span>Предупр. {{ f.warnings }}</span>{% endif %}
+          {% if f.court %}<span>Суд {{ f.court }}</span>{% endif %}
+        </div>
+      </td>
+      <td>
+        {% if f.latest %}
+          <b>{{ f.latest_kind_ru|capitalize }}</b>
+          <div class="muted small">
+            {% if f.latest.kind == 'callout' %}{{ f.latest.row.callout_type }} · {{ f.latest.row.location or '—' }}
+            {% elif f.latest.kind == 'arrest' %}{{ f.latest.row.zone or '—' }}
+            {% elif f.latest.kind == 'citation' %}{{ f.latest.row.location or '—' }} · ${{ f.latest.row.fine or 0 }}
+            {% elif f.latest.kind == 'warning' %}{{ f.latest.row.reason or '—' }}
+            {% elif f.latest.kind == 'court' %}{{ f.latest.title.replace('Суд: ','') }}
+            {% endif %}
+          </div>
+        {% else %}—{% endif %}
+      </td>
+      <td class="muted">{{ f.latest_when }}</td>
+      <td>
+        <a class="mini-link" href="{{ url_for('file_view', name=f.name) }}" onclick="event.stopPropagation()">досье</a>
+        {% if route %}<a class="mini-link" href="{{ url_for(route, cid=f.latest.id) }}" onclick="event.stopPropagation()">событие</a>{% endif %}
+      </td>
     </tr>
   {% endfor %}
   </tbody>

@@ -953,13 +953,25 @@ def case_file(name):
                           "title": title_fn(d), "row": d})
 
     with get_conn() as c:
-        cur = c.execute("SELECT * FROM cases WHERE suspect_name=? COLLATE NOCASE", (name,)).fetchall()
+        cur = c.execute(
+            """SELECT cases.*, officers.callsign, officers.name AS officer_name
+               FROM cases LEFT JOIN officers ON officers.id = cases.officer_id
+               WHERE cases.suspect_name=? COLLATE NOCASE""", (name,)).fetchall()
         add("arrest", cur, "suspect_name", "created_at", lambda d: "Задержание")
-        cit = c.execute("SELECT * FROM citations WHERE subject_name=? COLLATE NOCASE", (name,)).fetchall()
+        cit = c.execute(
+            """SELECT citations.*, officers.callsign, officers.name AS officer_name
+               FROM citations LEFT JOIN officers ON officers.id = citations.officer_id
+               WHERE citations.subject_name=? COLLATE NOCASE""", (name,)).fetchall()
         add("citation", cit, "subject_name", "issued_at", lambda d: f"Штраф ${d.get('fine') or 0}")
-        wr = c.execute("SELECT * FROM warnings WHERE subject_name=? COLLATE NOCASE", (name,)).fetchall()
+        wr = c.execute(
+            """SELECT warnings.*, officers.callsign, officers.name AS officer_name
+               FROM warnings LEFT JOIN officers ON officers.id = warnings.officer_id
+               WHERE warnings.subject_name=? COLLATE NOCASE""", (name,)).fetchall()
         add("warning", wr, "subject_name", "issued_at", lambda d: "Предупреждение")
-        co = c.execute("SELECT * FROM callouts WHERE suspect_name=? COLLATE NOCASE", (name,)).fetchall()
+        co = c.execute(
+            """SELECT callouts.*, officers.callsign, officers.name AS officer_name
+               FROM callouts LEFT JOIN officers ON officers.id = callouts.officer_id
+               WHERE callouts.suspect_name=? COLLATE NOCASE""", (name,)).fetchall()
         add("callout", co, "suspect_name", "occurred_at", lambda d: f"Вызов: {d.get('callout_type') or ''}")
         crt = c.execute("SELECT * FROM court_cases WHERE subject_name=? COLLATE NOCASE", (name,)).fetchall()
         add("court", crt, "subject_name", "filed_at",
@@ -1154,7 +1166,7 @@ def get_vehicle(plate):
 
 
 def list_case_files(limit=200):
-    """Люди, на которых есть дело (>=1 запись), с числом записей."""
+    """Люди, на которых есть дело (>=1 запись), с краткой сводкой для списка."""
     counts = {}
     with get_conn() as c:
         for tbl, col in [("cases", "suspect_name"), ("citations", "subject_name"),
@@ -1166,8 +1178,31 @@ def list_case_files(limit=200):
                     counts[r["n"]] = counts.get(r["n"], 0) + r["k"]
             except Exception:
                 pass
-    out = [{"name": n, "count": k} for n, k in counts.items()]
-    out.sort(key=lambda x: -x["count"])
+    out = []
+    kind_ru = {"callout": "вызов", "arrest": "арест", "citation": "штраф",
+               "warning": "предупреждение", "court": "суд"}
+    order = {"callout": 0, "arrest": 1, "citation": 2, "warning": 3, "court": 4}
+    for n, k in counts.items():
+        cf = case_file(n)
+        chain = cf["chain"] if cf else []
+        by_kind = {key: 0 for key in order}
+        for item in chain:
+            by_kind[item["kind"]] = by_kind.get(item["kind"], 0) + 1
+        latest = chain[-1] if chain else None
+        out.append({
+            "name": n,
+            "count": k,
+            "callouts": by_kind.get("callout", 0),
+            "arrests": by_kind.get("arrest", 0),
+            "citations": by_kind.get("citation", 0),
+            "warnings": by_kind.get("warning", 0),
+            "court": by_kind.get("court", 0),
+            "latest": latest,
+            "latest_kind_ru": kind_ru.get(latest["kind"], latest["kind"]) if latest else "—",
+            "latest_when": fmt_dt(latest["when"]) if latest and latest.get("when") else "—",
+            "latest_sort": latest["when"] if latest else "",
+        })
+    out.sort(key=lambda x: (x["latest_sort"], x["count"]), reverse=True)
     return out[:limit]
 
 

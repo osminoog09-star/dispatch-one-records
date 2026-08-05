@@ -14,12 +14,12 @@
   <tbody>
   {% for c in citations %}
     <tr onclick="location='{{ url_for('citation_view', cid=c.id) }}'">
-      <td>#{{ c.id }}</td>
-      <td>{{ c.subject_name }}</td>
+      <td><a class="row-link" href="{{ url_for('citation_view', cid=c.id) }}" onclick="event.stopPropagation()">#{{ c.id }}</a></td>
+      <td><a class="row-link" href="{{ url_for('file_view', name=c.subject_name) }}" onclick="event.stopPropagation()">{{ c.subject_name }}</a></td>
       <td>{% if c.charges %}{{ c.charges[0] }}{% if c.charges|length > 1 %}
             <span class="muted">+{{ c.charges|length - 1 }}</span>{% endif %}{% else %}—{% endif %}</td>
       <td>{{ c.location or '—' }}</td>
-      <td><span class="cs">{{ c.callsign or '—' }}</span></td>
+      <td>{% if c.callsign %}<a class="cs" href="{{ url_for('officer_view', callsign=c.callsign) }}" onclick="event.stopPropagation()">{{ c.callsign }}</a>{% else %}—{% endif %}</td>
       <td><b>${{ c.fine }}</b></td>
       <td class="muted">{{ c.issued_fmt }}</td>
     </tr>

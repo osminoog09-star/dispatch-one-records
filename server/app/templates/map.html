@@ -1,8 +1,18 @@
 {% extends "base.html" %}
 {% block title %}Карта{% endblock %}
 {% block content %}
-<h1>Карта патрульных зон</h1>
-<p class="muted">Территория GTA V разделена по реальному смыслу районов: город, округ, пустыня, порт и аэропорт.</p>
+<header class="map-page-head">
+  <div>
+    <span>MDT · PATROL GRID</span>
+    <h1>Карта патрульных районов LAPD</h1>
+    <p class="muted">Оперативное деление Лос-Сантоса и округа Блэйн для патрулей, смен и аналитики задержаний.</p>
+  </div>
+  <div class="map-page-badges" aria-label="Сводка карты">
+    <b>8 районов</b>
+    <b>3 типа зоны</b>
+    <b>live-статистика</b>
+  </div>
+</header>
 
 <section class="clean-map-shell">
   <div class="clean-map-toolbar">
@@ -16,10 +26,6 @@
       <button type="button" data-zone-filter="county">Округ</button>
       <button type="button" data-zone-filter="port">Порт</button>
     </div>
-  </div>
-  <div class="map-district-info" id="district-info">
-    <span>Выбери сектор</span>
-    <b>патрулирования</b>
   </div>
   <div class="clean-map" id="lapd-clean-map">
     <div class="clean-map-stage">
@@ -81,6 +87,12 @@
           <text class="map-district-text" x="690" y="1790">Порт / аэропорт</text>
         </g>
       </svg>
+    </div>
+    <aside class="map-side-panel" aria-label="Управление патрульной картой">
+      <div class="map-panel-title">
+        <span>НАВИГАЦИЯ</span>
+        <b>Выбор района</b>
+      </div>
       <div class="map-legend">
         <button type="button" data-zone-control data-zone="blaine-north" data-zone-type="county" style="--legend-color:#38bdf8">Север Блэйна</button>
         <button type="button" data-zone-control data-zone="blaine-east" data-zone-type="county" style="--legend-color:#f59e0b">Восток Блэйна</button>
@@ -91,7 +103,14 @@
         <button type="button" data-zone-control data-zone="south-ls" data-zone-type="city" style="--legend-color:#ef4444">Юг ЛС</button>
         <button type="button" data-zone-control data-zone="port-airport" data-zone-type="port" style="--legend-color:#94a3b8">Порт / аэропорт</button>
       </div>
-    </div>
+      <div class="map-district-info" id="district-info">
+        <span>Выбери район</span>
+        <b>на карте или в списке</b>
+      </div>
+      <div class="map-panel-note">
+        Наведи на район, чтобы подсветить его контур. Фильтры сверху приглушают лишние зоны, но не скрывают карту.
+      </div>
+    </aside>
   </div>
 </section>
 
@@ -105,7 +124,7 @@
   {'id':'south-ls','type':'city','name':'Юг Лос-Сантоса','hint':'Дэвис, Ранчо, Бэннинг','color':'#ef4444','codes':['DAVIS','RANCHO','BANNING']},
   {'id':'port-airport','type':'port','name':'Порт / аэропорт','hint':'LSIA, порт Лос-Сантоса, Элизиан-Айленд','color':'#94a3b8','codes':['LOSPUER','AIRP','ELYSIAN']}
 ] %}
-{%- set hot = namespace(id='', name='Нет данных', hint='Записей по районам пока нет', color='#3b82f6', arrests=0, citations=0, count=-1) %}
+{%- set hot = namespace(id='', type='', name='Нет данных', hint='Записей по районам пока нет', color='#3b82f6', arrests=0, citations=0, count=-1) %}
 {%- for group in patrol_zone_groups %}
   {%- set ns = namespace(arrests=0, citations=0, count=0) %}
   {%- for zone in zones %}
@@ -117,6 +136,7 @@
   {%- endfor %}
   {%- if ns.count > hot.count %}
     {%- set hot.id = group.id %}
+    {%- set hot.type = group.type %}
     {%- set hot.name = group.name %}
     {%- set hot.hint = group.hint %}
     {%- set hot.color = group.color %}
@@ -128,12 +148,12 @@
 <section class="map-zone-stats" aria-label="Статистика по патрульным зонам">
   <div class="map-zone-stats-head">
     <div>
-      <span>ОПЕРАТИВНАЯ СТАТИСТИКА</span>
+      <span>ОПЕРАТИВНАЯ СВОДКА</span>
       <h2>Нагрузка по районам</h2>
     </div>
-    <p class="muted">Нажми карточку, чтобы выделить район на карте.</p>
+    <p class="muted">Карточки используют реальные записи сайта и синхронизируются с картой.</p>
   </div>
-  <button type="button" class="map-hot-zone" data-zone-control data-zone="{{ hot.id }}" style="--zone-color:{{ hot.color }}">
+  <button type="button" class="map-hot-zone" data-zone-control data-zone="{{ hot.id }}" data-zone-type="{{ hot.type }}" style="--zone-color:{{ hot.color }}">
     <span>ГОРЯЧИЙ РАЙОН</span>
     <b>{{ hot.name }}</b>
     <small>{{ hot.hint }}</small>

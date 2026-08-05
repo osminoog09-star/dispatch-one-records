@@ -327,3 +327,16 @@ main a.cs,main a[href]:not(.btn):not(.chip):not(.tag):hover{color:var(--accent2)
 
 /* подвал */
 .foot{text-align:center}
+
+/* ---- компактное меню с выпадашками ---- */
+nav{align-items:center}
+.nav-drop{position:relative;display:inline-block}
+.nav-drop-t{color:var(--muted);padding:7px 12px;border-radius:9px;cursor:pointer;
+  display:inline-block;font-size:14px;transition:background .15s,color .15s}
+.nav-drop:hover .nav-drop-t{background:var(--surface2);color:var(--text)}
+.nav-menu{position:absolute;top:calc(100% + 4px);left:0;background:var(--surface);
+  border:1px solid var(--border);border-radius:11px;box-shadow:var(--shadow);
+  padding:6px;min-width:180px;display:none;z-index:20;flex-direction:column;gap:2px}
+.nav-drop:hover .nav-menu{display:flex}
+.nav-menu a{margin:0;display:block;padding:9px 12px;border-radius:8px;color:var(--muted)}
+.nav-menu a:hover{background:var(--surface2);color:var(--text)}

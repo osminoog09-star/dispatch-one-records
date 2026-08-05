@@ -16,18 +16,28 @@
       </a>
       <nav>
         <a href="{{ url_for('index') }}">Главная</a>
-        <a href="{{ url_for('files') }}">Дела</a>
-        <a href="{{ url_for('callouts') }}">Вызовы</a>
-        <a href="{{ url_for('cases') }}">Задержания</a>
-        <a href="{{ url_for('citations') }}">Штрафы</a>
-        <a href="{{ url_for('warnings') }}">Предупреждения</a>
-        <a href="{{ url_for('vehicles') }}">Транспорт</a>
+        <div class="nav-drop">
+          <span class="nav-drop-t">Записи ▾</span>
+          <div class="nav-menu">
+            <a href="{{ url_for('files') }}">Дела</a>
+            <a href="{{ url_for('cases') }}">Задержания</a>
+            <a href="{{ url_for('citations') }}">Штрафы</a>
+            <a href="{{ url_for('warnings') }}">Предупреждения</a>
+            <a href="{{ url_for('callouts') }}">Вызовы</a>
+            <a href="{{ url_for('vehicles') }}">Транспорт</a>
+          </div>
+        </div>
         <a href="{{ url_for('court') }}">Суд</a>
         <a href="{{ url_for('shifts') }}">Смены</a>
         <a href="{{ url_for('game_map') }}">Карта</a>
         <a href="{{ url_for('staff') }}">Персонал</a>
-        <a href="{{ url_for('tickets') }}" class="admin-only" style="display:none">Тикеты</a>
-        <a href="{{ url_for('dictionaries') }}" class="admin-only" style="display:none">Справочники</a>
+        <div class="nav-drop admin-only" style="display:none">
+          <span class="nav-drop-t">Админ ▾</span>
+          <div class="nav-menu">
+            <a href="{{ url_for('tickets') }}">Тикеты</a>
+            <a href="{{ url_for('dictionaries') }}">Справочники</a>
+          </div>
+        </div>
         <a href="{{ url_for('register') }}">Регистрация</a>
         <span id="auth-slot" class="auth-slot"></span>
       </nav>

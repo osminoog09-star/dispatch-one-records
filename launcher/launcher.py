@@ -18,7 +18,7 @@ import tkinter as tk
 from tkinter import messagebox
 
 APP_NAME = "LAPD Records"
-VERSION = "1.4.5"
+VERSION = "1.4.6"
 GITHUB_REPO = "osminoog09-star/dispatch-one-records"
 # Шлюз приёма данных (Cloudflare Worker) — вшивается при сборке, токена в клиенте нет.
 try:
@@ -810,9 +810,13 @@ class Launcher(tk.Tk):
                           "Через лаунчер ходить не нужно.", bg=CARD, fg=MUTED,
                  font=("Segoe UI", 8), wraplength=470, justify="left").pack(anchor="w", pady=(4, 0))
 
+        # ─── КНОПКА ПОДДЕРЖКИ (заметная) ───
+        self._button(self, "Написать в поддержку", self.support_chat,
+                     CARD2, BORDER).pack(fill="x", padx=32, pady=(14, 0))
+
         # ─── КНОПКА ИГРАТЬ ───
         self._button(self, "▶   ИГРАТЬ", self.play, GREEN, GREEN2,
-                     big=True).pack(fill="x", padx=32, pady=(14, 4))
+                     big=True).pack(fill="x", padx=32, pady=(10, 4))
         tk.Label(self, text="поставит плагин, запустит игру через Vinewood и синхронизацию",
                  bg=BG, fg=MUTED, font=("Segoe UI", 8)).pack()
 
@@ -840,6 +844,18 @@ class Launcher(tk.Tk):
                 self.after(1200, lambda: self._set_status(f"Плагин: {pmsg}", "#e0a0a0"))
         log(f"лаунчер запущен v{VERSION}, игра={self.game}")
         threading.Thread(target=self._check_update_async, daemon=True).start()
+        # окно само подгоняется под содержимое — чтобы низ (кнопки) никогда не обрезался
+        self.after(60, self._fit_height)
+
+    def _fit_height(self):
+        """Подгоняет высоту окна под реальную высоту контента (не больше экрана)."""
+        try:
+            self.update_idletasks()
+            need = self.winfo_reqheight()
+            maxh = self.winfo_screenheight() - 90
+            self.geometry("580x%d" % min(max(need, 600), maxh))
+        except Exception:
+            log_exc("_fit_height")
 
     def _animate_hero(self):
         """Чередует кадры баннера (красная/синяя мигалка) — эффект включённых огней."""

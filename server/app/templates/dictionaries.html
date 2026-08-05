@@ -117,7 +117,7 @@
   document.addEventListener("lapd:auth", function () {
     sb = window.lapd.sb;
     const gate = document.getElementById("dic-gate");
-    if (!window.lapd.admin) { gate.innerHTML = "Только для админов. Войди через <b>Discord</b> вверху."; return; }
+    if (!window.lapd.canDictionaries) { gate.innerHTML = "Только для главного админа и админов. Войди через <b>Discord</b> и проверь права."; return; }
     gate.style.display = "none";
     document.getElementById("dic-app").style.display = "";
     loadRanks(); loadDepts();

@@ -34,6 +34,7 @@
         <div class="nav-drop admin-only" style="display:none">
           <span class="nav-drop-t">Админ ▾</span>
           <div class="nav-menu">
+            <a href="/dispatch-one-records/admin">Управление</a>
             <a href="/dispatch-one-records/tickets">Тикеты</a>
             <a href="/dispatch-one-records/dictionaries">Справочники</a>
           </div>
@@ -145,8 +146,8 @@
   document.addEventListener("lapd:auth", async function () {
     sb = window.lapd.sb;
     const gate = document.getElementById("tk-gate");
-    if (!window.lapd.admin) {
-      gate.innerHTML = "Только для админов. Войди через <b>Discord</b> (кнопка «Войти» вверху справа).";
+    if (!window.lapd.canTickets) {
+      gate.innerHTML = "Только для админов, модераторов и хелперов. Войди через <b>Discord</b> и попроси выдать доступ.";
       return;
     }
     gate.style.display = "none";
@@ -164,7 +165,7 @@
       осминоог09-star</span>
   </footer>
   <!-- Dispatch One Records — исходная система: github.com/osminoog09-star/dispatch-one-records
-       Копирование оформления и кода без разрешения запрещено. build:20260805 -->
+       Копирование оформления и кода без разрешения запрещено. build:20260806 -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="/dispatch-one-records/static/supa.js"></script>
 </body>

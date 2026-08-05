@@ -97,8 +97,8 @@
   document.addEventListener("lapd:auth", async function () {
     sb = window.lapd.sb;
     const gate = document.getElementById("tk-gate");
-    if (!window.lapd.admin) {
-      gate.innerHTML = "Только для админов. Войди через <b>Discord</b> (кнопка «Войти» вверху справа).";
+    if (!window.lapd.canTickets) {
+      gate.innerHTML = "Только для админов, модераторов и хелперов. Войди через <b>Discord</b> и попроси выдать доступ.";
       return;
     }
     gate.style.display = "none";

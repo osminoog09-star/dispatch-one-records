@@ -298,6 +298,12 @@ def tickets():
     return render_template("tickets.html")
 
 
+@app.route("/admin")
+def admin_panel():
+    # статичная панель: роли и права подтягиваются через Supabase RPC + RLS.
+    return render_template("admin.html")
+
+
 @app.route("/dictionaries")
 def dictionaries():
     # редактор справочников (звания/отделы) — правит supabase-js, RLS = только админ

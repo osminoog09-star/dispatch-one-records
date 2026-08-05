@@ -151,7 +151,7 @@
     cells.forEach(function (el) {
       const cs = el.getAttribute("data-cs") || "";
       const prof = profiles[cs.toLowerCase()];
-      if (window.lapd.admin) renderEditor(el, cs, prof);
+      if (window.lapd.canStaff) renderEditor(el, cs, prof);
       else renderReadonly(el, prof);
     });
   });

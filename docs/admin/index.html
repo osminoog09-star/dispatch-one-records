@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Админ-панель · LAPD</title>
+  <meta name="generator" content="Dispatch One Records — osminoog09-star">
+  <meta name="author" content="LAPD Records · osminoog09-star.github.io/dispatch-one-records">
+  <link rel="stylesheet" href="/dispatch-one-records/static/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="wrap">
+      <a class="brand" href="/dispatch-one-records/">
+        <span class="badge">★</span> LAPD <span class="sub">Реестр</span>
+      </a>
+      <nav>
+        <a class="" href="/dispatch-one-records/">Главная</a>
+        <div class="nav-drop">
+          <span class="nav-drop-t">Записи ▾</span>
+          <div class="nav-menu">
+            <a href="/dispatch-one-records/files">Дела</a>
+            <a href="/dispatch-one-records/cases">Задержания</a>
+            <a href="/dispatch-one-records/citations">Штрафы</a>
+            <a href="/dispatch-one-records/warnings">Предупреждения</a>
+            <a href="/dispatch-one-records/callouts">Вызовы</a>
+            <a href="/dispatch-one-records/vehicles">Транспорт</a>
+          </div>
+        </div>
+        <a class="" href="/dispatch-one-records/court">Суд</a>
+        <a class="" href="/dispatch-one-records/shifts">Смены</a>
+        <a class="" href="/dispatch-one-records/map">Карта</a>
+        <a class="" href="/dispatch-one-records/staff">Персонал</a>
+        <div class="nav-drop admin-only" style="display:none">
+          <span class="nav-drop-t">Админ ▾</span>
+          <div class="nav-menu">
+            <a href="/dispatch-one-records/admin">Управление</a>
+            <a href="/dispatch-one-records/tickets">Тикеты</a>
+            <a href="/dispatch-one-records/dictionaries">Справочники</a>
+          </div>
+        </div>
+        <a class="" href="/dispatch-one-records/register">Регистрация</a>
+        <span id="auth-slot" class="auth-slot"></span>
+      </nav>
+    </div>
+  </header>
+
+  <main class="wrap">
+    
+      
+    
+    
+<section class="admin-hero">
+  <div>
+    <span class="eyebrow">Командование LAPD</span>
+    <h1>Админ-панель</h1>
+    <p class="muted">Роли, полномочия и доступы команды. Главный админ управляет всей системой, админы ведут сайт, модераторы проверяют заявки, хелперы помогают игрокам.</p>
+  </div>
+  <div id="admin-me" class="admin-me muted">Проверяю доступ…</div>
+</section>
+
+<div id="admin-gate" class="empty">Проверяю права доступа…</div>
+
+<div id="admin-app" class="admin-console" style="display:none">
+  <section class="admin-grid">
+    <article class="admin-card role-owner">
+      <span>100</span>
+      <h2>Главный админ</h2>
+      <p>Полный доступ, выдача админов, защита владельца, аудит и критические настройки.</p>
+    </article>
+    <article class="admin-card role-admin">
+      <span>80</span>
+      <h2>Админ</h2>
+      <p>Персонал, справочники, тикеты, модерация, публикационная операционка.</p>
+    </article>
+    <article class="admin-card role-moderator">
+      <span>60</span>
+      <h2>Модератор</h2>
+      <p>Заявки персонала, тикеты, порядок в записях и первичная проверка данных.</p>
+    </article>
+    <article class="admin-card role-helper">
+      <span>40</span>
+      <h2>Хелпер</h2>
+      <p>Поддержка игроков, разбор логов и ответы в тикетах без доступа к полномочиям.</p>
+    </article>
+  </section>
+
+  <section class="card admin-section" id="admin-users-section" style="display:none">
+    <div class="admin-section-head">
+      <div>
+        <span class="eyebrow">Полномочия</span>
+        <h2>Команда доступа</h2>
+      </div>
+      <button class="btn" onclick="adminLoad()">Обновить</button>
+    </div>
+
+    <div class="admin-add">
+      <input id="adm-email" type="email" placeholder="email пользователя из Supabase Auth">
+      <input id="adm-name" placeholder="отображаемое имя">
+      <select id="adm-role">
+        <option value="helper">Хелпер</option>
+        <option value="moderator">Модератор</option>
+        <option value="admin">Админ</option>
+        <option value="viewer">Наблюдатель</option>
+      </select>
+      <button class="btn primary" onclick="adminGrant()">Выдать доступ</button>
+    </div>
+    <p class="muted small">Пользователь должен хотя бы один раз войти через Discord, чтобы Supabase создал его учётку. Роль “Главный админ” выдаётся только SQL-командой владельца.</p>
+
+    <div id="admin-users" class="admin-users"></div>
+  </section>
+
+  <section class="admin-tools">
+    <a class="admin-tool" href="/dispatch-one-records/staff" data-perm="can_staff">
+      <span>Персонал</span>
+      <b>Звания, отделы, заявки</b>
+      <small>Админ / модератор</small>
+    </a>
+    <a class="admin-tool" href="/dispatch-one-records/tickets" data-perm="can_tickets">
+      <span>Тикеты</span>
+      <b>Поддержка игроков</b>
+      <small>Админ / модератор / хелпер</small>
+    </a>
+    <a class="admin-tool" href="/dispatch-one-records/dictionaries" data-perm="can_dictionaries">
+      <span>Справочники</span>
+      <b>Звания и отделы</b>
+      <small>Главный админ / админ</small>
+    </a>
+  </section>
+
+  <section class="card admin-section" id="admin-audit-section" style="display:none">
+    <div class="admin-section-head">
+      <div>
+        <span class="eyebrow">Аудит</span>
+        <h2>Последние действия</h2>
+      </div>
+    </div>
+    <div id="admin-audit" class="admin-audit muted">Загружаю журнал…</div>
+  </section>
+</div>
+
+<script>
+(function () {
+  let sb, perms = {};
+  const ROLE_LABELS = {
+    owner: "Главный админ",
+    admin: "Админ",
+    moderator: "Модератор",
+    helper: "Хелпер",
+    officer: "Офицер",
+    viewer: "Наблюдатель",
+  };
+  const ROLE_CLASS = {
+    owner: "role-owner",
+    admin: "role-admin",
+    moderator: "role-moderator",
+    helper: "role-helper",
+    officer: "role-officer",
+    viewer: "role-viewer",
+  };
+  function esc(s){return (s||"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
+  function fmt(s){
+    if (!s) return "—";
+    const d = new Date(s);
+    return isNaN(d.getTime()) ? esc(String(s)) : d.toLocaleString("ru-RU");
+  }
+  function roleOptions(cur){
+    return ["helper","moderator","admin","viewer"].map(r =>
+      '<option value="'+r+'" '+(r===cur?'selected':'')+'>'+ROLE_LABELS[r]+'</option>').join("");
+  }
+  function canEditRole(role){
+    if (perms.is_owner) return true;
+    return perms.can_admins && !["owner","admin"].includes(role);
+  }
+
+  async function loadAudit(){
+    if (!perms.can_audit) return;
+    document.getElementById("admin-audit-section").style.display = "";
+    const { data, error } = await sb.from("audit_log").select("*").order("created_at", { ascending:false }).limit(20);
+    const box = document.getElementById("admin-audit");
+    if (error) { box.textContent = "Журнал недоступен: " + error.message; return; }
+    if (!data || !data.length) { box.innerHTML = '<div class="empty">Действий пока нет.</div>'; return; }
+    box.innerHTML = data.map(a =>
+      '<div class="audit-row"><b>'+esc(a.action)+'</b><span>'+esc(a.actor||"система")+
+      '</span><small>'+esc(a.entity||"")+" · "+esc(a.entity_id||"")+" · "+fmt(a.created_at)+'</small></div>'
+    ).join("");
+  }
+
+  window.adminLoad = async function(){
+    const box = document.getElementById("admin-users");
+    box.innerHTML = '<div class="empty">Загружаю команду…</div>';
+    const { data, error } = await sb.rpc("list_admin_users");
+    if (error) { box.innerHTML = '<div class="empty">Не удалось загрузить: '+esc(error.message)+'</div>'; return; }
+    if (!data || !data.length) { box.innerHTML = '<div class="empty">Команда доступа пока пустая.</div>'; return; }
+    box.innerHTML = data.map(u => {
+      const locked = u.protected || !canEditRole(u.role);
+      return '<div class="admin-user '+(ROLE_CLASS[u.role]||"")+'" data-email="'+esc(u.email)+'">' +
+        '<div><b>'+esc(u.display_name || u.email)+'</b><small>'+esc(u.email || "—")+' · '+fmt(u.updated_at || u.added_at)+'</small></div>' +
+        '<span class="admin-role">'+esc(u.role_title || ROLE_LABELS[u.role] || u.role)+'</span>' +
+        '<select '+(locked?'disabled':'')+'>'+roleOptions(u.role)+'</select>' +
+        '<select class="admin-status" '+(locked?'disabled':'')+'><option value="active" '+(u.status==="active"?'selected':'')+'>Активен</option><option value="suspended" '+(u.status==="suspended"?'selected':'')+'>Отключён</option></select>' +
+        '<button class="btn" '+(locked?'disabled':'')+' onclick="adminSaveUser(this)">Сохранить</button>' +
+        (u.protected ? '<em>защищён</em>' : '') +
+      '</div>';
+    }).join("");
+  };
+
+  window.adminSaveUser = async function(btn){
+    const row = btn.closest(".admin-user");
+    const email = row.dataset.email;
+    const role = row.querySelector("select").value;
+    const status = row.querySelector(".admin-status").value;
+    btn.disabled = true; btn.textContent = "Сохраняю…";
+    const { error } = await sb.rpc("set_admin_role", {
+      _email: email, _role: role, _status: status,
+      _display_name: row.querySelector("b").textContent, _notes: ""
+    });
+    if (error) alert("Не сохранено: " + error.message);
+    await adminLoad();
+  };
+
+  window.adminGrant = async function(){
+    const email = document.getElementById("adm-email").value.trim();
+    const name = document.getElementById("adm-name").value.trim();
+    const role = document.getElementById("adm-role").value;
+    if (!email) return alert("Укажи email из Supabase Auth.");
+    const { error } = await sb.rpc("set_admin_role", {
+      _email: email, _role: role, _status: "active", _display_name: name, _notes: ""
+    });
+    if (error) { alert("Не выдано: " + error.message); return; }
+    document.getElementById("adm-email").value = "";
+    document.getElementById("adm-name").value = "";
+    await adminLoad();
+  };
+
+  document.addEventListener("lapd:auth", async function () {
+    sb = window.lapd.sb;
+    perms = window.lapd.permissions || {};
+    const gate = document.getElementById("admin-gate");
+    const app = document.getElementById("admin-app");
+    const me = document.getElementById("admin-me");
+    if (!perms.can_access_admin) {
+      gate.innerHTML = 'Только для команды администрации. Войди через <b>Discord</b> и попроси главного админа выдать доступ.';
+      me.textContent = "Доступ не выдан";
+      return;
+    }
+    gate.style.display = "none";
+    app.style.display = "";
+    me.innerHTML = '<span>Ваш доступ</span><b>'+esc(perms.title || "Админ")+'</b>';
+    document.querySelectorAll(".admin-tool").forEach(function (x) {
+      const ok = perms[x.dataset.perm] === true;
+      x.classList.toggle("disabled", !ok);
+      if (!ok) x.setAttribute("aria-disabled", "true");
+    });
+    if (perms.can_admins) {
+      document.getElementById("admin-users-section").style.display = "";
+      adminLoad();
+    }
+    loadAudit();
+  });
+})();
+</script>
+
+  </main>
+
+  <footer class="wrap foot">
+    LAPD Реестр · данные синхронизируются из игры<br>
+    <span class="foot-attr">© Реестр Dispatch One · система разработана для LAPD ·
+      осминоог09-star</span>
+  </footer>
+  <!-- Dispatch One Records — исходная система: github.com/osminoog09-star/dispatch-one-records
+       Копирование оформления и кода без разрешения запрещено. build:20260806 -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/dispatch-one-records/static/supa.js"></script>
+</body>
+</html>

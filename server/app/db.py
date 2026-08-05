@@ -554,11 +554,16 @@ _PHRASES = [
     ("restitution ordered", "предписано возмещение ущерба"),
     ("restitution", "возмещение ущерба"),
     ("counseling ordered", "предписаны консультации"),
+    ("weapons prohibition ordered", "назначен запрет на владение оружием"),
+    ("weapons prohibition", "запрет на владение оружием"),
+    ("proof-of-correction eligible", "допускается подтверждение устранения нарушения"),
     ("mandatory appearance tracked", "обязательная явка учтена"),
     ("mandatory appearance", "обязательная явка"),
     ("(strike prior)", "(с учётом прежней судимости)"),
     ("(concurrent)", "(одновременно)"),
     ("(consecutive)", "(последовательно)"),
+    ("consecutive", "последовательно"),
+    ("concurrent", "одновременно"),
     ("stayed PC 654", "приостановлено по статье PC 654"),
     ("suspended sentence", "условный срок"),
     ("time served", "срок отбыт"),
@@ -593,12 +598,44 @@ def _fix_rooms(s):
     return re.sub(r"(\d)([А-Я])", lambda m: m.group(1) + _CYR2LAT.get(m.group(2), m.group(2)), s)
 
 
+def _ru_days(n):
+    n = int(n)
+    if n % 10 == 1 and n % 100 != 11:
+        word = "день"
+    elif n % 10 in (2, 3, 4) and n % 100 not in (12, 13, 14):
+        word = "дня"
+    else:
+        word = "дней"
+    return f"{n} {word} лишения свободы"
+
+
 def localize(text):
     if not text or not isinstance(text, str):
         return text
     out = text
     for en, ru in _PHRASES:
         out = out.replace(en, ru)
+    out = re.sub(r"\b1 года\b", "1 год", out)
+    out = re.sub(r"\b([2-4]) года\b", r"\1 года", out)
+    out = re.sub(r"\b([5-9]|1[0-9]|[2-9][0-9]) года\b", r"\1 лет", out)
+    out = re.sub(r"\b1 год тюрьма\b", "1 год тюрьмы", out)
+    out = re.sub(r"\b([0-9]+) года тюрьма\b", r"\1 года тюрьмы", out)
+    out = re.sub(r"\b([0-9]+) лет тюрьма\b", r"\1 лет тюрьмы", out)
+    out = out.replace(" + ", "; ")
+    out = re.sub(r"\b1 год тюрьмы\b", "1 год лишения свободы", out)
+    out = re.sub(r"\b([2-4]) года тюрьмы\b", r"\1 года лишения свободы", out)
+    out = re.sub(r"\b([5-9]|1[0-9]|[2-9][0-9]) лет тюрьмы\b", r"\1 лет лишения свободы", out)
+    out = re.sub(r"\b([0-9]+) дн\. тюрьмы\b", lambda m: _ru_days(m.group(1)), out)
+    out = re.sub(r";\s*1 год последовательно\b", "; дополнительно 1 год последовательно", out)
+    out = re.sub(r";\s*([2-4]) года последовательно\b", r"; дополнительно \1 года последовательно", out)
+    out = re.sub(r";\s*([5-9]|1[0-9]|[2-9][0-9]) лет последовательно\b", r"; дополнительно \1 лет последовательно", out)
+    out = out.replace("Виновен plea", "Признание вины")
+    out = out.replace("Не виновен plea", "Заявление о невиновности")
+    out = out.replace("Признание вины entered", "Внесено признание вины")
+    out = out.replace("Заявление о невиновности entered", "Внесено заявление о невиновности")
+    out = out.replace("plea", "заявление")
+    out = out.replace(" entered", "")
+    out = out.replace("; ;", ";")
     return _fix_rooms(out)
 
 

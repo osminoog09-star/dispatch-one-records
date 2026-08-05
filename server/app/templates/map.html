@@ -16,6 +16,7 @@
     </div>
   </div>
   <div id="lapd-clean-map" class="clean-map"></div>
+  <img class="clean-map-source" src="{{ url_for('static', filename='maps/gtav/gtav-atlas-2048.png') }}" alt="" hidden>
 </section>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
@@ -39,7 +40,8 @@
   });
   window.lapdMap = map;
 
-  L.imageOverlay("{{ url_for('static', filename='maps/gtav/gtav-atlas-2048.png') }}", mapBounds, {
+  var mapImageUrl = document.querySelector('.clean-map-source').getAttribute('src');
+  L.imageOverlay(mapImageUrl, mapBounds, {
     attribution: 'Map: BragitOff / GTA V Atlas'
   }).addTo(map);
 

@@ -1,53 +1,54 @@
 {% extends "base.html" %}
 {% block title %}Карта{% endblock %}
 {% block content %}
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-      integrity="sha256-p4NxAoJBhIINfQh7kA8S2qHVCef03JM/Z7y6jI7xYQo="
-      crossorigin="">
-
-<h1>Карта Лос-Сантоса</h1>
-<p class="muted">Чистая карта GTA V для патрулей LAPD. Зоны и назначения добавим следующим слоем позже.</p>
+<h1>Карта округов</h1>
+<p class="muted">Карта GTA V с крупным делением для патрулей LAPD. Нажми на округ, чтобы выделить его.</p>
 
 <section class="clean-map-shell">
   <div class="clean-map-toolbar">
     <div>
-      <span>GTA V MAP</span>
-      <b>Atlas · Los Santos / Blaine County</b>
+      <span>PATROL DISTRICTS</span>
+      <b>Los Santos · Blaine County</b>
     </div>
   </div>
-  <div id="lapd-clean-map" class="clean-map"></div>
-  <img class="clean-map-source" src="{{ url_for('static', filename='maps/gtav/gtav-atlas-2048.png') }}" alt="" hidden>
+  <div class="map-district-info" id="district-info">
+    <span>Выбери округ</span>
+    <b>на карте</b>
+  </div>
+  <div class="clean-map" id="lapd-clean-map">
+    <div class="clean-map-stage">
+      <img class="clean-map-image"
+           src="{{ url_for('static', filename='maps/gtav/gtav-atlas-2048.png') }}"
+           alt="GTA V atlas map">
+      <svg class="map-district-overlay" viewBox="0 0 2048 2048" aria-label="Округа патрулирования">
+        <g class="map-district" data-ru="Округ Блэйн" data-patrol="Северный патруль">
+          <polygon class="map-district-shape" style="--district-color:#38bdf8"
+                   points="640,235 1030,190 1430,280 1650,550 1585,870 1360,1070 890,1015 540,845 420,500"/>
+          <text class="map-district-text" x="1020" y="635">Округ Блэйн</text>
+        </g>
+        <g class="map-district" data-ru="Округ Лос-Сантос" data-patrol="Пригород / хайвей">
+          <polygon class="map-district-shape" style="--district-color:#f59e0b"
+                   points="470,925 860,825 1260,900 1590,1115 1580,1400 1330,1590 900,1495 555,1285"/>
+          <text class="map-district-text" x="1110" y="1180">Округ Лос-Сантос</text>
+        </g>
+        <g class="map-district" data-ru="Лос-Сантос" data-patrol="Городской патруль">
+          <polygon class="map-district-shape" style="--district-color:#2563eb"
+                   points="595,1295 930,1215 1350,1280 1595,1540 1510,1810 1185,1920 760,1830 560,1580"/>
+          <text class="map-district-text" x="1020" y="1620">Лос-Сантос</text>
+        </g>
+      </svg>
+    </div>
+  </div>
 </section>
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
-        crossorigin=""></script>
 <script>
-(function(){
-  var imageSize = 2048;
-  var mapBounds = [[0, 0], [imageSize, imageSize]];
-
-  var map = L.map('lapd-clean-map', {
-    crs: L.CRS.Simple,
-    minZoom: -2,
-    maxZoom: 2,
-    zoomSnap: 0.25,
-    zoomDelta: 0.5,
-    maxBounds: mapBounds,
-    maxBoundsViscosity: 0.9,
-    zoomControl: false,
-    attributionControl: true
+document.querySelectorAll('.map-district').forEach(function(district){
+  district.addEventListener('click', function(){
+    document.querySelectorAll('.map-district').forEach(function(item){ item.classList.remove('active'); });
+    district.classList.add('active');
+    document.getElementById('district-info').innerHTML =
+      '<span>' + district.dataset.ru + '</span><b>' + district.dataset.patrol + '</b>';
   });
-  window.lapdMap = map;
-
-  var mapImageUrl = document.querySelector('.clean-map-source').getAttribute('src');
-  L.imageOverlay(mapImageUrl, mapBounds, {
-    attribution: 'Map: BragitOff / GTA V Atlas'
-  }).addTo(map);
-
-  map.fitBounds(mapBounds, { padding: [18, 18], animate: false });
-  setTimeout(function(){ map.invalidateSize(); map.fitBounds(mapBounds, { padding: [18, 18], animate: false }); }, 150);
-  window.addEventListener('resize', function(){ map.invalidateSize(); });
-})();
+});
 </script>
 {% endblock %}

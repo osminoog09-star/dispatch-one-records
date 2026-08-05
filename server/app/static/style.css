@@ -164,13 +164,13 @@ h3{font-size:14px;margin:0 0 .5em;color:var(--muted);text-transform:uppercase;le
 .map-district{cursor:pointer}
 .map-coastline{fill:transparent;stroke:#d8edff;stroke-width:2.5;stroke-opacity:.34;
   filter:drop-shadow(0 0 8px rgba(88,166,255,.35));pointer-events:none}
-.map-district-shape{fill:var(--district-color);fill-opacity:.11;stroke:var(--district-color);
-  stroke-width:2.4;stroke-opacity:.78;stroke-dasharray:0;vector-effect:non-scaling-stroke;
+.map-district-shape{fill:var(--district-color);fill-opacity:.13;stroke:rgba(235,245,255,.72);
+  stroke-width:1.1;stroke-opacity:.34;stroke-dasharray:0;vector-effect:non-scaling-stroke;
   transition:fill-opacity .16s,stroke-opacity .16s,stroke-width .16s}
 .map-district:hover .map-district-shape,.map-district.active .map-district-shape{
-  fill-opacity:.24;stroke-opacity:1;stroke-width:4.4;stroke-dasharray:0}
-.map-district-text{fill:#f7fbff;font-size:31px;font-weight:800;text-anchor:middle;
-  paint-order:stroke;stroke:#06101d;stroke-width:7px;letter-spacing:1px;pointer-events:none;
+  fill-opacity:.24;stroke:var(--district-color);stroke-opacity:.95;stroke-width:3.2;stroke-dasharray:0}
+.map-district-text{fill:#f7fbff;font-size:29px;font-weight:800;text-anchor:middle;
+  paint-order:stroke;stroke:#06101d;stroke-width:6px;letter-spacing:1px;pointer-events:none;
   text-transform:uppercase}
 .map-district:hover .map-district-text,.map-district.active .map-district-text{
   fill:#fff;filter:drop-shadow(0 0 10px var(--district-color))}

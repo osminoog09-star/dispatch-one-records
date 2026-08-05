@@ -70,57 +70,56 @@
            alt="GTA V atlas map">
       <svg class="map-district-overlay" viewBox="0 0 2048 2048" aria-label="Патрульные зоны">
         <defs>
-          <clipPath id="land-mask">
-            <path d="M985,250 C1158,258 1315,320 1445,438 C1582,562 1648,742 1612,930 C1592,1032 1518,1098 1502,1190 C1485,1290 1558,1398 1600,1525 C1655,1690 1515,1845 1325,1915 C1145,1982 922,1948 760,1862 C590,1772 500,1605 532,1435 C555,1318 520,1212 470,1100 C390,918 438,705 570,515 C685,350 820,252 985,250 Z"/>
-          </clipPath>
+          <mask id="land-mask" maskUnits="userSpaceOnUse" x="0" y="0" width="2048" height="2048">
+            <image href="/dispatch-one-records/static/maps/gtav/gtav-land-mask-2048.png" width="2048" height="2048"/>
+          </mask>
         </defs>
-        <path class="map-coastline" d="M985,250 C1158,258 1315,320 1445,438 C1582,562 1648,742 1612,930 C1592,1032 1518,1098 1502,1190 C1485,1290 1558,1398 1600,1525 C1655,1690 1515,1845 1325,1915 C1145,1982 922,1948 760,1862 C590,1772 500,1605 532,1435 C555,1318 520,1212 470,1100 C390,918 438,705 570,515 C685,350 820,252 985,250 Z"/>
         <g class="map-district" data-ru="Blaine North" data-patrol="Палето-Бэй / Чилиад · северные вызовы и поиски">
           <path class="map-district-shape land-sector" style="--district-color:#38bdf8"
-                clip-path="url(#land-mask)"
-                d="M650,330 C790,250 955,245 1138,280 C1308,312 1435,400 1510,535 C1430,640 1285,690 1105,675 C918,662 735,600 595,505 C598,428 615,372 650,330 Z"/>
-          <text class="map-district-text" x="1030" y="500">Blaine North</text>
+                mask="url(#land-mask)"
+                d="M390,170 H1685 V650 C1470,705 1260,715 1045,675 C825,635 620,565 390,435 Z"/>
+          <text class="map-district-text" x="1030" y="505">Blaine North</text>
         </g>
         <g class="map-district" data-ru="Blaine East" data-patrol="Сэнди / Грейпсид / Аламо · пустыня и трассы">
           <path class="map-district-shape land-sector" style="--district-color:#f59e0b"
-                clip-path="url(#land-mask)"
-                d="M760,660 C940,640 1138,682 1315,755 C1460,815 1575,920 1605,1035 C1518,1140 1365,1198 1168,1192 C978,1185 815,1122 675,1012 C650,870 680,740 760,660 Z"/>
+                mask="url(#land-mask)"
+                d="M835,640 C1035,665 1265,705 1685,650 L1710,1195 C1510,1285 1325,1288 1130,1225 C935,1165 805,1050 765,900 C735,780 770,690 835,640 Z"/>
           <text class="map-district-text" x="1120" y="920">Blaine East</text>
         </g>
         <g class="map-district" data-ru="LS County West" data-patrol="Чумаш / Тонгва / каньоны · побережье и хайвей">
           <path class="map-district-shape land-sector" style="--district-color:#eab308"
-                clip-path="url(#land-mask)"
-                d="M510,900 C610,822 725,770 850,765 C835,928 880,1085 985,1215 C862,1288 708,1295 585,1222 C475,1155 420,1015 510,900 Z"/>
+                mask="url(#land-mask)"
+                d="M320,620 C510,650 690,668 835,640 C760,805 778,1018 985,1218 C865,1350 688,1380 520,1285 C365,1198 288,1010 320,620 Z"/>
           <text class="map-district-text" x="670" y="1060">LS County West</text>
         </g>
         <g class="map-district" data-ru="Vinewood / Rockford" data-patrol="Вайнвуд / Рокфорд / Дель-Перро · трафик и VIP-вызовы">
           <path class="map-district-shape land-sector" style="--district-color:#8b5cf6"
-                clip-path="url(#land-mask)"
-                d="M590,1225 C730,1125 910,1088 1115,1120 C1245,1142 1350,1210 1390,1315 C1282,1405 1110,1448 920,1412 C758,1382 640,1320 590,1225 Z"/>
+                mask="url(#land-mask)"
+                d="M520,1220 C700,1120 918,1095 1158,1148 C1300,1180 1408,1255 1470,1360 C1315,1475 1110,1515 900,1468 C720,1428 592,1345 520,1220 Z"/>
           <text class="map-district-text" x="970" y="1285">Vinewood</text>
         </g>
         <g class="map-district" data-ru="Central Los Santos" data-patrol="Downtown / Mission Row / Strawberry · основной городской патруль">
           <path class="map-district-shape land-sector" style="--district-color:#2563eb"
-                clip-path="url(#land-mask)"
-                d="M790,1410 C935,1360 1125,1370 1280,1440 C1330,1540 1290,1650 1185,1715 C1022,1732 872,1670 770,1548 C735,1490 748,1440 790,1410 Z"/>
+                mask="url(#land-mask)"
+                d="M710,1410 C890,1458 1110,1462 1295,1418 C1360,1518 1328,1648 1215,1735 C1032,1772 858,1715 725,1608 C660,1510 662,1448 710,1410 Z"/>
           <text class="map-district-text" x="1020" y="1535">Central LS</text>
         </g>
         <g class="map-district" data-ru="East Los Santos" data-patrol="La Mesa / Mirror Park / El Burro · промзоны и восточные вызовы">
           <path class="map-district-shape land-sector" style="--district-color:#22c55e"
-                clip-path="url(#land-mask)"
-                d="M1220,1328 C1395,1358 1530,1450 1590,1580 C1545,1715 1428,1818 1272,1855 C1195,1788 1165,1665 1190,1545 C1210,1458 1228,1395 1220,1328 Z"/>
+                mask="url(#land-mask)"
+                d="M1260,1300 C1460,1340 1625,1458 1710,1630 C1642,1815 1470,1938 1265,1965 C1205,1845 1190,1690 1245,1540 C1280,1445 1290,1362 1260,1300 Z"/>
           <text class="map-district-text" x="1390" y="1585">East LS</text>
         </g>
         <g class="map-district" data-ru="South Los Santos" data-patrol="Davis / Rancho / Banning · южный криминальный сектор">
           <path class="map-district-shape land-sector" style="--district-color:#ef4444"
-                clip-path="url(#land-mask)"
-                d="M760,1540 C900,1660 1058,1732 1265,1740 C1245,1848 1140,1908 980,1900 C832,1892 690,1820 605,1708 C628,1628 675,1572 760,1540 Z"/>
+                mask="url(#land-mask)"
+                d="M690,1570 C845,1675 1015,1740 1235,1725 C1305,1810 1308,1900 1245,1980 C1065,2010 850,1970 682,1870 C570,1795 535,1665 590,1595 Z"/>
           <text class="map-district-text" x="930" y="1770">South LS</text>
         </g>
         <g class="map-district" data-ru="Port / Airport" data-patrol="LSIA / порт / Elysian · контроль грузов и аэропорта">
           <path class="map-district-shape land-sector" style="--district-color:#94a3b8"
-                clip-path="url(#land-mask)"
-                d="M500,1605 C605,1660 728,1755 820,1888 C745,1958 632,1940 555,1868 C475,1792 440,1682 500,1605 Z M1010,1772 C1130,1795 1255,1855 1320,1915 C1205,1965 1065,1958 950,1898 C928,1848 940,1808 1010,1772 Z"/>
+                mask="url(#land-mask)"
+                d="M390,1568 C510,1628 632,1745 720,1870 C668,2000 520,2038 392,1952 C288,1880 248,1690 390,1568 Z M1000,1765 C1140,1780 1298,1858 1405,1975 C1288,2065 1095,2060 945,1968 C910,1878 925,1812 1000,1765 Z"/>
           <text class="map-district-text" x="690" y="1790">Port / Airport</text>
         </g>
       </svg>

@@ -10,6 +10,12 @@
       <span>ПАТРУЛЬНЫЕ ЗОНЫ</span>
       <b>8 зон · Лос-Сантос / Блэйн</b>
     </div>
+    <div class="map-filterbar" aria-label="Фильтр карты">
+      <button type="button" class="active" data-zone-filter="all">Все</button>
+      <button type="button" data-zone-filter="city">Город</button>
+      <button type="button" data-zone-filter="county">Округ</button>
+      <button type="button" data-zone-filter="port">Порт</button>
+    </div>
   </div>
   <div class="map-district-info" id="district-info">
     <span>Выбери сектор</span>
@@ -26,49 +32,49 @@
             <image href="{{ url_for('static', filename='maps/gtav/gtav-land-mask-2048.png') }}" width="2048" height="2048"/>
           </mask>
         </defs>
-        <g class="map-district" data-ru="Север Блэйна" data-patrol="Палето-Бэй / Чилиад · северные вызовы и поиски">
+        <g class="map-district" data-zone="blaine-north" data-zone-type="county" data-ru="Север Блэйна" data-patrol="Палето-Бэй / Чилиад · северные вызовы и поиски">
           <path class="map-district-shape land-sector" style="--district-color:#38bdf8"
                 mask="url(#land-mask)"
                 d="M390,170 H1685 V650 C1470,705 1260,715 1045,675 C825,635 620,565 390,435 Z"/>
           <text class="map-district-text" x="1030" y="505">Север Блэйна</text>
         </g>
-        <g class="map-district" data-ru="Восток Блэйна" data-patrol="Сэнди / Грейпсид / Аламо · пустыня и трассы">
+        <g class="map-district" data-zone="blaine-east" data-zone-type="county" data-ru="Восток Блэйна" data-patrol="Сэнди / Грейпсид / Аламо · пустыня и трассы">
           <path class="map-district-shape land-sector" style="--district-color:#f59e0b"
                 mask="url(#land-mask)"
                 d="M835,640 C1035,665 1265,705 1685,650 L1710,1195 C1510,1285 1325,1288 1130,1225 C935,1165 805,1050 765,900 C735,780 770,690 835,640 Z"/>
           <text class="map-district-text" x="1120" y="920">Восток Блэйна</text>
         </g>
-        <g class="map-district" data-ru="Запад округа ЛС" data-patrol="Чумаш / Тонгва / каньоны · побережье и хайвей">
+        <g class="map-district" data-zone="county-west" data-zone-type="county" data-ru="Запад округа ЛС" data-patrol="Чумаш / Тонгва / каньоны · побережье и хайвей">
           <path class="map-district-shape land-sector" style="--district-color:#eab308"
                 mask="url(#land-mask)"
                 d="M320,620 C510,650 690,668 835,640 C760,805 778,1018 985,1218 C865,1350 688,1380 520,1285 C365,1198 288,1010 320,620 Z"/>
           <text class="map-district-text" x="670" y="1060">Запад округа ЛС</text>
         </g>
-        <g class="map-district" data-ru="Вайнвуд / Рокфорд" data-patrol="Вайнвуд / Рокфорд / Дель-Перро · трафик и VIP-вызовы">
+        <g class="map-district" data-zone="vinewood" data-zone-type="city" data-ru="Вайнвуд / Рокфорд" data-patrol="Вайнвуд / Рокфорд / Дель-Перро · трафик и VIP-вызовы">
           <path class="map-district-shape land-sector" style="--district-color:#8b5cf6"
                 mask="url(#land-mask)"
                 d="M520,1220 C700,1120 918,1095 1158,1148 C1300,1180 1408,1255 1470,1360 C1315,1475 1110,1515 900,1468 C720,1428 592,1345 520,1220 Z"/>
           <text class="map-district-text" x="970" y="1285">Вайнвуд</text>
         </g>
-        <g class="map-district" data-ru="Центр Лос-Сантоса" data-patrol="Даунтаун / Мишн-Роу / Строберри · основной городской патруль">
+        <g class="map-district" data-zone="central-ls" data-zone-type="city" data-ru="Центр Лос-Сантоса" data-patrol="Даунтаун / Мишн-Роу / Строберри · основной городской патруль">
           <path class="map-district-shape land-sector" style="--district-color:#2563eb"
                 mask="url(#land-mask)"
                 d="M710,1410 C890,1458 1110,1462 1295,1418 C1360,1518 1328,1648 1215,1735 C1032,1772 858,1715 725,1608 C660,1510 662,1448 710,1410 Z"/>
           <text class="map-district-text" x="1020" y="1535">Центр ЛС</text>
         </g>
-        <g class="map-district" data-ru="Восток Лос-Сантоса" data-patrol="Ла-Меса / Миррор-Парк / Эль-Бурро · промзоны и восточные вызовы">
+        <g class="map-district" data-zone="east-ls" data-zone-type="city" data-ru="Восток Лос-Сантоса" data-patrol="Ла-Меса / Миррор-Парк / Эль-Бурро · промзоны и восточные вызовы">
           <path class="map-district-shape land-sector" style="--district-color:#22c55e"
                 mask="url(#land-mask)"
                 d="M1260,1300 C1460,1340 1625,1458 1710,1630 C1642,1815 1470,1938 1265,1965 C1205,1845 1190,1690 1245,1540 C1280,1445 1290,1362 1260,1300 Z"/>
           <text class="map-district-text" x="1390" y="1585">Восток ЛС</text>
         </g>
-        <g class="map-district" data-ru="Юг Лос-Сантоса" data-patrol="Дэвис / Ранчо / Бэннинг · южный криминальный сектор">
+        <g class="map-district" data-zone="south-ls" data-zone-type="city" data-ru="Юг Лос-Сантоса" data-patrol="Дэвис / Ранчо / Бэннинг · южный криминальный сектор">
           <path class="map-district-shape land-sector" style="--district-color:#ef4444"
                 mask="url(#land-mask)"
                 d="M690,1570 C845,1675 1015,1740 1235,1725 C1305,1810 1308,1900 1245,1980 C1065,2010 850,1970 682,1870 C570,1795 535,1665 590,1595 Z"/>
           <text class="map-district-text" x="930" y="1770">Юг ЛС</text>
         </g>
-        <g class="map-district" data-ru="Порт / аэропорт" data-patrol="LSIA / порт / Элизиан · контроль грузов и аэропорта">
+        <g class="map-district" data-zone="port-airport" data-zone-type="port" data-ru="Порт / аэропорт" data-patrol="LSIA / порт / Элизиан · контроль грузов и аэропорта">
           <path class="map-district-shape land-sector" style="--district-color:#94a3b8"
                 mask="url(#land-mask)"
                 d="M390,1568 C510,1628 632,1745 720,1870 C668,2000 520,2038 392,1952 C288,1880 248,1690 390,1568 Z M1000,1765 C1140,1780 1298,1858 1405,1975 C1288,2065 1095,2060 945,1968 C910,1878 925,1812 1000,1765 Z"/>
@@ -76,27 +82,133 @@
         </g>
       </svg>
       <div class="map-legend">
-        <span style="--legend-color:#38bdf8">Север Блэйна</span>
-        <span style="--legend-color:#f59e0b">Восток Блэйна</span>
-        <span style="--legend-color:#eab308">Запад округа ЛС</span>
-        <span style="--legend-color:#8b5cf6">Вайнвуд</span>
-        <span style="--legend-color:#2563eb">Центр ЛС</span>
-        <span style="--legend-color:#22c55e">Восток ЛС</span>
-        <span style="--legend-color:#ef4444">Юг ЛС</span>
-        <span style="--legend-color:#94a3b8">Порт / аэропорт</span>
+        <button type="button" data-zone-control data-zone="blaine-north" data-zone-type="county" style="--legend-color:#38bdf8">Север Блэйна</button>
+        <button type="button" data-zone-control data-zone="blaine-east" data-zone-type="county" style="--legend-color:#f59e0b">Восток Блэйна</button>
+        <button type="button" data-zone-control data-zone="county-west" data-zone-type="county" style="--legend-color:#eab308">Запад округа ЛС</button>
+        <button type="button" data-zone-control data-zone="vinewood" data-zone-type="city" style="--legend-color:#8b5cf6">Вайнвуд</button>
+        <button type="button" data-zone-control data-zone="central-ls" data-zone-type="city" style="--legend-color:#2563eb">Центр ЛС</button>
+        <button type="button" data-zone-control data-zone="east-ls" data-zone-type="city" style="--legend-color:#22c55e">Восток ЛС</button>
+        <button type="button" data-zone-control data-zone="south-ls" data-zone-type="city" style="--legend-color:#ef4444">Юг ЛС</button>
+        <button type="button" data-zone-control data-zone="port-airport" data-zone-type="port" style="--legend-color:#94a3b8">Порт / аэропорт</button>
       </div>
     </div>
   </div>
 </section>
 
+{%- set patrol_zone_groups = [
+  {'id':'blaine-north','type':'county','name':'Север Блэйна','hint':'Палето-Бэй, Чилиад, лес Палето','color':'#38bdf8','codes':['PALETO','MTCHIL','PALFOR']},
+  {'id':'blaine-east','type':'county','name':'Восток Блэйна','hint':'Сэнди-Шорс, Грейпсид, Аламо, пустыня','color':'#f59e0b','codes':['GRAPES','SANDY','ALAMO','HARMO','GRANDSEN']},
+  {'id':'county-west','type':'county','name':'Запад округа ЛС','hint':'Чумаш, Тонгва, каньоны, западный хайвей','color':'#eab308','codes':['ARMYB','CHU','TONGVAH','BANHAMC','DAVIS_Q']},
+  {'id':'vinewood','type':'city','name':'Вайнвуд / Рокфорд','hint':'Вайнвуд, Рокфорд-Хиллз, Дель-Перро','color':'#8b5cf6','codes':['DTVINE','VINE','DELPE']},
+  {'id':'central-ls','type':'city','name':'Центр Лос-Сантоса','hint':'Даунтаун, Мишн-Роу, Строберри','color':'#2563eb','codes':['DOWNT','MISSION','STRAW']},
+  {'id':'east-ls','type':'city','name':'Восток Лос-Сантоса','hint':'Ла-Меса, Миррор-Парк, Эль-Бурро, Паломино','color':'#22c55e','codes':['MIRR','LMESA','EBURO','PALHIGH']},
+  {'id':'south-ls','type':'city','name':'Юг Лос-Сантоса','hint':'Дэвис, Ранчо, Бэннинг','color':'#ef4444','codes':['DAVIS','RANCHO','BANNING']},
+  {'id':'port-airport','type':'port','name':'Порт / аэропорт','hint':'LSIA, порт Лос-Сантоса, Элизиан-Айленд','color':'#94a3b8','codes':['LOSPUER','AIRP','ELYSIAN']}
+] %}
+{%- set hot = namespace(id='', name='Нет данных', hint='Записей по районам пока нет', color='#3b82f6', arrests=0, citations=0, count=-1) %}
+{%- for group in patrol_zone_groups %}
+  {%- set ns = namespace(arrests=0, citations=0, count=0) %}
+  {%- for zone in zones %}
+    {%- if zone.code in group.codes %}
+      {%- set ns.arrests = ns.arrests + zone.arrests %}
+      {%- set ns.citations = ns.citations + zone.citations %}
+      {%- set ns.count = ns.count + zone.count %}
+    {%- endif %}
+  {%- endfor %}
+  {%- if ns.count > hot.count %}
+    {%- set hot.id = group.id %}
+    {%- set hot.name = group.name %}
+    {%- set hot.hint = group.hint %}
+    {%- set hot.color = group.color %}
+    {%- set hot.arrests = ns.arrests %}
+    {%- set hot.citations = ns.citations %}
+    {%- set hot.count = ns.count %}
+  {%- endif %}
+{%- endfor %}
+<section class="map-zone-stats" aria-label="Статистика по патрульным зонам">
+  <div class="map-zone-stats-head">
+    <div>
+      <span>ОПЕРАТИВНАЯ СТАТИСТИКА</span>
+      <h2>Нагрузка по районам</h2>
+    </div>
+    <p class="muted">Нажми карточку, чтобы выделить район на карте.</p>
+  </div>
+  <button type="button" class="map-hot-zone" data-zone-control data-zone="{{ hot.id }}" style="--zone-color:{{ hot.color }}">
+    <span>ГОРЯЧИЙ РАЙОН</span>
+    <b>{{ hot.name }}</b>
+    <small>{{ hot.hint }}</small>
+    <em>{{ hot.count if hot.count > 0 else 0 }} записей · задержания {{ hot.arrests }} · штрафы {{ hot.citations }}</em>
+  </button>
+  <div class="zone-stat-grid">
+    {%- for group in patrol_zone_groups %}
+      {%- set ns = namespace(arrests=0, citations=0, count=0) %}
+      {%- for zone in zones %}
+        {%- if zone.code in group.codes %}
+          {%- set ns.arrests = ns.arrests + zone.arrests %}
+          {%- set ns.citations = ns.citations + zone.citations %}
+          {%- set ns.count = ns.count + zone.count %}
+        {%- endif %}
+      {%- endfor %}
+      <button type="button" class="zone-stat-card" data-zone-control data-zone="{{ group.id }}" data-zone-type="{{ group.type }}" style="--zone-color:{{ group.color }}">
+        <span>{{ group.name }}</span>
+        <b>{{ ns.count }}</b>
+        <small>{{ group.hint }}</small>
+        <em>Задержания {{ ns.arrests }} · штрафы {{ ns.citations }}</em>
+      </button>
+    {%- endfor %}
+  </div>
+</section>
+
 <script>
-document.querySelectorAll('.map-district').forEach(function(district){
-  district.addEventListener('click', function(){
-    document.querySelectorAll('.map-district').forEach(function(item){ item.classList.remove('active'); });
-    district.classList.add('active');
-    document.getElementById('district-info').innerHTML =
-      '<span>' + district.dataset.ru + '</span><b>' + district.dataset.patrol + '</b>';
+var mapDistricts = document.querySelectorAll('.map-district');
+var zoneControls = document.querySelectorAll('[data-zone-control]');
+var zoneFilters = document.querySelectorAll('[data-zone-filter]');
+var districtInfo = document.getElementById('district-info');
+
+function selectPatrolZone(district){
+  if (!district) return;
+  mapDistricts.forEach(function(item){ item.classList.remove('active'); });
+  district.classList.add('active');
+  zoneControls.forEach(function(item){
+    var isActive = item.dataset.zone === district.dataset.zone;
+    item.classList.toggle('active', isActive);
+    item.setAttribute('aria-pressed', isActive ? 'true' : 'false');
   });
+  districtInfo.innerHTML = '<span>' + district.dataset.ru + '</span><b>' + district.dataset.patrol + '</b>';
+}
+
+function getDistrictByZone(zone){
+  return document.querySelector('.map-district[data-zone="' + zone + '"]');
+}
+
+function applyZoneFilter(filter){
+  zoneFilters.forEach(function(item){
+    var isActive = item.dataset.zoneFilter === filter;
+    item.classList.toggle('active', isActive);
+    item.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+  });
+  mapDistricts.forEach(function(district){
+    district.classList.toggle('filtered-out', filter !== 'all' && district.dataset.zoneType !== filter);
+  });
+  zoneControls.forEach(function(control){
+    if (!control.dataset.zoneType) return;
+    control.classList.toggle('filtered-out', filter !== 'all' && control.dataset.zoneType !== filter);
+  });
+}
+
+mapDistricts.forEach(function(district){
+  district.addEventListener('mouseenter', function(){ selectPatrolZone(district); });
+  district.addEventListener('click', function(){ selectPatrolZone(district); });
+});
+zoneControls.forEach(function(control){
+  control.setAttribute('aria-pressed', 'false');
+  control.addEventListener('mouseenter', function(){ selectPatrolZone(getDistrictByZone(control.dataset.zone)); });
+  control.addEventListener('focus', function(){ selectPatrolZone(getDistrictByZone(control.dataset.zone)); });
+  control.addEventListener('click', function(){ selectPatrolZone(getDistrictByZone(control.dataset.zone)); });
+});
+zoneFilters.forEach(function(filter){
+  filter.setAttribute('aria-pressed', filter.classList.contains('active') ? 'true' : 'false');
+  filter.addEventListener('click', function(){ applyZoneFilter(filter.dataset.zoneFilter); });
 });
 </script>
 {% endblock %}

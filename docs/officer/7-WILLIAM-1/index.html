@@ -67,11 +67,11 @@
 </div>
 
 <section class="stats stats-5">
-  <div class="stat"><div class="num">3</div><div class="lbl">Задержаний</div></div>
+  <div class="stat"><div class="num">4</div><div class="lbl">Задержаний</div></div>
   <div class="stat"><div class="num">2</div><div class="lbl">Штрафов</div></div>
   <div class="stat"><div class="num">$850</div><div class="lbl">Сумма штрафов</div></div>
-  <div class="stat"><div class="num">0</div><div class="lbl">Смен</div></div>
-  <div class="stat"><div class="num">0.0</div><div class="lbl">Часов на службе</div></div>
+  <div class="stat"><div class="num">6</div><div class="lbl">Смен</div></div>
+  <div class="stat"><div class="num">0.6</div><div class="lbl">Часов на службе</div></div>
 </section>
 
 <h2>Задержания</h2>
@@ -79,6 +79,16 @@
 <table class="tbl">
   <thead><tr><th>#</th><th>Подозреваемый</th><th>Район</th><th>Когда</th><th>Статус</th></tr></thead>
   <tbody>
+  
+    <tr onclick="location='/dispatch-one-records/case/19'">
+      <td>#19</td>
+      <td>Eddie Thomas
+        
+        </td>
+      <td>Дидион-драйв, West Vinewood</td>
+      <td class="muted">05.08.2026 22:26</td>
+      <td><span class="tag st-submitted">Подано</span></td>
+    </tr>
   
     <tr onclick="location='/dispatch-one-records/case/13'">
       <td>#13</td>
@@ -140,6 +150,44 @@
 </table>
 
 
+
+<h2>Смены</h2>
+<table class="tbl">
+  <thead><tr><th>#</th><th>Тип</th><th>Длит.</th><th>Задерж.</th><th>Остан.</th><th>Начало</th></tr></thead>
+  <tbody>
+  
+    <tr onclick="location='/dispatch-one-records/shift/10'">
+      <td>#10</td><td>дневная</td><td>0ч 8м</td>
+      <td>0</td><td>0</td><td class="muted">05.08.2026 15:58</td>
+    </tr>
+  
+    <tr onclick="location='/dispatch-one-records/shift/9'">
+      <td>#9</td><td>дневная</td><td>0ч 14м</td>
+      <td>0</td><td>0</td><td class="muted">04.08.2026 16:24</td>
+    </tr>
+  
+    <tr onclick="location='/dispatch-one-records/shift/8'">
+      <td>#8</td><td>дневная</td><td>0ч 3м</td>
+      <td>0</td><td>0</td><td class="muted">04.08.2026 10:37</td>
+    </tr>
+  
+    <tr onclick="location='/dispatch-one-records/shift/7'">
+      <td>#7</td><td>ночная</td><td>0ч 1м</td>
+      <td>0</td><td>0</td><td class="muted">03.08.2026 23:57</td>
+    </tr>
+  
+    <tr onclick="location='/dispatch-one-records/shift/6'">
+      <td>#6</td><td>ночная</td><td>0ч 6м</td>
+      <td>0</td><td>0</td><td class="muted">03.08.2026 23:43</td>
+    </tr>
+  
+    <tr onclick="location='/dispatch-one-records/shift/5'">
+      <td>#5</td><td>ночная</td><td>0ч 1м</td>
+      <td>0</td><td>0</td><td class="muted">03.08.2026 23:41</td>
+    </tr>
+  
+  </tbody>
+</table>
 
 
 

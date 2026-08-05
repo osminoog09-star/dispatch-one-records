@@ -137,11 +137,12 @@ h3{font-size:14px;margin:0 0 .5em;color:var(--muted);text-transform:uppercase;le
 @media(max-width:760px){.doc-body{grid-template-columns:1fr}}
 
 /* Карта */
-.clean-map-shell{position:relative;min-height:72vh;border:1px solid #26374c;border-radius:16px;
-  overflow:hidden;background:#07101b;box-shadow:var(--shadow),inset 0 0 70px -28px #2b74bd}
+.clean-map-shell{position:relative;width:min(840px,100%);aspect-ratio:1/1;margin:18px auto 0;
+  border:1px solid #26374c;border-radius:16px;overflow:hidden;background:#07101b;
+  box-shadow:var(--shadow),0 0 42px -24px #3b82f6,inset 0 0 70px -34px #2b74bd}
 .clean-map-shell::before{content:"";position:absolute;inset:0;z-index:2;pointer-events:none;
-  background:linear-gradient(180deg,rgba(3,8,15,.10),rgba(3,8,15,.30)),
-    radial-gradient(circle at 50% 12%,rgba(78,141,220,.16),transparent 38%)}
+  background:linear-gradient(180deg,rgba(3,8,15,.02),rgba(3,8,15,.16)),
+    radial-gradient(circle at 50% 10%,rgba(78,141,220,.12),transparent 40%)}
 .clean-map-toolbar{position:absolute;left:16px;right:16px;top:16px;z-index:500;display:flex;
   align-items:center;justify-content:space-between;gap:12px;pointer-events:none}
 .clean-map-toolbar>div:first-child{display:flex;align-items:center;gap:10px;padding:9px 12px;
@@ -155,25 +156,28 @@ h3{font-size:14px;margin:0 0 .5em;color:var(--muted);text-transform:uppercase;le
 .map-district-info span{display:block;color:#8ec5ff;font-size:11px;text-transform:uppercase;
   letter-spacing:.12em;font-weight:800}
 .map-district-info b{display:block;color:#f2f7ff;font-size:14px;margin-top:2px}
-.clean-map{position:absolute;inset:0;z-index:1;background:#050b12;display:grid;place-items:center;padding:54px 20px 38px}
+.clean-map{position:absolute;inset:0;z-index:1;background:#050b12;display:grid;place-items:center;padding:54px 22px 38px}
 .clean-map-stage{position:relative;aspect-ratio:1/1;max-width:100%;max-height:100%;height:100%}
 .clean-map-image,.map-district-overlay{position:absolute;inset:0;width:100%;height:100%;display:block}
-.clean-map-image{object-fit:contain;filter:saturate(1.04) contrast(1.03) brightness(.82)}
+.clean-map-image{object-fit:contain;filter:saturate(1.08) contrast(1.05) brightness(.92)}
 .map-district-overlay{z-index:2}
 .map-district{cursor:pointer}
-.map-district-shape{fill:var(--district-color);fill-opacity:.13;stroke:var(--district-color);
-  stroke-width:8;stroke-opacity:.72;stroke-dasharray:26 20;vector-effect:non-scaling-stroke;
+.map-district-shape{fill:var(--district-color);fill-opacity:.08;stroke:var(--district-color);
+  stroke-width:5;stroke-opacity:.76;stroke-dasharray:20 16;vector-effect:non-scaling-stroke;
   transition:fill-opacity .16s,stroke-opacity .16s,stroke-width .16s}
 .map-district:hover .map-district-shape,.map-district.active .map-district-shape{
-  fill-opacity:.28;stroke-opacity:1;stroke-width:13;stroke-dasharray:0}
-.map-district-text{fill:#f7fbff;font-size:42px;font-weight:800;text-anchor:middle;
-  paint-order:stroke;stroke:#06101d;stroke-width:10px;letter-spacing:1px;pointer-events:none;
+  fill-opacity:.18;stroke-opacity:1;stroke-width:9;stroke-dasharray:0}
+.map-district-text{fill:#f7fbff;font-size:34px;font-weight:800;text-anchor:middle;
+  paint-order:stroke;stroke:#06101d;stroke-width:8px;letter-spacing:1px;pointer-events:none;
   text-transform:uppercase}
 .map-district:hover .map-district-text,.map-district.active .map-district-text{
   fill:#fff;filter:drop-shadow(0 0 10px var(--district-color))}
 @media(max-width:820px){
-  .clean-map-shell{min-height:68vh;border-radius:12px}
+  .clean-map-shell{border-radius:12px}
   .clean-map-toolbar{align-items:flex-start;flex-direction:column}
+  .clean-map-toolbar b{display:none}
+  .map-district-info{left:16px;right:16px;min-width:0}
+  .map-district-text{font-size:42px}
 }
 
 .staff-list{display:flex;flex-direction:column;gap:10px}

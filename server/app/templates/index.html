@@ -29,6 +29,21 @@
 </section>
 
 <section class="period-panel">
+  <div class="section-kicker">Полная сводка</div>
+  <h2>Что уже собрано из игры</h2>
+  <div class="intel-grid">
+    <div class="intel-card"><span>Всего задержано</span><b>{{ ops.arrests }}</b><small>{{ ops.suspects }} уникальных фигурантов</small></div>
+    <div class="intel-card"><span>Штрафы</span><b>{{ ops.citations }}</b><small>${{ ops.fines_total }} общая сумма</small></div>
+    <div class="intel-card"><span>Вызовы CAD</span><b>{{ ops.callouts }}</b><small>карточки вызовов и рапорты</small></div>
+    <div class="intel-card"><span>Суды</span><b>{{ ops.courts }}</b><small>связанные судебные решения</small></div>
+    <div class="intel-card"><span>Предупреждения</span><b>{{ ops.warnings }}</b><small>устные/письменные записи</small></div>
+    <div class="intel-card"><span>Транспорт</span><b>{{ ops.vehicles }}</b><small>номера и проверки машин</small></div>
+    <div class="intel-card warn"><span>Изъято предметов</span><b>{{ ops.seized_total }}</b><small>{{ ops.weapon_items }} похоже на оружие</small></div>
+    <div class="intel-card danger"><span>По тексту рапортов</span><b>{{ ops.shooting_mentions }}</b><small>стрельба · эвакуации {{ ops.evac_mentions }} · смерти {{ ops.fatal_mentions }}</small></div>
+  </div>
+</section>
+
+<section class="period-panel">
   <div class="section-kicker">Оперативная статистика</div>
   <h2>Активность по периодам</h2>
   <div class="period-grid">

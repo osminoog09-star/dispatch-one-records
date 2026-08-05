@@ -72,6 +72,68 @@
   </div>
 </div>
 
+{% set kind_ru = {'callout':'Вызов','arrest':'Арест','citation':'Штраф','warning':'Предупр.','court':'Суд'} %}
+{% set route_map = {'callout':'callout_view','arrest':'case_view','citation':'citation_view','court':'court_case_view','warning':none} %}
+<section class="case-links-panel">
+  <div class="case-links-summary">
+    <div class="section-kicker">Связанная информация</div>
+    <h2>{{ case.suspect_name }}</h2>
+    <p class="muted small">Все записи по этому человеку собраны в одну цепочку: вызовы, аресты, штрафы, предупреждения и суды.</p>
+    <div class="mini-stat-grid">
+      <div class="mini-stat"><span>Аресты</span><b>{{ subject.arrests or 0 }}</b></div>
+      <div class="mini-stat"><span>Вызовы</span><b>{{ subject.callouts or 0 }}</b></div>
+      <div class="mini-stat"><span>Штрафы</span><b>{{ subject.citations or 0 }}</b></div>
+      <div class="mini-stat"><span>Сумма штрафов</span><b>${{ subject.fines_total or 0 }}</b></div>
+      <div class="mini-stat"><span>Суды</span><b>{{ subject.courts or 0 }}</b></div>
+      <div class="mini-stat"><span>Транспорт</span><b>{{ subject.vehicles|length if subject.vehicles else 0 }}</b></div>
+    </div>
+    <div class="related-links" style="margin-top:12px;margin-bottom:0">
+      <a class="mini-link" href="{{ url_for('file_view', name=case.suspect_name) }}">Открыть полное досье</a>
+      {% if case.zone %}<a class="mini-link" href="{{ url_for('game_map', zone=case.zone) }}">Место на карте</a>{% endif %}
+      {% if case.vehicle_plate %}<a class="mini-link" href="{{ url_for('vehicle_view', plate=case.vehicle_plate) }}">Транспорт {{ case.vehicle_plate }}</a>{% endif %}
+      {% for plate in subject.vehicles or [] %}
+        {% if plate != case.vehicle_plate %}<a class="mini-link" href="{{ url_for('vehicle_view', plate=plate) }}">Транспорт {{ plate }}</a>{% endif %}
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="case-links-chain">
+    <div class="section-kicker">Хронология</div>
+    <h2>Материалы по делу</h2>
+    {% if case_file and case_file.chain %}
+      <div class="linked-chain">
+        {% for it in case_file.chain %}
+          {% set route = route_map[it.kind] %}
+          {% set map_zone = it.row.zone if it.kind in ['callout','arrest'] else it.row.location %}
+          <article class="linked-row">
+            <div class="linked-kind">{{ kind_ru[it.kind] }}</div>
+            <div class="linked-main">
+              <b>{{ it.title }}</b>
+              <small>
+                {% if it.kind == 'callout' %}{{ it.row.location or it.row.zone or 'место не указано' }}
+                {% elif it.kind == 'arrest' %}{{ it.row.zone or 'район не указан' }}
+                {% elif it.kind == 'citation' %}{{ it.row.location or 'место не указано' }} · ${{ it.row.fine or 0 }}
+                {% elif it.kind == 'warning' %}{{ it.row.reason or 'причина не указана' }}
+                {% elif it.kind == 'court' %}{{ it.row.sentence or it.title }}
+                {% endif %}
+                {% if it.row.callsign %} · {{ it.row.callsign }}{% endif %}
+                {% if it.when %} · {{ it.when[:16].replace('T',' ') }}{% endif %}
+              </small>
+            </div>
+            <div class="linked-actions">
+              {% if route %}<a class="mini-link" href="{{ url_for(route, cid=it.id) }}">карточка</a>{% endif %}
+              {% if map_zone %}<a class="mini-link" href="{{ url_for('game_map', zone=map_zone) }}">карта</a>{% endif %}
+              {% if it.row.callsign %}<a class="mini-link" href="{{ url_for('officer_view', callsign=it.row.callsign) }}">офицер</a>{% endif %}
+            </div>
+          </article>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p class="empty">Связанных записей пока нет.</p>
+    {% endif %}
+  </div>
+</section>
+
 <div class="case-grid">
   <!-- Красивая карточка (данные — кириллица работает) -->
   <section class="card report">

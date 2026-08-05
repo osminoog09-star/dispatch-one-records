@@ -1529,6 +1529,107 @@ def activity_periods():
     return out
 
 
+def _count_text_hits(rows, terms):
+    count = 0
+    for row in rows:
+        text = " ".join(str(x or "") for x in row).lower()
+        if any(term in text for term in terms):
+            count += 1
+    return count
+
+
+def operation_intel():
+    """Максимальная честная сводка из текущих таблиц.
+
+    Часть показателей точная, часть помечается как найденная по тексту, потому что
+    pdComp не даёт отдельные поля для эвакуаций/стрельбы/смертей.
+    """
+    weapon_terms = ("weapon", "firearm", "gun", "pistol", "rifle", "shotgun",
+                    "оруж", "пистолет", "винтов", "дробов", "автомат")
+    shooting_terms = ("shoot", "shot", "firearm", "gunfire", "стрел", "перестрел")
+    evac_terms = ("tow", "impound", "evac", "эваку", "штрафстоян", "изъят транспорт")
+    fatal_terms = ("killed", "dead", "fatal", "deceased", "убит", "погиб", "смерт")
+    with get_conn() as c:
+        arrests = c.execute("SELECT COUNT(*) FROM cases WHERE is_test=0").fetchone()[0]
+        suspects = c.execute(
+            "SELECT COUNT(DISTINCT suspect_name) FROM cases WHERE is_test=0 AND suspect_name!=''"
+        ).fetchone()[0]
+        wanted = c.execute("SELECT COUNT(*) FROM cases WHERE is_test=0 AND wanted=1").fetchone()[0]
+        citations = c.execute("SELECT COUNT(*), COALESCE(SUM(fine),0) FROM citations").fetchone()
+        callouts = c.execute("SELECT COUNT(*) FROM callouts").fetchone()[0]
+        warnings = c.execute("SELECT COUNT(*) FROM warnings").fetchone()[0]
+        courts = c.execute("SELECT COUNT(*) FROM court_cases").fetchone()[0]
+        vehicles = c.execute("SELECT COUNT(DISTINCT plate) FROM vehicles WHERE plate IS NOT NULL AND plate!=''").fetchone()[0]
+        case_rows = c.execute(
+            "SELECT charges, found_items, reason, notes, vehicle_model, vehicle_plate FROM cases WHERE is_test=0"
+        ).fetchall()
+        callout_rows = c.execute("SELECT callout_type, location, zone, description, outcome FROM callouts").fetchall()
+
+    seized_total = 0
+    weapon_items = 0
+    for r in case_rows:
+        for item in _jsonlist(r["found_items"]):
+            seized_total += 1
+            if any(term in str(item).lower() for term in weapon_terms):
+                weapon_items += 1
+    combined = [tuple(r) for r in case_rows] + [tuple(r) for r in callout_rows]
+    return {
+        "arrests": arrests,
+        "suspects": suspects,
+        "wanted": wanted,
+        "citations": citations[0],
+        "fines_total": int(citations[1] or 0),
+        "callouts": callouts,
+        "warnings": warnings,
+        "courts": courts,
+        "vehicles": vehicles,
+        "seized_total": seized_total,
+        "weapon_items": weapon_items,
+        "shooting_mentions": _count_text_hits(combined, shooting_terms),
+        "evac_mentions": _count_text_hits(combined, evac_terms),
+        "fatal_mentions": _count_text_hits(combined, fatal_terms),
+    }
+
+
+def subject_intel(name):
+    """Сводка по человеку для карточки конкретного дела."""
+    name = (name or "").strip()
+    if not name:
+        return {}
+    with get_conn() as c:
+        arrests = c.execute(
+            "SELECT COUNT(*), COALESCE(SUM(wanted),0) FROM cases WHERE is_test=0 AND suspect_name=? COLLATE NOCASE",
+            (name,),
+        ).fetchone()
+        citations = c.execute(
+            "SELECT COUNT(*), COALESCE(SUM(fine),0) FROM citations WHERE subject_name=? COLLATE NOCASE",
+            (name,),
+        ).fetchone()
+        warnings = c.execute(
+            "SELECT COUNT(*) FROM warnings WHERE subject_name=? COLLATE NOCASE", (name,)
+        ).fetchone()[0]
+        courts = c.execute(
+            "SELECT COUNT(*) FROM court_cases WHERE subject_name=? COLLATE NOCASE", (name,)
+        ).fetchone()[0]
+        callouts = c.execute(
+            "SELECT COUNT(*) FROM callouts WHERE suspect_name=? COLLATE NOCASE", (name,)
+        ).fetchone()[0]
+        vehicles = [r["plate"] for r in c.execute(
+            "SELECT DISTINCT plate FROM vehicles WHERE suspect_name=? COLLATE NOCASE AND plate IS NOT NULL AND plate!=''",
+            (name,),
+        ).fetchall()]
+    return {
+        "arrests": arrests[0],
+        "wanted": arrests[1] or 0,
+        "citations": citations[0],
+        "fines_total": int(citations[1] or 0),
+        "warnings": warnings,
+        "courts": courts,
+        "callouts": callouts,
+        "vehicles": vehicles,
+    }
+
+
 def shift_periods():
     """Сводка смен за 24 часа, неделю и месяц."""
     now = datetime.datetime.now()

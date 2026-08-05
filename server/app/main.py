@@ -46,6 +46,7 @@ def index():
                            court=db.court_summary(),
                            districts=districts,
                            activity=db.activity_periods(),
+                           ops=db.operation_intel(),
                            evidence=db.evidence_catalog())
 
 
@@ -332,7 +333,9 @@ def case_view(cid):
     if not case:
         abort(404)
     discord_md = discord_post.build_markdown(case)
-    return render_template("case.html", case=case, statuses=db.STATUSES, discord_md=discord_md)
+    return render_template("case.html", case=case, statuses=db.STATUSES, discord_md=discord_md,
+                           case_file=db.case_file(case.get("suspect_name")),
+                           subject=db.subject_intel(case.get("suspect_name")))
 
 
 @app.route("/case/<int:cid>/discord", methods=["POST"])

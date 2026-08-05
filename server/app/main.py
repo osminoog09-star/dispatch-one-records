@@ -45,6 +45,7 @@ def index():
                            cit=db.citations_summary(),
                            court=db.court_summary(),
                            districts=districts,
+                           activity=db.activity_periods(),
                            evidence=db.evidence_catalog())
 
 
@@ -426,7 +427,8 @@ def api_court():
 
 @app.route("/shifts")
 def shifts():
-    return render_template("shifts.html", shifts=db.list_shifts(200))
+    return render_template("shifts.html", shifts=db.list_shifts(200),
+                           periods=db.shift_periods())
 
 
 @app.route("/shift/<int:sid>")
@@ -473,7 +475,8 @@ def api_shift():
         return jsonify({"error": "unauthorized"}), 401
     data = request.get_json(silent=True) or request.form.to_dict()
     sid = db.create_shift(data)
-    return jsonify({"ok": True, "shift_id": sid}), 201
+    sent, msg = discord_post.send_shift(db.get_shift(sid))
+    return jsonify({"ok": True, "shift_id": sid, "discord_sent": sent, "discord": msg}), 201
 
 
 @app.route("/api/status", methods=["POST"])

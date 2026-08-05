@@ -369,6 +369,7 @@ def _row_to_case(r):
     d["charges"] = [localize(x) for x in (_jsonlist(r["charges"]) if "charges" in r.keys() else [])]
     d["charges_parsed"] = [_parse_charge(x) for x in d["charges"]]
     d["found_items"] = _jsonlist(r["found_items"]) if "found_items" in r.keys() else []
+    d["zone"] = localize_narrative(d.get("zone"))
     d["notes"] = localize_narrative(d.get("notes"))
     d["created_fmt"] = fmt_dt(r["created_at"])
     d["game_time_fmt"] = fmt_dt(r["game_time"]) if r["game_time"] else None
@@ -945,6 +946,9 @@ def case_file(name):
     def add(kind, rows, name_key, time_key, title_fn):
         for r in rows:
             d = dict(r)
+            for key in ("zone", "location", "callout_type", "description", "notes"):
+                if d.get(key):
+                    d[key] = localize_narrative(d[key])
             items.append({"kind": kind, "id": d["id"], "when": d.get(time_key) or "",
                           "title": title_fn(d), "row": d})
 
@@ -1421,6 +1425,84 @@ def summary_counts():
         officers = c.execute("SELECT COUNT(*) FROM officers").fetchone()[0]
         tests = c.execute("SELECT COUNT(*) FROM cases WHERE is_test=1").fetchone()[0]
         return {"total": total, "today": today, "officers": officers, "tests": tests}
+
+
+def activity_periods():
+    """Сводка активности за 24 часа, 7 дней и 30 дней."""
+    now = datetime.datetime.now()
+    periods = [
+        ("24 часа", now - datetime.timedelta(hours=24)),
+        ("7 дней", now - datetime.timedelta(days=7)),
+        ("30 дней", now - datetime.timedelta(days=30)),
+    ]
+    out = []
+    with get_conn() as c:
+        for label, start in periods:
+            since = start.isoformat(timespec="seconds")
+            arrests = c.execute(
+                "SELECT COUNT(*) FROM cases WHERE is_test=0 AND datetime(created_at) >= datetime(?)",
+                (since,),
+            ).fetchone()[0]
+            citations = c.execute(
+                "SELECT COUNT(*), COALESCE(SUM(fine),0) FROM citations WHERE datetime(issued_at) >= datetime(?)",
+                (since,),
+            ).fetchone()
+            court = c.execute(
+                "SELECT COUNT(*) FROM court_cases WHERE datetime(filed_at) >= datetime(?)",
+                (since,),
+            ).fetchone()[0]
+            callouts = c.execute(
+                "SELECT COUNT(*) FROM callouts WHERE datetime(occurred_at) >= datetime(?)",
+                (since,),
+            ).fetchone()[0]
+            shifts = c.execute(
+                """SELECT COUNT(*), COALESCE(SUM(duration_min),0)
+                   FROM shifts WHERE is_test=0 AND datetime(started_at) >= datetime(?)""",
+                (since,),
+            ).fetchone()
+            out.append({
+                "label": label,
+                "arrests": arrests,
+                "citations": citations[0],
+                "fines_total": int(citations[1] or 0),
+                "court": court,
+                "callouts": callouts,
+                "shifts": shifts[0],
+                "shift_hours": round((shifts[1] or 0) / 60, 1),
+            })
+    return out
+
+
+def shift_periods():
+    """Сводка смен за 24 часа, неделю и месяц."""
+    now = datetime.datetime.now()
+    periods = [
+        ("24 часа", now - datetime.timedelta(hours=24)),
+        ("7 дней", now - datetime.timedelta(days=7)),
+        ("30 дней", now - datetime.timedelta(days=30)),
+    ]
+    out = []
+    with get_conn() as c:
+        for label, start in periods:
+            since = start.isoformat(timespec="seconds")
+            row = c.execute(
+                """SELECT COUNT(*), COALESCE(SUM(duration_min),0), COALESCE(SUM(arrests),0),
+                          COALESCE(SUM(traffic_stops),0), COALESCE(SUM(callouts),0),
+                          COALESCE(SUM(fines_total),0)
+                   FROM shifts
+                   WHERE is_test=0 AND datetime(started_at) >= datetime(?)""",
+                (since,),
+            ).fetchone()
+            out.append({
+                "label": label,
+                "count": row[0],
+                "hours": round((row[1] or 0) / 60, 1),
+                "arrests": row[2] or 0,
+                "traffic_stops": row[3] or 0,
+                "callouts": row[4] or 0,
+                "fines_total": int(row[5] or 0),
+            })
+    return out
 
 
 def delete_test_cases():

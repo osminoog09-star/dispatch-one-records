@@ -5,9 +5,32 @@
   <h1>Рапорты смен</h1>
 </div>
 
+<section class="period-panel">
+  <div class="section-kicker">Контроль службы</div>
+  <h2>Сводка смен</h2>
+  <p class="muted">Ориентир для полноценного патруля — 12 часов. Короткие сессии остаются в журнале, но в отчёте видны отдельно по времени.</p>
+  <div class="period-grid">
+    {% for p in periods %}
+      <article class="period-card">
+        <div class="period-title">{{ p.label }}</div>
+        <div class="period-main">{{ p.hours }}ч</div>
+        <div class="period-sub">{{ p.count }} смен · норма {{ (p.count * 12) }}ч</div>
+        <div class="period-line">
+          <span>Задержания / вызовы</span>
+          <b>{{ p.arrests }} / {{ p.callouts }}</b>
+        </div>
+        <div class="period-line">
+          <span>Остановки / штрафы</span>
+          <b>{{ p.traffic_stops }} / ${{ p.fines_total }}</b>
+        </div>
+      </article>
+    {% endfor %}
+  </div>
+</section>
+
 {% if shifts %}
 <table class="tbl">
-  <thead><tr><th>#</th><th>Офицер</th><th>Тип</th><th>Длит.</th><th>Задерж.</th><th>Остан.</th><th>Погони</th><th>Начало</th></tr></thead>
+  <thead><tr><th>#</th><th>Офицер</th><th>Тип</th><th>Длит.</th><th>Задерж.</th><th>Остан.</th><th>Вызовы</th><th>Погони</th><th>Начало</th></tr></thead>
   <tbody>
   {% for s in shifts %}
     <tr onclick="location='{{ url_for('shift_view', sid=s.id) }}'">
@@ -18,6 +41,7 @@
       <td>{{ s.duration_h }}</td>
       <td>{{ s.arrests }}</td>
       <td>{{ s.traffic_stops }}</td>
+      <td>{{ s.callouts }}</td>
       <td>{{ s.pursuits }}</td>
       <td class="muted">{{ s.started_fmt }}</td>
     </tr>

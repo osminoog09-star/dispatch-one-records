@@ -28,6 +28,28 @@
   <div class="stat"><div class="num">{{ summary.officers }}</div><div class="lbl">Офицеров</div></div>
 </section>
 
+<section class="period-panel">
+  <div class="section-kicker">Оперативная статистика</div>
+  <h2>Активность по периодам</h2>
+  <div class="period-grid">
+    {% for p in activity %}
+      <article class="period-card">
+        <div class="period-title">{{ p.label }}</div>
+        <div class="period-main">{{ p.arrests }}</div>
+        <div class="period-sub">задержаний · {{ p.callouts }} вызовов</div>
+        <div class="period-line">
+          <span>{{ p.citations }} штрафов</span>
+          <b>${{ p.fines_total }}</b>
+        </div>
+        <div class="period-line">
+          <span>{{ p.shifts }} смен</span>
+          <b>{{ p.shift_hours }}ч</b>
+        </div>
+      </article>
+    {% endfor %}
+  </div>
+</section>
+
 <div class="cols">
   <section class="col">
     <h2>Последние задержания</h2>

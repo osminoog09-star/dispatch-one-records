@@ -24,6 +24,7 @@
 
     <div class="shift-metrics">
       <div class="metric big-metric"><div class="mnum">{{ shift.duration_h }}</div><div class="mlbl">Длительность</div></div>
+      <div class="metric"><div class="mnum">{{ 100 if shift.duration_min >= 720 else (shift.duration_min * 100 // 720) }}%</div><div class="mlbl">Норма 12ч</div></div>
       <div class="metric"><div class="mnum">{{ shift.arrests }}</div><div class="mlbl">Задержаний</div></div>
       <div class="metric"><div class="mnum">{{ shift.traffic_stops }}</div><div class="mlbl">Остановок</div></div>
       <div class="metric"><div class="mnum">{{ shift.pursuits }}</div><div class="mlbl">Погонь</div></div>

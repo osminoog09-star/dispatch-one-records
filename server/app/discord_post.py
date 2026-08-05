@@ -116,6 +116,8 @@ def build_shift_markdown(s):
     L.append(f"🕓 **Рапорт смены #{s['id']} — {s.get('type_ru') or '—'}**")
     L.append(f"**Офицер:** {s.get('callsign') or '—'}" + (f" ({s['officer_name']})" if s.get("officer_name") else ""))
     L.append(f"**Длительность:** {s.get('duration_h') or '—'}")
+    pct = 100 if (s.get("duration_min") or 0) >= 720 else int((s.get("duration_min") or 0) * 100 / 720)
+    L.append(f"**Норма 12 часов:** {pct}%")
     L.append(f"**Задержаний:** {s.get('arrests') or 0}")
     L.append(f"**Остановок транспорта:** {s.get('traffic_stops') or 0}")
     L.append(f"**Погонь:** {s.get('pursuits') or 0} · **PIT-манёвров:** {s.get('pit') or 0}")

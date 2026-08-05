@@ -688,6 +688,9 @@ def build_shift(started_ts, baseline):
         "duration_min": dur_min,
         "arrests": max(0, a1 - a0),
         "traffic_stops": max(0, c1 - c0),   # штрафы ≈ остановки транспорта
+        "callouts": max(0, a1 - a0),         # CAD-карточки сейчас создаются из арестов
+        "pursuits": 0,
+        "pit": 0,
         "fines_total": max(0, f1 - f0),
     }
 

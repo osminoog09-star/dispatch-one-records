@@ -15,6 +15,11 @@
 
 ## Последние важные правки
 
+- Проведён полный smoke-аудит сайта: основные Flask-страницы отдают `200`, экспорт `docs/` проходит, поиск по явным английским/битым хвостам в `docs/*.html` чистый.
+- На главную добавлена статистика активности за 24 часа, 7 дней и 30 дней.
+- На страницу смен добавлена сводка смен за 24 часа, 7 дней и 30 дней, а в карточку смены добавлен ориентир нормы 12 часов.
+- `/api/shift` теперь после создания смены пробует отправить Discord-рапорт; если webhook не задан, смена сохраняется, а в ответе видно `discord_sent: false`.
+- Агент `pdcomp_sync.py` теперь кладёт в смену поля `callouts`, `pursuits`, `pit`; для текущей модели данных `callouts` считается как новые аресты за сессию.
 - Починен журнал вызовов: раньше `/callouts/` был пустым, потому что импорт игры создавал аресты/дела, но не создавал записи в `callouts`.
 - `db.ensure_callout_for_case()` теперь создаёт одну CAD-карточку из каждого реального ареста; подключено в `/api/case`, `server/import_inbox.py` и `publish.py`.
 - Выполнен backfill существующих дел в `server/data.db`: создано 6 карточек вызовов, экспортированы страницы `docs/callouts/` и `docs/callout/<id>/`.
@@ -32,6 +37,9 @@
 - Live-страница тикетов берёт `open/closed` и заголовки из Supabase через inline JS. Для перевода статусов и аккуратной нормализации мусорных заголовков нужна отдельная задача на `tickets.html`.
 - Live-редактор персонала на GitHub Pages подгружает звания/отделы из Supabase. Если там лежат английские названия, их надо править в справочниках или отдельным безопасным JS-display mapping.
 - Карта стала компактнее, но финально её лучше проверить глазами на 1366x768, 1920x1080 и мобильной ширине.
+- Старые смены в базе уже сохранены с нулевыми счётчиками действий. Их нельзя честно восстановить без точной связи “запись попала в эту смену”.
+- После правок агента нужно пересобрать/выпустить `pdcomp_sync.exe`, иначе игроки будут продолжать запускать старый бинарник.
+- Discord-отчёты смен реально уйдут только если задан `DISCORD_WEBHOOK_SHIFTS` или общий `DISCORD_WEBHOOK_URL`.
 
 ## Что нельзя забыть следующему агенту
 
@@ -47,7 +55,7 @@
 ```powershell
 python -m py_compile server/app/db.py server/app/main.py server/app/discord_post.py server/export_static.py
 python server/export_static.py
-python -c "from app.main import app; c=app.test_client(); paths=['/','/cases','/case/19','/court/20','/shifts','/map','/register','/staff','/tickets','/dictionaries']; [print(p, c.get(p).status_code) for p in paths]"
+python -c "from app.main import app; c=app.test_client(); paths=['/','/cases','/case/19','/court/20','/shifts','/shift/10','/map','/register','/staff','/tickets','/dictionaries','/callouts','/callout/7']; [print(p, c.get(p).status_code) for p in paths]"
 rg -n "Wobbler|arrested|test-смена|CITATIONS|RECORDS|COURT|T[0-9]{2}:[0-9]{2}:[0-9]{2}|Рљ|Р‘СЂ|Р°РІРµ|Courtroom|Court-Appointed|CJA Panel" docs -g "*.html"
 ```
 

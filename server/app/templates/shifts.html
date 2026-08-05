@@ -3,7 +3,6 @@
 {% block content %}
 <div class="case-head">
   <h1>Рапорты смен</h1>
-  <a class="seed" href="{{ url_for('dev_seed_shift') }}">+ тест-смена</a>
 </div>
 
 {% if shifts %}
@@ -26,6 +25,6 @@
   </tbody>
 </table>
 {% else %}
-  <p class="empty">Смен пока нет. Нажми «+ тест-смена» для проверки.</p>
+  <p class="empty">Смен пока нет. После закрытия игры агент отправит первый рапорт автоматически.</p>
 {% endif %}
 {% endblock %}

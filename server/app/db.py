@@ -371,6 +371,7 @@ def _row_to_case(r):
     d["found_items"] = _jsonlist(r["found_items"]) if "found_items" in r.keys() else []
     d["notes"] = localize_narrative(d.get("notes"))
     d["created_fmt"] = fmt_dt(r["created_at"])
+    d["game_time_fmt"] = fmt_dt(r["game_time"]) if r["game_time"] else None
     ext = r["external_id"] if "external_id" in r.keys() and r["external_id"] else str(r["id"])
     try:
         num = int(ext.replace("-", "")[:8], 16) % 90000000 + 10000000
@@ -409,6 +410,7 @@ def get_case(case_id):
             "SELECT status, changed_at FROM status_log WHERE case_id=? ORDER BY id", (case_id,)).fetchall()]
         for h in case["history"]:
             h["status_ru"] = STATUS_RU.get(h["status"], h["status"])
+            h["changed_fmt"] = fmt_dt(h["changed_at"])
         return case
 
 
@@ -521,6 +523,10 @@ _PHRASES = [
     ("heard the matter in", "рассмотрел дело в"),
     ("No fine assessed", "Штраф не назначен"),
     ("No sentence", "Без наказания"),
+    ("Court-Appointed Counsel", "назначенный защитник"),
+    ("CJA Panel Counsel", "назначенная защита"),
+    ("Courtroom", "зал"),
+    ("Hon.", "судья"),
     ("Not responsible", "Не признаёт вину"),
     ("Not guilty", "Не виновен"),
     ("NotGuilty", "Не виновен"),
@@ -533,6 +539,7 @@ _PHRASES = [
     ("costs", "издержки"),
     ("incl.", "вкл."),
     ("Fine", "Штраф"),
+    ("Wobbler", "по усмотрению суда"),
     ("Infraction", "Нарушение"),
     ("Misdemeanor", "Проступок"),
     ("Felony", "Тяжкое"),
@@ -592,10 +599,46 @@ _CYR2LAT = {"А": "A", "Б": "B", "В": "B", "Г": "G", "Д": "D", "Е": "E", "�
             "И": "I", "Й": "Y", "К": "K", "Л": "L", "М": "M", "Н": "N", "О": "O", "П": "P",
             "Р": "R", "С": "C", "Т": "T", "У": "U", "Ф": "F", "Х": "H", "Ц": "C", "Ч": "C"}
 
+_MOJI_TO_CYR = {}
+for _ch in "АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯабвгдеёжзийклмнопрстуфхцчшщъыьэюя":
+    try:
+        _MOJI_TO_CYR[_ch.encode("utf-8").decode("cp1251")] = _ch
+    except UnicodeDecodeError:
+        pass
+
+
+def _replace_mojibake_pairs(s):
+    for bad, good in sorted(_MOJI_TO_CYR.items(), key=lambda x: len(x[0]), reverse=True):
+        s = s.replace(bad, good)
+    return s
+
 
 def _fix_rooms(s):
     """Буква номера зала/отдела после цифры → латиница: '24Г' → '24G'."""
     return re.sub(r"(\d)([А-Я])", lambda m: m.group(1) + _CYR2LAT.get(m.group(2), m.group(2)), s)
+
+
+def _fix_mojibake(s):
+    """Repair UTF-8 text that was accidentally decoded as CP1251."""
+    if not s or not isinstance(s, str):
+        return s
+    try:
+        fixed = s.encode("cp1251").decode("utf-8")
+    except (UnicodeEncodeError, UnicodeDecodeError):
+        fixed = s
+    else:
+        return fixed if re.search(r"[А-Яа-яЁё]", fixed) else s
+
+    def repl(m):
+        chunk = m.group(0)
+        if not re.search(r"[ЉЊЂЃІЌљњђѓіќ№°]", chunk):
+            return chunk
+        try:
+            return chunk.encode("cp1251").decode("utf-8")
+        except (UnicodeEncodeError, UnicodeDecodeError):
+            return chunk
+
+    return _replace_mojibake_pairs(re.sub(r"[\u0400-\u04ff\u00a0\u2116°-]+", repl, s))
 
 
 def _ru_days(n):
@@ -612,7 +655,7 @@ def _ru_days(n):
 def localize(text):
     if not text or not isinstance(text, str):
         return text
-    out = text
+    out = _fix_mojibake(text)
     for en, ru in _PHRASES:
         out = out.replace(en, ru)
     out = re.sub(r"\b1 года\b", "1 год", out)
@@ -648,15 +691,22 @@ def localize_narrative(text):
     """Перевод сгенерированного pdComp описания ареста на русский (имена не трогаем)."""
     if not text or not isinstance(text, str):
         return text
-    t = text
+    t = _fix_mojibake(text)
     for en, ru in [
         ("After investigation, probable cause was determined for the arrest.",
          "После разбирательства установлено достаточное основание для ареста."),
         ("following a", "по вызову"),
         ("Officer arrested", "сотрудник задержал"),
         ("(DOB ", "(дата рожд. "),
+        ("[VH]", "[вызов]"),
+        ("vehicle contact", "проверка транспорта"),
+        ("vehicle plates", "номера ТС"),
+        ("vehicle plate", "номер ТС"),
+        ("involving", "с участием"),
     ]:
         t = t.replace(en, ru)
+    t = t.replace(" arrested ", " задержал ")
+    t = t.replace(" at ", " по адресу ")
     t = t.replace(" call.", ".").replace(" call,", ",").replace(" call ", " ")
     t = re.sub(r"\b(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+(\d{1,2})\b",
                lambda m: m.group(2) + " " + _MONTHS[m.group(1)], t)
@@ -729,7 +779,10 @@ def _row_to_court(r):
     d["sentence"] = localize(d.get("sentence"))
     d["plea"] = localize(d.get("plea"))
     d["notes"] = localize(d.get("notes"))
-    d["courtroom"] = _fix_rooms(d["courtroom"]) if d.get("courtroom") else d.get("courtroom")
+    d["judge"] = localize(d.get("judge"))
+    d["prosecutor"] = localize(d.get("prosecutor"))
+    d["defense"] = localize(d.get("defense"))
+    d["courtroom"] = _fix_rooms(localize(d["courtroom"])) if d.get("courtroom") else d.get("courtroom")
     d["filed_fmt"] = fmt_dt(r["filed_at"]) if r["filed_at"] else "—"
     # номер дела (детерминированный из ID)
     ext = r["external_id"] or str(r["id"])

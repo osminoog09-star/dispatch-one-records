@@ -22,7 +22,7 @@
         {% if c.wanted %}<span class="tag wanted">розыск</span>{% endif %}</td>
       <td>{{ c.zone or '—' }}</td>
       <td><span class="cs">{{ c.callsign }}</span></td>
-      <td class="muted">{{ c.created_at }}</td>
+      <td class="muted">{{ c.created_fmt }}</td>
       <td><span class="tag st-{{ c.status }}">{{ c.status_ru }}</span></td>
     </tr>
   {% endfor %}

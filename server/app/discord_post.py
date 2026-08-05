@@ -30,7 +30,7 @@ def build_embed(case):
         {"name": "Транспорт", "value": veh_val, "inline": True},
         {"name": "Изъято", "value": (", ".join(found)) if found else "—", "inline": True},
         {"name": "Район", "value": (case.get("zone") or "—") + (f" · {case['postal']}" if case.get("postal") else ""), "inline": True},
-        {"name": "Время", "value": case.get("game_time") or "—", "inline": True},
+        {"name": "Время", "value": case.get("game_time_fmt") or case.get("game_time") or "—", "inline": True},
         {"name": "Офицер", "value": case.get("callsign") or "—", "inline": True},
         {"name": "Наказание", "value": f"Штраф ${case.get('fine') or 0} · Залог ${case.get('bail') or 0} · Срок {case.get('jail_time') or '—'}", "inline": False},
         {"name": "Статус дела", "value": case.get("status_ru") or "—", "inline": True},
@@ -72,8 +72,8 @@ def build_markdown(case):
     loc = case.get("zone") or "—"
     if case.get("postal"):
         loc += f" · инд. {case['postal']}"
-    if case.get("game_time"):
-        loc += f" · {case['game_time']}"
+    if case.get("game_time_fmt") or case.get("game_time"):
+        loc += f" · {case.get('game_time_fmt') or case['game_time']}"
     L.append(f"**Место/время:** {loc}")
     if case.get("fine") or case.get("bail") or (case.get("jail_time") and case["jail_time"] != "—"):
         L.append(f"**Наказание:** Штраф ${case.get('fine') or 0} · Залог ${case.get('bail') or 0} · Срок {case.get('jail_time') or '—'}")

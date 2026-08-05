@@ -28,7 +28,7 @@
         <tr><td>Задержанный</td><td><b>{{ case.suspect_name }}</b>
           {% if case.wanted %}<span class="doc-verdict"> · В РОЗЫСКЕ</span>{% endif %}</td></tr>
         <tr><td>Сотрудник</td><td>{{ case.officer_name or case.callsign }}</td></tr>
-        <tr><td>Дата/время</td><td>{{ case.created_fmt }}{% if case.game_time %} · игр. {{ case.game_time }}{% endif %}</td></tr>
+        <tr><td>Дата/время</td><td>{{ case.created_fmt }}{% if case.game_time_fmt %} · игр. {{ case.game_time_fmt }}{% endif %}</td></tr>
         <tr><td>Место</td><td>{{ case.zone or '—' }}{% if case.postal %} · {{ case.postal }}{% endif %}</td></tr>
         {% if case.reason %}<tr><td>Причина</td><td>{{ case.reason }}</td></tr>{% endif %}
       </table>
@@ -79,7 +79,7 @@
       <div>
         <div class="rep-title">{{ community }} · Рапорт о задержании</div>
         <div class="rep-sub">Дело #{{ case.id }} · задержание {{ case.created_fmt }}
-          {% if case.game_time %}· игровое время {{ case.game_time }}{% endif %}</div>
+          {% if case.game_time_fmt %}· игровое время {{ case.game_time_fmt }}{% endif %}</div>
       </div>
     </div>
     <dl class="report-fields">
@@ -88,7 +88,7 @@
       <div><dt>Права</dt><dd>{{ case.license_ru }}</dd></div>
       <div><dt>Штрафы в истории</dt><dd>{{ case.citations }}</dd></div>
       <div><dt>Район</dt><dd>{{ case.zone or '—' }} {% if case.postal %}· индекс {{ case.postal }}{% endif %}</dd></div>
-      <div><dt>Время</dt><dd>{{ case.game_time or '—' }}</dd></div>
+      <div><dt>Время</dt><dd>{{ case.game_time_fmt or '—' }}</dd></div>
       <div><dt>Офицер</dt><dd><a href="{{ url_for('officer_view', callsign=case.callsign) }}"><span class="cs">{{ case.callsign }}</span></a> {{ case.officer_name or '' }}</dd></div>
     </dl>
 
@@ -181,7 +181,7 @@
       <h3>История статусов</h3>
       <ul class="history">
         {% for h in case.history %}
-          <li><span class="tag st-{{ h.status }}">{{ h.status_ru }}</span> <span class="muted small">{{ h.changed_at }}</span></li>
+          <li><span class="tag st-{{ h.status }}">{{ h.status_ru }}</span> <span class="muted small">{{ h.changed_fmt }}</span></li>
         {% endfor %}
       </ul>
     </div>

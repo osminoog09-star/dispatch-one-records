@@ -43,7 +43,6 @@
     <div class="staff-who">
       <a href="{{ url_for('officer_view', callsign=o.callsign) }}"><span class="cs">{{ o.callsign }}</span></a>
       <b>{{ o.name or '' }}</b>
-      {% if o.is_admin %}<span class="tag adm">админ</span>{% endif %}
       {% if not o.registered %}<span class="tag">из игровых записей</span>{% endif %}
       <div class="muted small">
         {% if o.discord %}discord: {{ o.discord }} · {% endif %}

@@ -8,8 +8,6 @@
   <div class="off-main">
     <h1><span class="cs big">{{ officer.callsign }}</span> {{ officer.name or '' }}</h1>
     <div class="off-tags">
-      {% if officer.rank %}<span class="tag rank">{{ officer.rank }}</span>{% endif %}
-      {% if officer.is_admin %}<span class="tag adm">админ</span>{% endif %}
       <span class="tag"><span class="status-dot {{ officer.status_cls }}"></span>{{ officer.status_ru }}</span>
     </div>
     <div class="muted small" style="margin-top:6px">

@@ -1,75 +1,90 @@
 {% extends "base.html" %}
 {% block title %}Карта{% endblock %}
 {% block content %}
-<h1>Карта ответственности отделов</h1>
-<p class="muted">Логичное распределение территории GTA V по отделам LAPD. Нажми на сектор, чтобы увидеть назначение.</p>
+<h1>Карта патрульных зон</h1>
+<p class="muted">Территория GTA V разделена по реальному смыслу районов: город, округ, пустыня, порт и аэропорт.</p>
 
 <section class="clean-map-shell">
   <div class="clean-map-toolbar">
     <div>
-      <span>DIVISION COVERAGE</span>
-      <b>6 отделов · Los Santos / Blaine</b>
+      <span>PATROL ZONES</span>
+      <b>8 зон · Los Santos / Blaine</b>
     </div>
   </div>
   <div class="map-district-info" id="district-info">
     <span>Выбери сектор</span>
-    <b>ответственности</b>
+    <b>патрулирования</b>
   </div>
   <div class="clean-map" id="lapd-clean-map">
     <div class="clean-map-stage">
       <img class="clean-map-image"
            src="{{ url_for('static', filename='maps/gtav/gtav-atlas-2048.png') }}"
            alt="GTA V atlas map">
-      <svg class="map-district-overlay" viewBox="0 0 2048 2048" aria-label="Сектора ответственности отделов">
+      <svg class="map-district-overlay" viewBox="0 0 2048 2048" aria-label="Патрульные зоны">
         <defs>
           <clipPath id="land-mask">
             <path d="M985,250 C1158,258 1315,320 1445,438 C1582,562 1648,742 1612,930 C1592,1032 1518,1098 1502,1190 C1485,1290 1558,1398 1600,1525 C1655,1690 1515,1845 1325,1915 C1145,1982 922,1948 760,1862 C590,1772 500,1605 532,1435 C555,1318 520,1212 470,1100 C390,918 438,705 570,515 C685,350 820,252 985,250 Z"/>
           </clipPath>
         </defs>
         <path class="map-coastline" d="M985,250 C1158,258 1315,320 1445,438 C1582,562 1648,742 1612,930 C1592,1032 1518,1098 1502,1190 C1485,1290 1558,1398 1600,1525 C1655,1690 1515,1845 1325,1915 C1145,1982 922,1948 760,1862 C590,1772 500,1605 532,1435 C555,1318 520,1212 470,1100 C390,918 438,705 570,515 C685,350 820,252 985,250 Z"/>
-        <g class="map-district" data-ru="LAPD Detective" data-patrol="Блэйн · северные расследования">
+        <g class="map-district" data-ru="Blaine North" data-patrol="Палето-Бэй / Чилиад · северные вызовы и поиски">
           <path class="map-district-shape land-sector" style="--district-color:#38bdf8"
                 clip-path="url(#land-mask)"
-                d="M620,360 C745,270 890,250 1045,270 C1240,292 1400,395 1515,545 C1600,655 1622,790 1580,912 C1460,982 1295,1008 1118,990 C925,970 755,908 615,825 C535,690 530,490 620,360 Z"/>
-          <text class="map-district-text" x="1045" y="610">LAPD Detective</text>
+                d="M650,330 C790,250 955,245 1138,280 C1308,312 1435,400 1510,535 C1430,640 1285,690 1105,675 C918,662 735,600 595,505 C598,428 615,372 650,330 Z"/>
+          <text class="map-district-text" x="1030" y="500">Blaine North</text>
         </g>
-        <g class="map-district" data-ru="Patrol Division LAPD" data-patrol="Округ Лос-Сантос · хайвей / пригород">
+        <g class="map-district" data-ru="Blaine East" data-patrol="Сэнди / Грейпсид / Аламо · пустыня и трассы">
           <path class="map-district-shape land-sector" style="--district-color:#f59e0b"
                 clip-path="url(#land-mask)"
-                d="M510,875 C675,805 885,810 1100,860 C1315,912 1485,1005 1565,1132 C1510,1245 1372,1315 1192,1338 C990,1364 790,1318 632,1222 C520,1152 455,1018 510,875 Z"/>
-          <text class="map-district-text" x="1035" y="1095">Patrol Division</text>
+                d="M760,660 C940,640 1138,682 1315,755 C1460,815 1575,920 1605,1035 C1518,1140 1365,1198 1168,1192 C978,1185 815,1122 675,1012 C650,870 680,740 760,660 Z"/>
+          <text class="map-district-text" x="1120" y="920">Blaine East</text>
         </g>
-        <g class="map-district" data-ru="Detective Division" data-patrol="Вайнвуд · Дель-Перро · деловой центр">
+        <g class="map-district" data-ru="LS County West" data-patrol="Чумаш / Тонгва / каньоны · побережье и хайвей">
+          <path class="map-district-shape land-sector" style="--district-color:#eab308"
+                clip-path="url(#land-mask)"
+                d="M510,900 C610,822 725,770 850,765 C835,928 880,1085 985,1215 C862,1288 708,1295 585,1222 C475,1155 420,1015 510,900 Z"/>
+          <text class="map-district-text" x="670" y="1060">LS County West</text>
+        </g>
+        <g class="map-district" data-ru="Vinewood / Rockford" data-patrol="Вайнвуд / Рокфорд / Дель-Перро · трафик и VIP-вызовы">
           <path class="map-district-shape land-sector" style="--district-color:#8b5cf6"
                 clip-path="url(#land-mask)"
-                d="M610,1308 C742,1205 935,1178 1145,1222 C1262,1248 1348,1322 1360,1415 C1240,1512 1088,1552 910,1520 C755,1492 652,1415 610,1308 Z"/>
-          <text class="map-district-text" x="980" y="1395">Detective Division</text>
+                d="M590,1225 C730,1125 910,1088 1115,1120 C1245,1142 1350,1210 1390,1315 C1282,1405 1110,1448 920,1412 C758,1382 640,1320 590,1225 Z"/>
+          <text class="map-district-text" x="970" y="1285">Vinewood</text>
         </g>
-        <g class="map-district" data-ru="METRO Division" data-patrol="Центр / восток / юг · тактическое реагирование">
+        <g class="map-district" data-ru="Central Los Santos" data-patrol="Downtown / Mission Row / Strawberry · основной городской патруль">
           <path class="map-district-shape land-sector" style="--district-color:#2563eb"
                 clip-path="url(#land-mask)"
-                d="M1000,1452 C1185,1388 1398,1425 1545,1545 C1515,1705 1375,1835 1160,1878 C1000,1852 855,1765 785,1632 C838,1535 915,1485 1000,1452 Z"/>
-          <text class="map-district-text" x="1185" y="1655">METRO</text>
+                d="M790,1410 C935,1360 1125,1370 1280,1440 C1330,1540 1290,1650 1185,1715 C1022,1732 872,1670 770,1548 C735,1490 748,1440 790,1410 Z"/>
+          <text class="map-district-text" x="1020" y="1535">Central LS</text>
         </g>
-        <g class="map-district" data-ru="Training Division LAPD" data-patrol="Аэропорт / порт · учебный и резервный сектор">
+        <g class="map-district" data-ru="East Los Santos" data-patrol="La Mesa / Mirror Park / El Burro · промзоны и восточные вызовы">
+          <path class="map-district-shape land-sector" style="--district-color:#22c55e"
+                clip-path="url(#land-mask)"
+                d="M1220,1328 C1395,1358 1530,1450 1590,1580 C1545,1715 1428,1818 1272,1855 C1195,1788 1165,1665 1190,1545 C1210,1458 1228,1395 1220,1328 Z"/>
+          <text class="map-district-text" x="1390" y="1585">East LS</text>
+        </g>
+        <g class="map-district" data-ru="South Los Santos" data-patrol="Davis / Rancho / Banning · южный криминальный сектор">
+          <path class="map-district-shape land-sector" style="--district-color:#ef4444"
+                clip-path="url(#land-mask)"
+                d="M760,1540 C900,1660 1058,1732 1265,1740 C1245,1848 1140,1908 980,1900 C832,1892 690,1820 605,1708 C628,1628 675,1572 760,1540 Z"/>
+          <text class="map-district-text" x="930" y="1770">South LS</text>
+        </g>
+        <g class="map-district" data-ru="Port / Airport" data-patrol="LSIA / порт / Elysian · контроль грузов и аэропорта">
           <path class="map-district-shape land-sector" style="--district-color:#94a3b8"
                 clip-path="url(#land-mask)"
-                d="M545,1585 C655,1620 790,1685 895,1802 C840,1900 708,1932 595,1870 C502,1818 452,1698 500,1610 Z"/>
-          <text class="map-district-text" x="725" y="1745">Training</text>
-        </g>
-        <g class="map-district air-sector" data-ru="AIR-unit LAPD" data-patrol="Воздушное покрытие всей территории">
-          <path class="map-district-shape" style="--district-color:#22c55e"
-                d="M1010,165 C1285,165 1535,265 1710,455 C1870,630 1920,860 1848,1085 C1805,1220 1825,1335 1885,1480 C1960,1660 1845,1875 1635,1985 C1405,2105 1010,2105 750,1990 C535,1895 365,1695 385,1465 C405,1250 350,1120 300,955 C235,735 330,500 515,335 C645,220 810,165 1010,165 Z"/>
-          <text class="map-district-text" x="1480" y="440">AIR-unit</text>
+                d="M500,1605 C605,1660 728,1755 820,1888 C745,1958 632,1940 555,1868 C475,1792 440,1682 500,1605 Z M1010,1772 C1130,1795 1255,1855 1320,1915 C1205,1965 1065,1958 950,1898 C928,1848 940,1808 1010,1772 Z"/>
+          <text class="map-district-text" x="690" y="1790">Port / Airport</text>
         </g>
       </svg>
       <div class="map-legend">
-        <span style="--legend-color:#38bdf8">LAPD Detective</span>
-        <span style="--legend-color:#f59e0b">Patrol Division</span>
-        <span style="--legend-color:#8b5cf6">Detective Division</span>
-        <span style="--legend-color:#2563eb">METRO</span>
-        <span style="--legend-color:#94a3b8">Training</span>
-        <span style="--legend-color:#22c55e">AIR-unit</span>
+        <span style="--legend-color:#38bdf8">Blaine North</span>
+        <span style="--legend-color:#f59e0b">Blaine East</span>
+        <span style="--legend-color:#eab308">LS County West</span>
+        <span style="--legend-color:#8b5cf6">Vinewood</span>
+        <span style="--legend-color:#2563eb">Central LS</span>
+        <span style="--legend-color:#22c55e">East LS</span>
+        <span style="--legend-color:#ef4444">South LS</span>
+        <span style="--legend-color:#94a3b8">Port / Airport</span>
       </div>
     </div>
   </div>

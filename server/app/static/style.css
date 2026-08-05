@@ -1,7 +1,9 @@
 :root{
-  --bg:#0f1216; --surface:#171b21; --surface2:#1d232b; --border:#2a323c;
-  --text:#e8ecf1; --muted:#98a1ac; --accent:#3b82f6; --accent2:#2563eb;
-  --wanted:#e05252; --ok:#3fa66a; --gold:#e0b53f;
+  --bg:#0a0d12; --surface:#141922; --surface2:#1b212c; --border:#28313d;
+  --text:#e7edf4; --muted:#8b95a4; --accent:#3b82f6; --accent2:#2563eb;
+  --wanted:#ef4444; --ok:#22c55e; --gold:#eab308;
+  --shadow:0 1px 2px rgba(0,0,0,.5), 0 12px 28px -16px rgba(0,0,0,.7);
+  --radius:14px;
 }
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--text);
@@ -266,3 +268,62 @@ nav{display:flex;flex-wrap:wrap;gap:2px 0}
 .doc-chain-tbl td{padding:5px 6px;border-bottom:1px solid #ddd6c2;font-size:12px;vertical-align:top;
   text-transform:none;color:#1a1a1a;width:auto}
 .doc-chain-tbl td:first-child{width:auto;font-size:12px}
+
+/* ============ ВИЗУАЛЬНАЯ ПОЛИРОВКА ============ */
+body{font-size:15px;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+.wrap{max-width:1120px}
+
+/* topbar: стекло + мягкая тень */
+.topbar{background:rgba(16,20,27,.82);backdrop-filter:saturate(140%) blur(10px);
+  box-shadow:0 1px 0 var(--border),0 10px 30px -20px #000}
+.brand .badge{box-shadow:0 3px 10px -3px var(--accent);background:linear-gradient(135deg,#4c8dff,#2563eb)}
+nav a{margin-left:4px;padding:7px 12px;border-radius:9px;transition:background .15s,color .15s;font-size:14px}
+nav a:hover{background:var(--surface2);color:var(--text)}
+nav a.active{background:var(--accent);color:#fff}
+.auth-slot{margin-left:12px;padding-left:12px;border-left:1px solid var(--border);color:var(--muted);font-size:13px}
+.auth-link{color:var(--accent);font-weight:600}
+
+/* заголовки */
+h1{font-size:26px;font-weight:700;letter-spacing:-.3px}
+h2{font-size:18px;font-weight:650}
+
+/* объём карточек и списков */
+.card,.stat,.tbl,.staff-row,.court-row,.officer-card,.district,.faq p,.dutylog li,.pen,.metric{
+  box-shadow:var(--shadow)}
+.card,.stat,.officer-card{border-radius:var(--radius)}
+.stat{transition:transform .15s,border-color .15s}
+.stat:hover{transform:translateY(-2px);border-color:#3a4553}
+.stat .num{letter-spacing:-1px}
+
+/* кнопки — глубина и акцент */
+.btn{transition:background .15s,border-color .15s,transform .05s}
+.btn:hover{border-color:#3a4553;background:#222a35}
+.btn:active{transform:translateY(1px)}
+.btn.primary{background:linear-gradient(135deg,#4c8dff,#2563eb);box-shadow:0 6px 18px -6px var(--accent)}
+.btn.primary:hover{filter:brightness(1.06)}
+.chip{transition:.15s;cursor:pointer}
+.chip:hover{border-color:#3a4553;color:var(--text)}
+.chip.on{box-shadow:0 4px 14px -5px var(--accent)}
+
+/* строки-списки: лёгкий hover-подъём */
+.staff-row,.court-row{transition:transform .12s,border-color .12s,background .12s}
+.staff-row:hover,.court-row:hover{border-color:#38424f}
+
+/* ссылки в тексте */
+main a.cs,main a[href]:not(.btn):not(.chip):not(.tag):hover{color:var(--accent2)}
+.back{transition:color .15s}.back:hover{color:var(--text)}
+
+/* таблицы — чуть воздушнее */
+.tbl th{background:var(--surface2)}
+.tbl td{padding:12px 14px}
+
+/* бейдж звания с цветом (staff) */
+.sb-badge{font-weight:600;letter-spacing:.2px}
+
+/* аккуратный скроллбар */
+*::-webkit-scrollbar{width:10px;height:10px}
+*::-webkit-scrollbar-thumb{background:#2a323f;border-radius:6px;border:2px solid var(--bg)}
+*::-webkit-scrollbar-thumb:hover{background:#3a4553}
+
+/* подвал */
+.foot{text-align:center}

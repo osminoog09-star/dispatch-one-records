@@ -80,8 +80,14 @@ _PROFILE = None
 
 
 def fetch_profile():
-    """Профиль с сайта (позывной + никнейм) по ключу агента. None если не зарегистрирован."""
+    """Профиль с хостинг-сайта (позывной + никнейм). None если сайта нет.
+    Игроки шлют данные через шлюз, а профиль берут из локального конфига —
+    для них к localhost/сайту не ходим (иначе WinError 10061 «отказ»)."""
     global _PROFILE
+    # шлюз задан ИЛИ сайт локальный/не задан → хостинг-сервера нет, профиль локальный
+    if _setting("GATEWAY_URL", "") or (not SITE_URL) or \
+       SITE_URL.startswith("http://localhost") or SITE_URL.startswith("http://127."):
+        return None
     try:
         req = urllib.request.Request(f"{SITE_URL}/api/profile", method="GET")
         req.add_header("X-Api-Key", API_KEY)
@@ -90,10 +96,9 @@ def fetch_profile():
     except urllib.error.HTTPError as e:
         if e.code == 404:
             _PROFILE = None
-        else:
-            print(f"[warn] профиль: HTTP {e.code}")
-    except Exception as e:
-        print(f"[warn] профиль недоступен: {e}")
+        # прочие HTTP-коды молча игнорируем — не пугаем игрока
+    except Exception:
+        pass   # нет связи с сайтом — тихо откатываемся на локальный профиль
     return _PROFILE
 
 

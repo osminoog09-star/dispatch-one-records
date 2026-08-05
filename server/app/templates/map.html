@@ -1,42 +1,65 @@
 {% extends "base.html" %}
 {% block title %}Карта{% endblock %}
 {% block content %}
-<h1>Карта патрульных округов</h1>
-<p class="muted">Оперативная карта GTA V для назначения патрулей LAPD. Нажми на округ, чтобы выделить его.</p>
+<h1>Карта ответственности отделов</h1>
+<p class="muted">Логичное распределение территории GTA V по отделам LAPD. Нажми на сектор, чтобы увидеть назначение.</p>
 
 <section class="clean-map-shell">
   <div class="clean-map-toolbar">
     <div>
-      <span>PATROL DISTRICTS</span>
-      <b>3 округа · Los Santos / Blaine</b>
+      <span>DIVISION COVERAGE</span>
+      <b>6 отделов · Los Santos / Blaine</b>
     </div>
   </div>
   <div class="map-district-info" id="district-info">
-    <span>Выбери округ</span>
-    <b>на карте</b>
+    <span>Выбери сектор</span>
+    <b>ответственности</b>
   </div>
   <div class="clean-map" id="lapd-clean-map">
     <div class="clean-map-stage">
       <img class="clean-map-image"
            src="{{ url_for('static', filename='maps/gtav/gtav-atlas-2048.png') }}"
            alt="GTA V atlas map">
-      <svg class="map-district-overlay" viewBox="0 0 2048 2048" aria-label="Округа патрулирования">
-        <g class="map-district" data-ru="Округ Блэйн" data-patrol="Северный патруль">
+      <svg class="map-district-overlay" viewBox="0 0 2048 2048" aria-label="Сектора ответственности отделов">
+        <g class="map-district" data-ru="LAPD Detective" data-patrol="Блэйн · северные расследования">
           <polygon class="map-district-shape" style="--district-color:#38bdf8"
-                   points="640,235 1030,190 1430,280 1650,550 1585,870 1360,1070 890,1015 540,845 420,500"/>
-          <text class="map-district-text" x="1020" y="635">Округ Блэйн</text>
+                   points="675,255 1015,210 1425,285 1645,555 1555,825 1320,945 935,925 575,805 440,505"/>
+          <text class="map-district-text" x="1045" y="610">LAPD Detective</text>
         </g>
-        <g class="map-district" data-ru="Округ Лос-Сантос" data-patrol="Пригород / хайвей">
+        <g class="map-district" data-ru="Patrol Division LAPD" data-patrol="Округ Лос-Сантос · хайвей / пригород">
           <polygon class="map-district-shape" style="--district-color:#f59e0b"
-                   points="470,925 860,825 1260,900 1590,1115 1580,1400 1330,1590 900,1495 555,1285"/>
-          <text class="map-district-text" x="1110" y="1180">Округ Лос-Сантос</text>
+                   points="445,855 820,790 1250,855 1605,1060 1580,1320 1310,1475 920,1405 575,1240 420,1040"/>
+          <text class="map-district-text" x="1045" y="1120">Patrol Division</text>
         </g>
-        <g class="map-district" data-ru="Лос-Сантос" data-patrol="Городской патруль">
+        <g class="map-district" data-ru="Detective Division" data-patrol="Вайнвуд · Дель-Перро · деловой центр">
+          <polygon class="map-district-shape" style="--district-color:#8b5cf6"
+                   points="610,1280 925,1170 1240,1205 1370,1390 1215,1565 880,1550 625,1420"/>
+          <text class="map-district-text" x="980" y="1395">Detective Division</text>
+        </g>
+        <g class="map-district" data-ru="METRO Division" data-patrol="Центр / восток / юг · тактическое реагирование">
           <polygon class="map-district-shape" style="--district-color:#2563eb"
-                   points="595,1295 930,1215 1350,1280 1595,1540 1510,1810 1185,1920 760,1830 560,1580"/>
-          <text class="map-district-text" x="1020" y="1620">Лос-Сантос</text>
+                   points="965,1450 1350,1340 1595,1540 1510,1810 1185,1920 835,1830 760,1625"/>
+          <text class="map-district-text" x="1185" y="1655">METRO</text>
+        </g>
+        <g class="map-district" data-ru="Training Division LAPD" data-patrol="Аэропорт / порт · учебный и резервный сектор">
+          <polygon class="map-district-shape" style="--district-color:#94a3b8"
+                   points="570,1585 835,1640 960,1835 740,1920 560,1805 475,1660"/>
+          <text class="map-district-text" x="725" y="1745">Training</text>
+        </g>
+        <g class="map-district air-sector" data-ru="AIR-unit LAPD" data-patrol="Воздушное покрытие всей территории">
+          <path class="map-district-shape" style="--district-color:#22c55e"
+                d="M1010,165 C1285,165 1535,265 1710,455 C1870,630 1920,860 1848,1085 C1805,1220 1825,1335 1885,1480 C1960,1660 1845,1875 1635,1985 C1405,2105 1010,2105 750,1990 C535,1895 365,1695 385,1465 C405,1250 350,1120 300,955 C235,735 330,500 515,335 C645,220 810,165 1010,165 Z"/>
+          <text class="map-district-text" x="1480" y="440">AIR-unit</text>
         </g>
       </svg>
+      <div class="map-legend">
+        <span style="--legend-color:#38bdf8">LAPD Detective</span>
+        <span style="--legend-color:#f59e0b">Patrol Division</span>
+        <span style="--legend-color:#8b5cf6">Detective Division</span>
+        <span style="--legend-color:#2563eb">METRO</span>
+        <span style="--legend-color:#94a3b8">Training</span>
+        <span style="--legend-color:#22c55e">AIR-unit</span>
+      </div>
     </div>
   </div>
 </section>

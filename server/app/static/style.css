@@ -172,12 +172,21 @@ h3{font-size:14px;margin:0 0 .5em;color:var(--muted);text-transform:uppercase;le
   text-transform:uppercase}
 .map-district:hover .map-district-text,.map-district.active .map-district-text{
   fill:#fff;filter:drop-shadow(0 0 10px var(--district-color))}
+.air-sector .map-district-shape{fill:transparent;fill-opacity:0;stroke-width:5;stroke-opacity:.5;stroke-dasharray:34 22;pointer-events:stroke}
+.air-sector:hover .map-district-shape,.air-sector.active .map-district-shape{fill:transparent;stroke-width:8;stroke-dasharray:0}
+.map-legend{position:absolute;right:14px;top:62px;z-index:4;display:flex;flex-direction:column;align-items:flex-start;
+  gap:7px;pointer-events:none}
+.map-legend span{display:inline-flex;align-items:center;gap:6px;padding:6px 8px;border:1px solid rgba(111,161,226,.24);
+  border-radius:999px;background:rgba(5,12,22,.62);backdrop-filter:blur(8px);color:#e4f0ff;font-size:11px;font-weight:800}
+.map-legend span::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--legend-color);
+  box-shadow:0 0 12px var(--legend-color)}
 @media(max-width:820px){
   .clean-map-shell{border-radius:12px}
   .clean-map-toolbar{align-items:flex-start;flex-direction:column}
   .clean-map-toolbar b{display:none}
   .map-district-info{left:16px;right:16px;min-width:0}
   .map-district-text{font-size:42px}
+  .map-legend{display:none}
 }
 
 .staff-list{display:flex;flex-direction:column;gap:10px}

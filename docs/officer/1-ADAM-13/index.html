@@ -70,34 +70,98 @@
   <div class="stat"><div class="num">2</div><div class="lbl">Задержаний</div></div>
   <div class="stat"><div class="num">1</div><div class="lbl">Штрафов</div></div>
   <div class="stat"><div class="num">$120</div><div class="lbl">Сумма штрафов</div></div>
-  <div class="stat"><div class="num">0</div><div class="lbl">Смен</div></div>
+  <div class="stat"><div class="num">2</div><div class="lbl">Вызовов</div></div>
   <div class="stat"><div class="num">0.0</div><div class="lbl">Часов на службе</div></div>
 </section>
 
 <h2>Задержания</h2>
 
 <table class="tbl">
-  <thead><tr><th>#</th><th>Подозреваемый</th><th>Район</th><th>Когда</th><th>Статус</th></tr></thead>
+  <thead><tr><th>#</th><th>Подозреваемый</th><th>Район</th><th>Когда</th><th>Статус</th><th>Связи</th></tr></thead>
   <tbody>
   
     <tr onclick="location='/dispatch-one-records/case/16'">
-      <td>#16</td>
-      <td>Dawnenzio Autista
+      <td><a class="row-link" href="/dispatch-one-records/case/16" onclick="event.stopPropagation()">#16</a></td>
+      <td><a class="row-link" href="/dispatch-one-records/file/Dawnenzio%20Autista" onclick="event.stopPropagation()">Dawnenzio Autista</a>
         
         </td>
-      <td>Гроув-стрит, Davis</td>
+      <td><a href="/dispatch-one-records/map?zone=%D0%93%D1%80%D0%BE%D1%83%D0%B2-%D1%81%D1%82%D1%80%D0%B8%D1%82,+Davis" onclick="event.stopPropagation()">Гроув-стрит, Davis</a></td>
       <td class="muted">30.07.2026 07:08</td>
       <td><span class="tag st-submitted">Подано</span></td>
+      <td>
+        <details class="link-pop" onclick="event.stopPropagation()">
+          <summary>связи</summary>
+          <div class="link-pop-menu">
+            <a href="/dispatch-one-records/case/16">Карточка ареста</a>
+            <a href="/dispatch-one-records/file/Dawnenzio%20Autista">Досье человека</a>
+            <a href="/dispatch-one-records/map?zone=%D0%93%D1%80%D0%BE%D1%83%D0%B2-%D1%81%D1%82%D1%80%D0%B8%D1%82,+Davis">Район на карте</a>
+          </div>
+        </details>
+      </td>
     </tr>
   
     <tr onclick="location='/dispatch-one-records/case/15'">
-      <td>#15</td>
-      <td>Kian Domingo
+      <td><a class="row-link" href="/dispatch-one-records/case/15" onclick="event.stopPropagation()">#15</a></td>
+      <td><a class="row-link" href="/dispatch-one-records/file/Kian%20Domingo" onclick="event.stopPropagation()">Kian Domingo</a>
         
         </td>
-      <td>Альта-стрит, Pillbox Hill</td>
+      <td><a href="/dispatch-one-records/map?zone=%D0%90%D0%BB%D1%8C%D1%82%D0%B0-%D1%81%D1%82%D1%80%D0%B8%D1%82,+Pillbox+Hill" onclick="event.stopPropagation()">Альта-стрит, Pillbox Hill</a></td>
       <td class="muted">30.07.2026 07:08</td>
       <td><span class="tag st-submitted">Подано</span></td>
+      <td>
+        <details class="link-pop" onclick="event.stopPropagation()">
+          <summary>связи</summary>
+          <div class="link-pop-menu">
+            <a href="/dispatch-one-records/case/15">Карточка ареста</a>
+            <a href="/dispatch-one-records/file/Kian%20Domingo">Досье человека</a>
+            <a href="/dispatch-one-records/map?zone=%D0%90%D0%BB%D1%8C%D1%82%D0%B0-%D1%81%D1%82%D1%80%D0%B8%D1%82,+Pillbox+Hill">Район на карте</a>
+          </div>
+        </details>
+      </td>
+    </tr>
+  
+  </tbody>
+</table>
+
+
+<h2>Вызовы</h2>
+
+<table class="tbl">
+  <thead><tr><th>#</th><th>Тип</th><th>Место</th><th>Когда</th><th>Связи</th></tr></thead>
+  <tbody>
+  
+    <tr onclick="location='/dispatch-one-records/callout/6'">
+      <td><a class="row-link" href="/dispatch-one-records/callout/6" onclick="event.stopPropagation()">#6</a></td>
+      <td><b>Задержание</b><div class="muted small"><a href="/dispatch-one-records/file/Dawnenzio%20Autista" onclick="event.stopPropagation()">Dawnenzio Autista</a></div></td>
+      <td><a href="/dispatch-one-records/map?zone=%D0%93%D1%80%D0%BE%D1%83%D0%B2-%D1%81%D1%82%D1%80%D0%B8%D1%82,+Davis" onclick="event.stopPropagation()">Гроув-стрит, Davis</a></td>
+      <td class="muted">30.07.2026 09:23</td>
+      <td>
+        <details class="link-pop" onclick="event.stopPropagation()">
+          <summary>связи</summary>
+          <div class="link-pop-menu">
+            <a href="/dispatch-one-records/callout/6">Карточка вызова</a>
+            <a href="/dispatch-one-records/file/Dawnenzio%20Autista">Досье человека</a>
+            <a href="/dispatch-one-records/map?zone=%D0%93%D1%80%D0%BE%D1%83%D0%B2-%D1%81%D1%82%D1%80%D0%B8%D1%82,+Davis">Район на карте</a>
+          </div>
+        </details>
+      </td>
+    </tr>
+  
+    <tr onclick="location='/dispatch-one-records/callout/5'">
+      <td><a class="row-link" href="/dispatch-one-records/callout/5" onclick="event.stopPropagation()">#5</a></td>
+      <td><b>Нарушение порядка в метро</b><div class="muted small"><a href="/dispatch-one-records/file/Kian%20Domingo" onclick="event.stopPropagation()">Kian Domingo</a></div></td>
+      <td><a href="/dispatch-one-records/map?zone=%D0%90%D0%BB%D1%8C%D1%82%D0%B0-%D1%81%D1%82%D1%80%D0%B8%D1%82,+Pillbox+Hill" onclick="event.stopPropagation()">Бруж-авеню, Davis</a></td>
+      <td class="muted">29.07.2026 13:42</td>
+      <td>
+        <details class="link-pop" onclick="event.stopPropagation()">
+          <summary>связи</summary>
+          <div class="link-pop-menu">
+            <a href="/dispatch-one-records/callout/5">Карточка вызова</a>
+            <a href="/dispatch-one-records/file/Kian%20Domingo">Досье человека</a>
+            <a href="/dispatch-one-records/map?zone=%D0%90%D0%BB%D1%8C%D1%82%D0%B0-%D1%81%D1%82%D1%80%D0%B8%D1%82,+Pillbox+Hill">Район на карте</a>
+          </div>
+        </details>
+      </td>
     </tr>
   
   </tbody>
@@ -107,12 +171,80 @@
 <h2>Штрафы</h2>
 
 <table class="tbl">
-  <thead><tr><th>Нарушитель</th><th>Нарушение</th><th>Сумма</th><th>Когда</th></tr></thead>
+  <thead><tr><th>Нарушитель</th><th>Нарушение</th><th>Сумма</th><th>Когда</th><th>Связи</th></tr></thead>
   <tbody>
   
-    <tr><td>Dawnenzio Autista</td>
+    <tr onclick="location='/dispatch-one-records/citation/8'"><td><a class="row-link" href="/dispatch-one-records/file/Dawnenzio%20Autista" onclick="event.stopPropagation()">Dawnenzio Autista</a></td>
       <td>VC.21955 · Переход вне перехода, где запрещено</td>
-      <td><b>$120</b></td><td class="muted">30.07.2026 09:19</td></tr>
+      <td><b>$120</b></td><td class="muted">30.07.2026 09:19</td>
+      <td>
+        <details class="link-pop" onclick="event.stopPropagation()">
+          <summary>связи</summary>
+          <div class="link-pop-menu">
+            <a href="/dispatch-one-records/citation/8">Карточка штрафа</a>
+            <a href="/dispatch-one-records/file/Dawnenzio%20Autista">Досье человека</a>
+            <a href="/dispatch-one-records/map?zone=%D0%93%D1%80%D0%BE%D1%83%D0%B2-%D1%81%D1%82%D1%80%D0%B8%D1%82,+Davis">Район на карте</a>
+          </div>
+        </details>
+      </td></tr>
+  
+  </tbody>
+</table>
+
+
+<h2>Связанные суды</h2>
+
+<table class="tbl">
+  <thead><tr><th>#</th><th>Фигурант</th><th>Решение</th><th>Когда</th><th>Связи</th></tr></thead>
+  <tbody>
+  
+    <tr onclick="location='/dispatch-one-records/court/16'">
+      <td><a class="row-link" href="/dispatch-one-records/court/16" onclick="event.stopPropagation()">#16</a></td>
+      <td><a class="row-link" href="/dispatch-one-records/file/Dawnenzio%20Autista" onclick="event.stopPropagation()">Dawnenzio Autista</a></td>
+      <td>Дело прекращено<div class="muted small">51 день лишения свободы</div></td>
+      <td class="muted">30.07.2026 06:23</td>
+      <td>
+        <details class="link-pop" onclick="event.stopPropagation()">
+          <summary>связи</summary>
+          <div class="link-pop-menu">
+            <a href="/dispatch-one-records/court/16">Карточка суда</a>
+            <a href="/dispatch-one-records/file/Dawnenzio%20Autista">Досье человека</a>
+          </div>
+        </details>
+      </td>
+    </tr>
+  
+    <tr onclick="location='/dispatch-one-records/court/15'">
+      <td><a class="row-link" href="/dispatch-one-records/court/15" onclick="event.stopPropagation()">#15</a></td>
+      <td><a class="row-link" href="/dispatch-one-records/file/Dawnenzio%20Autista" onclick="event.stopPropagation()">Dawnenzio Autista</a></td>
+      <td>Осуждён<div class="muted small">Штраф $138 (вкл. $18 судебные издержки)</div></td>
+      <td class="muted">30.07.2026 06:19</td>
+      <td>
+        <details class="link-pop" onclick="event.stopPropagation()">
+          <summary>связи</summary>
+          <div class="link-pop-menu">
+            <a href="/dispatch-one-records/court/15">Карточка суда</a>
+            <a href="/dispatch-one-records/file/Dawnenzio%20Autista">Досье человека</a>
+          </div>
+        </details>
+      </td>
+    </tr>
+  
+    <tr onclick="location='/dispatch-one-records/court/14'">
+      <td><a class="row-link" href="/dispatch-one-records/court/14" onclick="event.stopPropagation()">#14</a></td>
+      <td><a class="row-link" href="/dispatch-one-records/file/Kian%20Domingo" onclick="event.stopPropagation()">Kian Domingo</a></td>
+      <td>Дело прекращено<div class="muted small">6 лет лишения свободы</div></td>
+      <td class="muted">29.07.2026 10:42</td>
+      <td>
+        <details class="link-pop" onclick="event.stopPropagation()">
+          <summary>связи</summary>
+          <div class="link-pop-menu">
+            <a href="/dispatch-one-records/court/14">Карточка суда</a>
+            <a href="/dispatch-one-records/file/Kian%20Domingo">Досье человека</a>
+          </div>
+        </details>
+      </td>
+    </tr>
   
   </tbody>
 </table>
@@ -138,7 +270,7 @@
       осминоог09-star</span>
   </footer>
   <!-- Dispatch One Records — исходная система: github.com/osminoog09-star/dispatch-one-records
-       Копирование оформления и кода без разрешения запрещено. build:20260805 -->
+       Копирование оформления и кода без разрешения запрещено. build:20260806 -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="/dispatch-one-records/static/supa.js"></script>
 </body>

@@ -13,6 +13,11 @@
   <button class="btn primary" onclick="downloadDoc()">📄 Скачать карту вызова (PNG)</button>
   <span class="muted small">Картинку можно перетащить в Discord.</span>
 </div>
+<div class="related-links">
+  {% if co.suspect_name %}<a class="mini-link" href="{{ url_for('file_view', name=co.suspect_name) }}">Досье: {{ co.suspect_name }}</a>{% endif %}
+  {% if co.callsign %}<a class="mini-link" href="{{ url_for('officer_view', callsign=co.callsign) }}">Офицер: {{ co.callsign }}</a>{% endif %}
+  {% if co.zone or co.location %}<a class="mini-link" href="{{ url_for('game_map', zone=co.zone or co.location) }}">Показать район на карте</a>{% endif %}
+</div>
 
 <div id="doc" class="doc">
   <div class="doc-title">

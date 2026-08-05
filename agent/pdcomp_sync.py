@@ -497,6 +497,13 @@ GAME_PROCESSES = ["GTA5.exe", "GTA5_Enhanced.exe", "RAGEPluginHook.exe",
 OWNER_MODE = _setting("AUTO_PUBLISH", "0") in ("1", "true", "yes", "on")
 
 
+def _live_publish_seconds():
+    try:
+        return max(30, int(_setting("LIVE_PUBLISH_SECONDS", "90") or 90))
+    except Exception:
+        return 90
+
+
 def is_game_running():
     """Игра/RagePluginHook запущены?"""
     import subprocess
@@ -718,6 +725,7 @@ def watch_game():
     shift_start = None
     shift_base = (0, 0, 0)
     last_pub_fp = None    # владелец: отпечаток данных на момент последней публикации
+    next_live_publish = 0
     while True:
         try:
             running = is_game_running()
@@ -736,6 +744,9 @@ def watch_game():
                 seen = {}
                 shift_start = time.time()
                 shift_base = _count_records()   # замер на начало смены
+                if OWNER_MODE:
+                    last_pub_fp = _store_fp()
+                    next_live_publish = time.time() + min(20, _live_publish_seconds())
                 # профиль: с сайта, а если владелец/сайт недоступен — из локального конфига
                 prof = None if OWNER_MODE else fetch_profile()
                 if not prof:
@@ -745,6 +756,16 @@ def watch_game():
 
             # В режиме владельца (AUTO_PUBLISH) сервер не нужен: publish.py читает
             # игровые файлы напрямую. Не долбим сеть и не сыпем ошибками.
+            if running and OWNER_MODE:
+                fp = _store_fp()
+                if last_pub_fp is None:
+                    last_pub_fp = fp
+                elif fp != last_pub_fp and time.time() >= next_live_publish:
+                    print("Обнаружены новые данные игры — публикую live...")
+                    auto_publish()
+                    last_pub_fp = _store_fp()
+                    next_live_publish = time.time() + _live_publish_seconds()
+
             if running and not OWNER_MODE:
                 for fname, fn in (("arrests.json", sync_arrests),
                                   ("cases.json", sync_court)):

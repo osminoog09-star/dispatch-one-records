@@ -22,43 +22,116 @@
   <div class="stat"><div class="num">{{ cases|length }}</div><div class="lbl">Задержаний</div></div>
   <div class="stat"><div class="num">{{ cit.count }}</div><div class="lbl">Штрафов</div></div>
   <div class="stat"><div class="num">${{ cit.total_fine }}</div><div class="lbl">Сумма штрафов</div></div>
-  <div class="stat"><div class="num">{{ shifts|length }}</div><div class="lbl">Смен</div></div>
+  <div class="stat"><div class="num">{{ callouts|length }}</div><div class="lbl">Вызовов</div></div>
   <div class="stat"><div class="num">{{ hours }}</div><div class="lbl">Часов на службе</div></div>
 </section>
 
 <h2>Задержания</h2>
 {% if cases %}
 <table class="tbl">
-  <thead><tr><th>#</th><th>Подозреваемый</th><th>Район</th><th>Когда</th><th>Статус</th></tr></thead>
+  <thead><tr><th>#</th><th>Подозреваемый</th><th>Район</th><th>Когда</th><th>Статус</th><th>Связи</th></tr></thead>
   <tbody>
   {% for c in cases %}
     <tr onclick="location='{{ url_for('case_view', cid=c.id) }}'">
-      <td>#{{ c.id }}</td>
-      <td>{{ c.suspect_name }}
+      <td><a class="row-link" href="{{ url_for('case_view', cid=c.id) }}" onclick="event.stopPropagation()">#{{ c.id }}</a></td>
+      <td><a class="row-link" href="{{ url_for('file_view', name=c.suspect_name) }}" onclick="event.stopPropagation()">{{ c.suspect_name }}</a>
         {% if c.is_test %}<span class="tag test">ТЕСТ</span>{% endif %}
         {% if c.wanted %}<span class="tag wanted">розыск</span>{% endif %}</td>
-      <td>{{ c.zone or '—' }}</td>
+      <td>{% if c.zone %}<a href="{{ url_for('game_map', zone=c.zone) }}" onclick="event.stopPropagation()">{{ c.zone }}</a>{% else %}—{% endif %}</td>
       <td class="muted">{{ c.created_fmt }}</td>
       <td><span class="tag st-{{ c.status }}">{{ c.status_ru }}</span></td>
+      <td>
+        <details class="link-pop" onclick="event.stopPropagation()">
+          <summary>связи</summary>
+          <div class="link-pop-menu">
+            <a href="{{ url_for('case_view', cid=c.id) }}">Карточка ареста</a>
+            <a href="{{ url_for('file_view', name=c.suspect_name) }}">Досье человека</a>
+            {% if c.zone %}<a href="{{ url_for('game_map', zone=c.zone) }}">Район на карте</a>{% endif %}
+          </div>
+        </details>
+      </td>
     </tr>
   {% endfor %}
   </tbody>
 </table>
 {% else %}<p class="empty">Задержаний нет.</p>{% endif %}
 
+<h2>Вызовы</h2>
+{% if callouts %}
+<table class="tbl">
+  <thead><tr><th>#</th><th>Тип</th><th>Место</th><th>Когда</th><th>Связи</th></tr></thead>
+  <tbody>
+  {% for c in callouts %}
+    <tr onclick="location='{{ url_for('callout_view', cid=c.id) }}'">
+      <td><a class="row-link" href="{{ url_for('callout_view', cid=c.id) }}" onclick="event.stopPropagation()">#{{ c.id }}</a></td>
+      <td><b>{{ c.callout_type or '—' }}</b>{% if c.suspect_name %}<div class="muted small"><a href="{{ url_for('file_view', name=c.suspect_name) }}" onclick="event.stopPropagation()">{{ c.suspect_name }}</a></div>{% endif %}</td>
+      <td>{% if c.zone or c.location %}<a href="{{ url_for('game_map', zone=c.zone or c.location) }}" onclick="event.stopPropagation()">{{ c.location or c.zone }}</a>{% else %}—{% endif %}</td>
+      <td class="muted">{{ c.occurred_fmt }}</td>
+      <td>
+        <details class="link-pop" onclick="event.stopPropagation()">
+          <summary>связи</summary>
+          <div class="link-pop-menu">
+            <a href="{{ url_for('callout_view', cid=c.id) }}">Карточка вызова</a>
+            {% if c.suspect_name %}<a href="{{ url_for('file_view', name=c.suspect_name) }}">Досье человека</a>{% endif %}
+            {% if c.zone or c.location %}<a href="{{ url_for('game_map', zone=c.zone or c.location) }}">Район на карте</a>{% endif %}
+          </div>
+        </details>
+      </td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% else %}<p class="empty">Вызовов нет.</p>{% endif %}
+
 <h2>Штрафы</h2>
 {% if citations %}
 <table class="tbl">
-  <thead><tr><th>Нарушитель</th><th>Нарушение</th><th>Сумма</th><th>Когда</th></tr></thead>
+  <thead><tr><th>Нарушитель</th><th>Нарушение</th><th>Сумма</th><th>Когда</th><th>Связи</th></tr></thead>
   <tbody>
   {% for c in citations %}
-    <tr><td>{{ c.subject_name }}</td>
+    <tr onclick="location='{{ url_for('citation_view', cid=c.id) }}'"><td><a class="row-link" href="{{ url_for('file_view', name=c.subject_name) }}" onclick="event.stopPropagation()">{{ c.subject_name }}</a></td>
       <td>{% if c.charges %}{{ c.charges[0] }}{% else %}—{% endif %}</td>
-      <td><b>${{ c.fine }}</b></td><td class="muted">{{ c.issued_fmt }}</td></tr>
+      <td><b>${{ c.fine }}</b></td><td class="muted">{{ c.issued_fmt }}</td>
+      <td>
+        <details class="link-pop" onclick="event.stopPropagation()">
+          <summary>связи</summary>
+          <div class="link-pop-menu">
+            <a href="{{ url_for('citation_view', cid=c.id) }}">Карточка штрафа</a>
+            <a href="{{ url_for('file_view', name=c.subject_name) }}">Досье человека</a>
+            {% if c.location %}<a href="{{ url_for('game_map', zone=c.location) }}">Район на карте</a>{% endif %}
+          </div>
+        </details>
+      </td></tr>
   {% endfor %}
   </tbody>
 </table>
 {% else %}<p class="empty">Штрафов нет.</p>{% endif %}
+
+<h2>Связанные суды</h2>
+{% if court_cases %}
+<table class="tbl">
+  <thead><tr><th>#</th><th>Фигурант</th><th>Решение</th><th>Когда</th><th>Связи</th></tr></thead>
+  <tbody>
+  {% for c in court_cases %}
+    <tr onclick="location='{{ url_for('court_case_view', cid=c.id) }}'">
+      <td><a class="row-link" href="{{ url_for('court_case_view', cid=c.id) }}" onclick="event.stopPropagation()">#{{ c.id }}</a></td>
+      <td><a class="row-link" href="{{ url_for('file_view', name=c.subject_name) }}" onclick="event.stopPropagation()">{{ c.subject_name }}</a></td>
+      <td>{{ c.label }}{% if c.sentence %}<div class="muted small">{{ c.sentence }}</div>{% endif %}</td>
+      <td class="muted">{{ c.filed_fmt }}</td>
+      <td>
+        <details class="link-pop" onclick="event.stopPropagation()">
+          <summary>связи</summary>
+          <div class="link-pop-menu">
+            <a href="{{ url_for('court_case_view', cid=c.id) }}">Карточка суда</a>
+            <a href="{{ url_for('file_view', name=c.subject_name) }}">Досье человека</a>
+          </div>
+        </details>
+      </td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% else %}<p class="empty">Связанных судов нет.</p>{% endif %}
 
 {% if evidence %}
 <h2>Что изымал</h2>
@@ -75,7 +148,7 @@
   <tbody>
   {% for s in shifts %}
     <tr onclick="location='{{ url_for('shift_view', sid=s.id) }}'">
-      <td>#{{ s.id }}</td><td>{{ s.type_ru }}</td><td>{{ s.duration_h }}</td>
+      <td><a class="row-link" href="{{ url_for('shift_view', sid=s.id) }}" onclick="event.stopPropagation()">#{{ s.id }}</a></td><td>{{ s.type_ru }}</td><td>{{ s.duration_h }}</td>
       <td>{{ s.arrests }}</td><td>{{ s.traffic_stops }}</td><td class="muted">{{ s.started_fmt }}</td>
     </tr>
   {% endfor %}

@@ -1,6 +1,6 @@
 # LAPD Records handoff
 
-Последнее обновление: 2026-08-05, Codex.
+Последнее обновление: 2026-08-06, Codex.
 
 ## Текущее состояние
 
@@ -18,6 +18,10 @@
 - Лаунчер получил ручное управление агентом: отдельная карточка показывает, включён ли `pdcomp_sync.exe`, и даёт кнопки `Включить агент` / `Выключить агент` без изменения автозапуска.
 - `start_agent()` больше не плодит несколько процессов агента: если агент уже запущен, возвращается `агент уже запущен`.
 - После правки лаунчера нужно пересобрать `launcher/dist/LAPD-Records-Launcher.exe` и проверить UI глазами; исходник `launcher/launcher.py` уже проходит `py_compile`.
+- Агент в `AUTO_PUBLISH=1` теперь умеет публиковать изменения во время запущенной игры: если файлы `pdComp` поменялись, он запускает `publish.py` не чаще чем раз в `LIVE_PUBLISH_SECONDS` (по умолчанию 90 секунд, минимум 30).
+- Профиль офицера `/officer/<callsign>/` теперь показывает не только аресты и штрафы, но и связанные вызовы, связанные суды, смены и компактное меню `связи` с переходами в карточку, досье и карту.
+- Карточки ареста, вызова, штрафа и суда получили отдельный блок быстрых ссылок, не внутри PNG-документа: досье человека, профиль офицера и карта района, если есть адрес/зона.
+- Карта поддерживает входной параметр `?zone=...`: ссылки из дел и хронологии открывают карту уже с выбранным ближайшим патрульным сектором.
 - Список досье `/files/` больше не показывает голые имя+число: добавлены связанные типы записей, последнее событие, дата и явные ссылки на досье/последнюю карточку.
 - В основных журналах добавлены видимые ссылки: номер записи ведёт в карточку, имя человека в досье, позывной в профиль офицера.
 - Хронология личного дела теперь получает `callsign` через JOIN с офицерами, поэтому ссылки на офицеров работают в таблице и таймлайне.
@@ -46,6 +50,7 @@
 - Старые смены в базе уже сохранены с нулевыми счётчиками действий. Их нельзя честно восстановить без точной связи “запись попала в эту смену”.
 - После правок агента нужно пересобрать/выпустить `pdcomp_sync.exe`, иначе игроки будут продолжать запускать старый бинарник.
 - Discord-отчёты смен реально уйдут только если задан `DISCORD_WEBHOOK_SHIFTS` или общий `DISCORD_WEBHOOK_URL`.
+- Точные точки на карте пока невозможны: текущие данные дают текст адреса/района, но не игровые координаты `x/y`. Для клика “ровно на место вызова” нужен отдельный источник координат от плагина/агента.
 
 ## Что нельзя забыть следующему агенту
 
@@ -59,9 +64,9 @@
 ## Быстрая проверка
 
 ```powershell
-python -m py_compile server/app/db.py server/app/main.py server/app/discord_post.py server/export_static.py
+python -m py_compile server/app/db.py server/app/main.py server/app/discord_post.py agent/pdcomp_sync.py server/export_static.py
 python server/export_static.py
-python -c "from app.main import app; c=app.test_client(); paths=['/','/cases','/case/19','/court/20','/shifts','/shift/10','/map','/register','/staff','/tickets','/dictionaries','/callouts','/callout/7']; [print(p, c.get(p).status_code) for p in paths]"
+python -c "import sys; sys.path.insert(0,'server'); from app.main import app; c=app.test_client(); paths=['/','/cases','/case/19','/citations','/citation/7','/court','/court/20','/files','/file/Eddie%20Thomas','/officer/7-WILLIAM-1','/shifts','/shift/10','/map','/map?zone=Дидион-драйв,%20West%20Vinewood','/register','/staff','/tickets','/dictionaries','/callouts','/callout/7']; [print(p, c.get(p).status_code) for p in paths]"
 rg -n "Wobbler|arrested|test-смена|CITATIONS|RECORDS|COURT|T[0-9]{2}:[0-9]{2}:[0-9]{2}|Рљ|Р‘СЂ|Р°РІРµ|Courtroom|Court-Appointed|CJA Panel" docs -g "*.html"
 ```
 

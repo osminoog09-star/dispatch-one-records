@@ -807,6 +807,27 @@ def list_court_cases(limit=200):
             "SELECT * FROM court_cases ORDER BY filed_at DESC LIMIT ?", (limit,)).fetchall()]
 
 
+def list_related_court_cases_for_officer(officer_id, limit=100):
+    """Суды по людям, которых офицер оформлял в арестах/штрафах/вызовах."""
+    with get_conn() as c:
+        rows = c.execute(
+            """SELECT DISTINCT court_cases.*
+               FROM court_cases
+               WHERE subject_name IN (
+                 SELECT suspect_name FROM cases WHERE officer_id=? AND suspect_name IS NOT NULL AND suspect_name!=''
+                 UNION
+                 SELECT subject_name FROM citations WHERE officer_id=? AND subject_name IS NOT NULL AND subject_name!=''
+                 UNION
+                 SELECT suspect_name FROM callouts WHERE officer_id=? AND suspect_name IS NOT NULL AND suspect_name!=''
+                 UNION
+                 SELECT subject_name FROM warnings WHERE officer_id=? AND subject_name IS NOT NULL AND subject_name!=''
+               )
+               ORDER BY filed_at DESC LIMIT ?""",
+            (officer_id, officer_id, officer_id, officer_id, limit),
+        ).fetchall()
+        return [_row_to_court(r) for r in rows]
+
+
 def get_court_case(cid):
     with get_conn() as c:
         r = c.execute("SELECT * FROM court_cases WHERE id=?", (cid,)).fetchone()

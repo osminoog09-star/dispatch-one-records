@@ -13,6 +13,11 @@
   <button class="btn primary" onclick="downloadDoc()">📄 Скачать квитанцию картинкой (PNG)</button>
   <span class="muted small">Картинку можно перетащить прямо в Discord.</span>
 </div>
+<div class="related-links">
+  {% if cit.subject_name %}<a class="mini-link" href="{{ url_for('file_view', name=cit.subject_name) }}">Досье: {{ cit.subject_name }}</a>{% endif %}
+  {% if cit.callsign %}<a class="mini-link" href="{{ url_for('officer_view', callsign=cit.callsign) }}">Офицер: {{ cit.callsign }}</a>{% endif %}
+  {% if cit.location %}<a class="mini-link" href="{{ url_for('game_map', zone=cit.location) }}">Показать район на карте</a>{% endif %}
+</div>
 
 <div id="doc" class="doc">
   <div class="doc-title">

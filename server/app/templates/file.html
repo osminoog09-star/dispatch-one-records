@@ -78,6 +78,10 @@
           {% elif it.kind == 'court' %}{{ it.title.replace('Суд: ','') }}
           {% endif %}
           {% if it.row.callsign %} · <a class="cs" href="{{ url_for('officer_view', callsign=it.row.callsign) }}">{{ it.row.callsign }}</a>{% endif %}
+          {% if it.kind in ['callout','arrest','citation'] %}
+            {% set map_zone = it.row.zone if it.kind in ['callout','arrest'] else it.row.location %}
+            {% if map_zone %} · <a href="{{ url_for('game_map', zone=map_zone) }}">карта</a>{% endif %}
+          {% endif %}
           {% if it.when %} · {{ it.when[:16].replace('T',' ') }}{% endif %}
         </div>
       </div>

@@ -20,7 +20,7 @@
       <td><a class="row-link" href="{{ url_for('file_view', name=c.suspect_name) }}" onclick="event.stopPropagation()">{{ c.suspect_name }}</a>
         {% if c.is_test %}<span class="tag test">ТЕСТ</span>{% endif %}
         {% if c.wanted %}<span class="tag wanted">розыск</span>{% endif %}</td>
-      <td>{{ c.zone or '—' }}</td>
+      <td>{% if c.zone %}<a href="{{ url_for('game_map', zone=c.zone) }}" onclick="event.stopPropagation()">{{ c.zone }}</a>{% else %}—{% endif %}</td>
       <td>{% if c.callsign %}<a class="cs" href="{{ url_for('officer_view', callsign=c.callsign) }}" onclick="event.stopPropagation()">{{ c.callsign }}</a>{% else %}—{% endif %}</td>
       <td class="muted">{{ c.created_fmt }}</td>
       <td><span class="tag st-{{ c.status }}">{{ c.status_ru }}</span></td>

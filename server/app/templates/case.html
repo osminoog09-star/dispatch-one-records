@@ -15,6 +15,11 @@
   <button class="btn primary" onclick="downloadDoc()">📄 Скачать протокол картинкой (PNG)</button>
   <span class="muted small">Картинку можно перетащить прямо в Discord.</span>
 </div>
+<div class="related-links">
+  {% if case.suspect_name %}<a class="mini-link" href="{{ url_for('file_view', name=case.suspect_name) }}">Досье: {{ case.suspect_name }}</a>{% endif %}
+  {% if case.callsign %}<a class="mini-link" href="{{ url_for('officer_view', callsign=case.callsign) }}">Офицер: {{ case.callsign }}</a>{% endif %}
+  {% if case.zone %}<a class="mini-link" href="{{ url_for('game_map', zone=case.zone) }}">Показать район на карте</a>{% endif %}
+</div>
 
 <!-- ПРОТОКОЛ АРЕСТА (рендерится в картинку) -->
 <div id="doc" class="doc">
@@ -87,7 +92,7 @@
         {% if case.wanted %}<span class="tag wanted">В РОЗЫСКЕ</span>{% else %}<span class="tag ok">Чисто</span>{% endif %}</dd></div>
       <div><dt>Права</dt><dd>{{ case.license_ru }}</dd></div>
       <div><dt>Штрафы в истории</dt><dd>{{ case.citations }}</dd></div>
-      <div><dt>Район</dt><dd>{{ case.zone or '—' }} {% if case.postal %}· индекс {{ case.postal }}{% endif %}</dd></div>
+      <div><dt>Район</dt><dd>{% if case.zone %}<a href="{{ url_for('game_map', zone=case.zone) }}">{{ case.zone }}</a>{% else %}—{% endif %} {% if case.postal %}· индекс {{ case.postal }}{% endif %}</dd></div>
       <div><dt>Время</dt><dd>{{ case.game_time_fmt or '—' }}</dd></div>
       <div><dt>Офицер</dt><dd><a href="{{ url_for('officer_view', callsign=case.callsign) }}"><span class="cs">{{ case.callsign }}</span></a> {{ case.officer_name or '' }}</dd></div>
     </dl>

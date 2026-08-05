@@ -230,5 +230,9 @@ zoneFilters.forEach(function(filter){
   filter.setAttribute('aria-pressed', filter.classList.contains('active') ? 'true' : 'false');
   filter.addEventListener('click', function(){ applyZoneFilter(filter.dataset.zoneFilter); });
 });
+var initialZone = {{ focus_zone|tojson }};
+if (initialZone) {
+  selectPatrolZone(getDistrictByZone(initialZone));
+}
 </script>
 {% endblock %}

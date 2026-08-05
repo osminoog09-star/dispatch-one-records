@@ -97,6 +97,7 @@ def _poly_center(poly):
 
 @app.route("/map")
 def game_map():
+    focus_zone = _best_zone(request.args.get("zone")) or request.args.get("focus", "")
     cases = [c for c in db.list_cases(500) if not c.get("is_test")]
     cits = db.list_citations(500)
 
@@ -136,7 +137,8 @@ def game_map():
                         "count": sum(z["count"] for z in rz)})
 
     return render_template("map.html", zones=zones, top_zones=top_zones,
-                           regions=regions, officers=db.list_officers_with_stats())
+                           regions=regions, officers=db.list_officers_with_stats(),
+                           focus_zone=focus_zone)
 
 
 def _server_dir():
@@ -362,6 +364,8 @@ def officer_view(callsign):
     return render_template("officer.html", officer=off,
                            cases=db.list_cases(200, officer_id=off["id"]),
                            citations=db.list_citations(200, officer_id=off["id"]),
+                           callouts=db.list_callouts(200, officer_id=off["id"]),
+                           court_cases=db.list_related_court_cases_for_officer(off["id"]),
                            cit=db.citations_summary(off["id"]),
                            evidence=db.evidence_catalog(off["id"]),
                            shifts=shifts, hours=hours)

@@ -14,6 +14,9 @@
   <button class="btn" onclick="copyDiscord()">📋 Скопировать текст для Discord</button>
   <span class="muted small">Картинку можно перетащить прямо в Discord.</span>
 </div>
+<div class="related-links">
+  {% if case.subject_name %}<a class="mini-link" href="{{ url_for('file_view', name=case.subject_name) }}">Досье: {{ case.subject_name }}</a>{% endif %}
+</div>
 
 <!-- ДОКУМЕНТ (рендерится в картинку) -->
 <div id="doc" class="doc">

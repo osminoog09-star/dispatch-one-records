@@ -76,9 +76,9 @@
           <tr onclick="location='{{ url_for('officer_view', callsign=o.callsign) }}'">
             <td><span class="cs">{{ o.callsign }}</span> {{ o.name or '' }}
               {% if o.is_admin %}<span class="tag adm">админ</span>{% endif %}
-              {% if o.discord %}<div class="muted small">discord: {{ o.discord }}</div>{% endif %}</td>
-            <td>{% if o.rank %}<span class="tag rank">{{ o.rank }}</span>{% endif %}
-              {% if o.department %}<div class="muted small">{{ o.department }}</div>{% endif %}</td>
+              {% if o.discord %}<div class="muted small">Discord: {{ o.discord }}</div>{% endif %}</td>
+            <td>{% if o.rank %}<span class="tag rank">{{ o.rank_label }}</span>{% endif %}
+              {% if o.department %}<div class="muted small">{{ o.department_label }}</div>{% endif %}</td>
             <td>{{ o.cases_count }}</td>
           </tr>
         {% endfor %}

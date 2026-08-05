@@ -23,7 +23,7 @@
       <input type="hidden" name="discord" value="{{ p.discord }}">
       <div class="staff-who">
         <span class="cs">{{ p.callsign }}</span> <b>{{ p.nickname }}</b>
-        <div class="muted small">discord: {{ p.discord }} ·
+        <div class="muted small">Discord: {{ p.discord }} ·
           задержаний: {{ p.arrests }} · штрафов: {{ p.citations }} · суд: {{ p.cases }}</div>
       </div>
       <div class="staff-form">
@@ -45,7 +45,7 @@
       <b>{{ o.name or '' }}</b>
       {% if not o.registered %}<span class="tag">из игровых записей</span>{% endif %}
       <div class="muted small">
-        {% if o.discord %}discord: {{ o.discord }} · {% endif %}
+        {% if o.discord %}Discord: {{ o.discord }} · {% endif %}
         задержаний: {{ o.cases_count }} · штрафов: {{ o.cit_count }}
       </div>
     </div>
@@ -59,13 +59,13 @@
         <input type="hidden" name="officer_id" value="{{ o.id }}">
         <select name="rank">
           <option value="">— звание —</option>
-          {% for r in ranks %}<option value="{{ r }}" {{ 'selected' if o.rank==r }}>{{ r }}</option>{% endfor %}
-          {% if o.rank and o.rank not in ranks %}<option value="{{ o.rank }}" selected>{{ o.rank }}</option>{% endif %}
+          {% for r in ranks %}<option value="{{ r }}" {{ 'selected' if o.rank==r }}>{{ staff_label(r) }}</option>{% endfor %}
+          {% if o.rank and o.rank not in ranks %}<option value="{{ o.rank }}" selected>{{ staff_label(o.rank) }}</option>{% endif %}
         </select>
         <select name="department">
           <option value="">— отдел —</option>
-          {% for d in departments %}<option value="{{ d }}" {{ 'selected' if o.department==d }}>{{ d }}</option>{% endfor %}
-          {% if o.department and o.department not in departments %}<option value="{{ o.department }}" selected>{{ o.department }}</option>{% endif %}
+          {% for d in departments %}<option value="{{ d }}" {{ 'selected' if o.department==d }}>{{ staff_label(d) }}</option>{% endfor %}
+          {% if o.department and o.department not in departments %}<option value="{{ o.department }}" selected>{{ staff_label(o.department) }}</option>{% endif %}
         </select>
         <input name="discord" value="{{ o.discord or '' }}" placeholder="discord" size="12">
         <label class="chk"><input type="checkbox" name="is_admin" {{ 'checked' if o.is_admin }}> админ</label>

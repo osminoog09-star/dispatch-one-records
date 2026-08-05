@@ -448,6 +448,8 @@ def list_officers_with_stats():
             d = dict(r)
             si = status_info(d.get("current_status"))
             d["status_ru"], d["status_cls"] = si["ru"], si["cls"]
+            d["rank_label"] = staff_label(d.get("rank"))
+            d["department_label"] = staff_label(d.get("department"))
             out.append(d)
         return out
 
@@ -485,6 +487,8 @@ def get_officer(callsign):
         si = status_info(d.get("current_status"))
         d["status_ru"], d["status_cls"] = si["ru"], si["cls"]
         d["status_since_fmt"] = fmt_dt(d["status_since"]) if d.get("status_since") else None
+        d["rank_label"] = staff_label(d.get("rank"))
+        d["department_label"] = staff_label(d.get("department"))
         d["status_log"] = [
             {"status": h["status"], "status_ru": status_info(h["status"])["ru"],
              "cls": status_info(h["status"])["cls"], "at": fmt_dt(h["changed_at"])}
@@ -1228,6 +1232,39 @@ RANKS = ["Officer I", "Officer II", "Officer III", "Detective I", "Detective II"
 DEPARTMENTS = ["Patrol Division", "Traffic Division", "Detective Bureau", "Gang Unit",
                "Air Support", "K-9 Unit", "SWAT", "Internal Affairs", "Командование"]
 
+STAFF_LABELS = {
+    "Officer I": "Офицер I",
+    "Officer II": "Офицер II",
+    "Officer III": "Офицер III",
+    "Detective I": "Детектив I",
+    "Detective II": "Детектив II",
+    "Detective III": "Детектив III",
+    "Sergeant I": "Сержант I",
+    "Sergeant II": "Сержант II",
+    "Lieutenant": "Лейтенант",
+    "Watch Commander": "Дежурный командир",
+    "Captain": "Капитан",
+    "Commander": "Командир",
+    "Deputy Chief": "Заместитель шефа",
+    "Chief of Police": "Шеф полиции",
+    "Patrol Division": "Патрульный отдел",
+    "Traffic Division": "Дорожный отдел",
+    "Detective Bureau": "Детективное бюро",
+    "LAPD Detective": "Детективный отдел",
+    "METRO Division": "Отдел METRO",
+    "AIR-unit LAPD": "Авиационное подразделение",
+    "Training Division LAPD": "Учебный отдел",
+    "Detective Division": "Детективный отдел",
+    "Gang Unit": "Отдел по бандам",
+    "Air Support": "Авиационная поддержка",
+    "K-9 Unit": "Кинологический отдел",
+    "Internal Affairs": "Внутренние расследования",
+}
+
+
+def staff_label(value):
+    return STAFF_LABELS.get(value, value)
+
 
 def list_all_officers():
     """Полный список офицеров (для страницы персонала)."""
@@ -1243,6 +1280,8 @@ def list_all_officers():
             d = dict(r)
             si = status_info(d.get("current_status"))
             d["status_ru"], d["status_cls"] = si["ru"], si["cls"]
+            d["rank_label"] = staff_label(d.get("rank"))
+            d["department_label"] = staff_label(d.get("department"))
             d["registered"] = bool(d.get("registered"))
             out.append(d)
         return out

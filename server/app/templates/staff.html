@@ -54,8 +54,6 @@
     {% if static_export %}
       <div class="staff-meta">
         <div class="sb-edit" data-cs="{{ o.callsign }}"></div>
-        {% if o.rank %}<span class="tag rank">{{ o.rank }}</span>{% endif %}
-        <div class="muted small">{{ o.department or '—' }}</div>
       </div>
     {% else %}
       <form method="post" class="staff-form">

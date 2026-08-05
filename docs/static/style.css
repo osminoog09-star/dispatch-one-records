@@ -340,3 +340,14 @@ nav{align-items:center}
 .nav-drop:hover .nav-menu{display:flex}
 .nav-menu a{margin:0;display:block;padding:9px 12px;border-radius:8px;color:var(--muted)}
 .nav-menu a:hover{background:var(--surface2);color:var(--text)}
+
+/* ---- карта: более «дорогая» рамка (без копирайтных ассетов) ---- */
+.map-box{background:radial-gradient(120% 120% at 50% 0%,#0e1b2e 0%,#08111d 55%,#060b13 100%);
+  border-radius:16px;box-shadow:var(--shadow),inset 0 0 60px -20px #1b3a5e;padding:12px}
+.map-box::after{content:"";position:absolute}
+.z-label{font-weight:600}
+.zone.has-data .z-label{fill:#f0f5fb}
+
+/* фикс: выпадашка не пропадает при движении курсора к пунктам */
+.nav-menu{top:100%}
+.nav-drop::after{content:"";position:absolute;left:0;top:100%;width:100%;height:10px}

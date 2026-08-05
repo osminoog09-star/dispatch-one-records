@@ -125,6 +125,21 @@ def build_shift_markdown(s):
     return "\n".join(L)
 
 
+def send_shift(shift):
+    """Автоотправка рапорта смены в канал смен (config.DISCORD_WEBHOOK_SHIFTS)."""
+    if not shift:
+        return False, "нет смены"
+    url = config.webhook_for("shift")
+    if not url:
+        return False, "вебхук смен не задан"
+    try:
+        r = requests.post(url, json={"content": build_shift_markdown(shift),
+                                     "username": "LAPD-Dispatch"}, timeout=15)
+        return (r.status_code in (200, 204)), f"смена #{shift.get('id')}"
+    except Exception as e:
+        return False, str(e)
+
+
 def _clean_charge(text):
     """'VC.2800.1 · Уклонение (Misdemeanor)' → 'VC.2800.1 Уклонение'."""
     if not text:

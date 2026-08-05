@@ -134,8 +134,13 @@ def sync_from_game():
     if os.path.exists(shift_queue):
         try:
             for sh in json.load(open(shift_queue, encoding="utf-8")):
-                db.create_shift(sh)
+                _sid = db.create_shift(sh)
                 new_shifts += 1
+                try:
+                    from app import discord_post
+                    discord_post.send_shift(db.get_shift(_sid))   # рапорт смены → Discord
+                except Exception:
+                    pass
             os.remove(shift_queue)
         except Exception as e:
             print(f"   смены не приняты: {e}")

@@ -191,8 +191,13 @@ def main():
         for sh in data.get("shifts", []):
             sh.setdefault("callsign", callsign)
             sh.setdefault("officer_name", nickname)
-            db.create_shift(sh)
+            _sid = db.create_shift(sh)
             total_s += 1
+            try:
+                from app import discord_post
+                discord_post.send_shift(db.get_shift(_sid))   # рапорт смены → Discord
+            except Exception:
+                pass
         for w in data.get("warnings", []):
             w.setdefault("callsign", callsign)
             w.setdefault("officer_name", nickname)

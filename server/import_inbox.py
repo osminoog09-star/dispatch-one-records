@@ -176,6 +176,7 @@ def main():
             if not db.case_exists_external(a.get("Id")):
                 rec = _map_arrest(a, callsign, nickname)
                 cid = db.create_case(rec)
+                db.ensure_callout_for_case(rec, cid)
                 _feed(rec, "arrest", cid)
                 total_a += 1
         for ct in data.get("citations", []):

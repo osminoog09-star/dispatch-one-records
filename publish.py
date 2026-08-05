@@ -73,6 +73,7 @@ def sync_from_game():
         data = agent.map_arrest(a)
         if not db.case_exists_external(data.get("external_id")):
             cid = db.create_case(data)
+            db.ensure_callout_for_case(data, cid)
             _feed_event(data, "arrest", cid)
             new_arrests += 1
 

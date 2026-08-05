@@ -462,6 +462,7 @@ def api_case():
         data["screenshot"] = safe
 
     cid = db.create_case(data)
+    db.ensure_callout_for_case(data, cid)
     return jsonify({"ok": True, "case_id": cid}), 201
 
 

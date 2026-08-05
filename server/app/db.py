@@ -703,6 +703,8 @@ def localize_narrative(text):
         ("Officer arrested", "сотрудник задержал"),
         ("(DOB ", "(дата рожд. "),
         ("[VH]", "[вызов]"),
+        ("Subway Disturbance", "Нарушение порядка в метро"),
+        ("Los Santos International", "Международный аэропорт Лос-Сантоса"),
         ("vehicle contact", "проверка транспорта"),
         ("vehicle plates", "номера ТС"),
         ("vehicle plate", "номер ТС"),
@@ -866,6 +868,70 @@ def create_callout(data):
              data.get("location"), data.get("zone"), data.get("description"),
              data.get("outcome"), data.get("occurred_at") or _now(), data.get("suspect_name")))
         return cur.lastrowid, True
+
+
+def _callout_type_from_case(data):
+    text = data.get("reason") or data.get("notes") or ""
+    if data.get("reason"):
+        return data.get("reason")
+    m = re.search(r"following a\s+(.+?)\s+call\b", text, flags=re.I)
+    if m:
+        title = m.group(1).strip()
+        title = re.sub(r"^\[[^\]]+\]\s*", "", title).strip()
+        return localize_narrative(title) or "Вызов"
+    if re.search(r"vehicle contact", text, flags=re.I):
+        return "Проверка транспорта"
+    return "Задержание"
+
+
+def _callout_location_from_case(data):
+    text = data.get("notes") or ""
+    m = re.search(r"\sat\s+(.+?)(?:\s+involving|\.\s+After|$)", text, flags=re.I)
+    if m:
+        return localize_narrative(m.group(1).strip())
+    return localize_narrative(data.get("zone")) or data.get("zone")
+
+
+def ensure_callout_for_case(data, case_id=None):
+    """Create one CAD callout card for an arrest/case if it does not exist yet."""
+    if data.get("is_test"):
+        return None, False
+    source = data.get("external_id") or (str(case_id) if case_id else None)
+    if not source:
+        return None, False
+    suspect = data.get("suspect_name") or "Неизвестный"
+    notes = localize_narrative(data.get("notes")) if data.get("notes") else ""
+    payload = {
+        "external_id": f"case-callout:{source}",
+        "callsign": data.get("callsign") or "UNKNOWN",
+        "officer_name": data.get("officer_name"),
+        "callout_type": _callout_type_from_case(data),
+        "priority": data.get("priority") or "2",
+        "location": _callout_location_from_case(data),
+        "zone": localize_narrative(data.get("zone")) if data.get("zone") else data.get("zone"),
+        "description": notes or f"Вызов завершился задержанием: {suspect}.",
+        "outcome": f"Задержан: {suspect}",
+        "occurred_at": data.get("game_time") or data.get("created_at"),
+        "suspect_name": suspect,
+    }
+    return create_callout(payload)
+
+
+def backfill_callouts_from_cases():
+    """Restore CAD callout cards for existing arrest records."""
+    created = 0
+    with get_conn() as c:
+        rows = c.execute(
+            """SELECT cases.*, officers.callsign, officers.name AS officer_name
+               FROM cases LEFT JOIN officers ON officers.id = cases.officer_id
+               WHERE cases.is_test=0
+               ORDER BY cases.id"""
+        ).fetchall()
+    for r in rows:
+        _, made = ensure_callout_for_case(dict(r), r["id"])
+        if made:
+            created += 1
+    return created
 
 
 def case_file(name):

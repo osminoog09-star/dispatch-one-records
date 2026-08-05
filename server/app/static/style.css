@@ -184,7 +184,7 @@ h3{font-size:14px;margin:0 0 .5em;color:var(--muted);text-transform:uppercase;le
 .map-page-badges{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
 .map-page-badges b{display:inline-flex;align-items:center;min-height:32px;padding:6px 10px;border:1px solid rgba(111,161,226,.24);
   border-radius:999px;background:rgba(20,25,34,.72);color:#dbeafe;font-size:12px;white-space:nowrap}
-.clean-map-shell{position:relative;width:min(1120px,100%);height:clamp(620px,calc(100vh - 260px),720px);min-height:620px;margin:18px auto 0;
+.clean-map-shell{position:relative;width:min(1120px,100%);min-height:0;margin:18px auto 0;
   border:1px solid #26374c;border-radius:16px;overflow:hidden;background:#07101b;
   box-shadow:var(--shadow),0 0 42px -24px #3b82f6,inset 0 0 70px -34px #2b74bd}
 .clean-map-shell::before{content:"";position:absolute;inset:0;z-index:2;pointer-events:none;
@@ -208,9 +208,9 @@ h3{font-size:14px;margin:0 0 .5em;color:var(--muted);text-transform:uppercase;le
 .map-district-info span{display:block;color:#8ec5ff;font-size:11px;text-transform:uppercase;
   letter-spacing:.12em;font-weight:800}
 .map-district-info b{display:block;color:#f2f7ff;font-size:14px;margin-top:2px}
-.clean-map{position:absolute;inset:0;z-index:1;background:#050b12;display:grid;grid-template-columns:minmax(0,1fr) 230px;
+.clean-map{position:relative;z-index:1;background:#050b12;display:grid;grid-template-columns:minmax(0,1fr) 230px;
   gap:18px;align-items:stretch;padding:74px 22px 22px}
-.clean-map-stage{position:relative;aspect-ratio:1/1;width:100%;max-width:760px;max-height:100%;justify-self:center;align-self:center}
+.clean-map-stage{position:relative;aspect-ratio:1/1;width:min(100%,760px);max-width:760px;justify-self:center;align-self:start}
 .clean-map-image,.map-district-overlay{position:absolute;inset:0;width:100%;height:100%;display:block}
 .clean-map-image{object-fit:contain;filter:saturate(1.08) contrast(1.05) brightness(.92)}
 .map-district-overlay{z-index:2}
@@ -298,7 +298,6 @@ h3{font-size:14px;margin:0 0 .5em;color:var(--muted);text-transform:uppercase;le
   .clean-map-toolbar{align-items:flex-start;flex-direction:column}
   .clean-map-toolbar b{display:none}
   .map-filterbar{align-self:flex-start;max-width:100%;overflow:auto}
-  .clean-map-shell{min-height:0}
   .clean-map{position:relative;grid-template-columns:1fr;padding:112px 14px 16px}
   .clean-map-stage{max-width:100%;height:auto}
   .map-side-panel{padding:12px}

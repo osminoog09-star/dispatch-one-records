@@ -149,15 +149,8 @@ h3{font-size:14px;margin:0 0 .5em;color:var(--muted);text-transform:uppercase;le
   backdrop-filter:blur(10px);box-shadow:0 0 26px rgba(43,116,189,.18)}
 .clean-map-toolbar span{font-size:11px;letter-spacing:.13em;color:#8ec5ff;font-weight:800}
 .clean-map-toolbar b{font-size:12px;color:#e4f0ff}
-.map-layer-switch{display:flex;gap:6px;padding:5px;border:1px solid rgba(111,161,226,.28);
-  border-radius:10px;background:rgba(5,12,22,.72);backdrop-filter:blur(10px);pointer-events:auto}
-.map-layer-switch button{height:30px;padding:0 11px;border:0;border-radius:7px;background:transparent;
-  color:#9aa8b9;font-weight:700;font-size:12px;cursor:pointer}
-.map-layer-switch button:hover{color:#fff;background:rgba(255,255,255,.08)}
-.map-layer-switch button.on{background:linear-gradient(135deg,#4c8dff,#2563eb);color:#fff;
-  box-shadow:0 5px 18px -8px #4c8dff}
 .clean-map{position:absolute;inset:0;z-index:1;background:#050b12}
-.clean-map .leaflet-tile{filter:saturate(1.08) contrast(1.05) brightness(.72)}
+.clean-map .leaflet-image-layer{filter:saturate(1.04) contrast(1.03) brightness(.82)}
 .clean-map .leaflet-control-zoom{border:1px solid rgba(111,161,226,.25);box-shadow:var(--shadow)}
 .clean-map .leaflet-control-zoom a{background:rgba(13,22,34,.92);color:#e7edf4;border-bottom-color:#26374c}
 .clean-map .leaflet-control-zoom a:hover{background:#1b2838;color:#fff}

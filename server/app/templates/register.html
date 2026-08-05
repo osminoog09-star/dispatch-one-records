@@ -2,17 +2,22 @@
 {% block title %}Регистрация{% endblock %}
 {% block content %}
 
-<h1>Регистрация офицера</h1>
-<p class="muted">Регистрация проходит прямо в установщике: он запишет твой позывной в игру
-  и подключит её к сайту. Ничего вручную настраивать не нужно.</p>
-
-<div class="dl-banner" style="margin-top:18px">
+<section class="register-hero">
   <div>
-    <div class="dl-title">Лаунчер {{ community }} Records</div>
-    <div class="muted small">Windows · ~19 МБ · Python не нужен · с автообновлением</div>
+    <div class="eyebrow">OFFICER ONBOARDING</div>
+    <h1>Регистрация офицера</h1>
+    <p class="muted">Регистрация проходит прямо в установщике: он запишет твой позывной в игру
+      и подключит её к сайту. Ничего вручную настраивать не нужно.</p>
   </div>
-  <a class="btn primary" href="https://github.com/osminoog09-star/dispatch-one-records/releases/latest/download/LAPD-Records-Launcher.exe">⬇ Скачать лаунчер</a>
-</div>
+  <div class="download-card">
+    <div class="download-mark">★</div>
+    <div>
+      <div class="dl-title">Лаунчер {{ community }} Records</div>
+      <div class="muted small">Windows · ~19 МБ · автообновление · Python не нужен</div>
+    </div>
+    <a class="btn primary" href="https://github.com/osminoog09-star/dispatch-one-records/releases/latest/download/LAPD-Records-Launcher.exe">Скачать лаунчер</a>
+  </div>
+</section>
 
 <h2>Как всё сделать (4 шага)</h2>
 <ol class="steps">
@@ -44,9 +49,9 @@
   </li>
 </ol>
 
-<div class="dl-banner" style="background:#16233a;border-color:#31517a">
+<div class="dl-banner notice-banner">
   <div>
-    <div class="dl-title">⚠️ Важно: не закрывай окно агента сразу</div>
+    <div class="dl-title">Важно: не закрывай окно агента сразу</div>
     <div class="muted small">После выхода из игры в чёрном окне агента появится строка
       <span class="cs">[github] отправлено (N задержаний...)</span> — это значит данные ушли.
       Если написано <b>«новых данных нет»</b> — значит за сессию не было арестов/штрафов.</div>

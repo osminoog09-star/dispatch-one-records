@@ -2,14 +2,22 @@
 {% block title %}Сводка{% endblock %}
 {% block content %}
 
-<div class="dl-banner">
-  <div>
-    <div class="dl-title">Подключить свою игру к сайту</div>
-    <div class="muted small">Скачай установщик, впиши позывной и имя — он сам пропишет позывной в игре
-      и будет отправлять твои аресты, штрафы и суды сюда.</div>
+<section class="hero-panel">
+  <div class="hero-copy">
+    <div class="eyebrow">LAPD RECORDS · LIVE DATABASE</div>
+    <h1>Оперативная база для патрулей GTA V</h1>
+    <p>Задержания, штрафы, суды, личный состав и карта зон собираются в одном аккуратном MDT-интерфейсе.</p>
+    <div class="hero-actions">
+      <a class="btn primary" href="{{ url_for('register') }}">Подключить игру</a>
+      <a class="btn" href="{{ url_for('game_map') }}">Открыть карту зон</a>
+    </div>
   </div>
-  <a class="btn primary" href="{{ url_for('register') }}">Как подключиться →</a>
-</div>
+  <div class="hero-status">
+    <div><span>Records</span><b>{{ summary.total }}</b></div>
+    <div><span>Citations</span><b>{{ cit.count }}</b></div>
+    <div><span>Court</span><b>{{ court.total }}</b></div>
+  </div>
+</section>
 
 <section class="stats stats-6">
   <div class="stat"><div class="num">{{ summary.total }}</div><div class="lbl">Задержаний</div></div>

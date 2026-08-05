@@ -15,7 +15,7 @@
         <span class="badge">★</span> {{ community }} <span class="sub">Records</span>
       </a>
       <nav>
-        <a href="{{ url_for('index') }}">Главная</a>
+        <a class="{% if request.endpoint == 'index' %}active{% endif %}" href="{{ url_for('index') }}">Главная</a>
         <div class="nav-drop">
           <span class="nav-drop-t">Записи ▾</span>
           <div class="nav-menu">
@@ -27,10 +27,10 @@
             <a href="{{ url_for('vehicles') }}">Транспорт</a>
           </div>
         </div>
-        <a href="{{ url_for('court') }}">Суд</a>
-        <a href="{{ url_for('shifts') }}">Смены</a>
-        <a href="{{ url_for('game_map') }}">Карта</a>
-        <a href="{{ url_for('staff') }}">Персонал</a>
+        <a class="{% if request.endpoint == 'court' %}active{% endif %}" href="{{ url_for('court') }}">Суд</a>
+        <a class="{% if request.endpoint == 'shifts' %}active{% endif %}" href="{{ url_for('shifts') }}">Смены</a>
+        <a class="{% if request.endpoint == 'game_map' %}active{% endif %}" href="{{ url_for('game_map') }}">Карта</a>
+        <a class="{% if request.endpoint == 'staff' %}active{% endif %}" href="{{ url_for('staff') }}">Персонал</a>
         <div class="nav-drop admin-only" style="display:none">
           <span class="nav-drop-t">Админ ▾</span>
           <div class="nav-menu">
@@ -38,7 +38,7 @@
             <a href="{{ url_for('dictionaries') }}">Справочники</a>
           </div>
         </div>
-        <a href="{{ url_for('register') }}">Регистрация</a>
+        <a class="{% if request.endpoint == 'register' %}active{% endif %}" href="{{ url_for('register') }}">Регистрация</a>
         <span id="auth-slot" class="auth-slot"></span>
       </nav>
     </div>

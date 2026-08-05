@@ -15,7 +15,7 @@
         <span class="badge">★</span> LAPD <span class="sub">Records</span>
       </a>
       <nav>
-        <a href="/dispatch-one-records/">Главная</a>
+        <a class="" href="/dispatch-one-records/">Главная</a>
         <div class="nav-drop">
           <span class="nav-drop-t">Записи ▾</span>
           <div class="nav-menu">
@@ -27,10 +27,10 @@
             <a href="/dispatch-one-records/vehicles">Транспорт</a>
           </div>
         </div>
-        <a href="/dispatch-one-records/court">Суд</a>
-        <a href="/dispatch-one-records/shifts">Смены</a>
-        <a href="/dispatch-one-records/map">Карта</a>
-        <a href="/dispatch-one-records/staff">Персонал</a>
+        <a class="" href="/dispatch-one-records/court">Суд</a>
+        <a class="" href="/dispatch-one-records/shifts">Смены</a>
+        <a class="" href="/dispatch-one-records/map">Карта</a>
+        <a class="" href="/dispatch-one-records/staff">Персонал</a>
         <div class="nav-drop admin-only" style="display:none">
           <span class="nav-drop-t">Админ ▾</span>
           <div class="nav-menu">
@@ -38,7 +38,7 @@
             <a href="/dispatch-one-records/dictionaries">Справочники</a>
           </div>
         </div>
-        <a href="/dispatch-one-records/register">Регистрация</a>
+        <a class="active" href="/dispatch-one-records/register">Регистрация</a>
         <span id="auth-slot" class="auth-slot"></span>
       </nav>
     </div>
@@ -50,17 +50,22 @@
     
     
 
-<h1>Регистрация офицера</h1>
-<p class="muted">Регистрация проходит прямо в установщике: он запишет твой позывной в игру
-  и подключит её к сайту. Ничего вручную настраивать не нужно.</p>
-
-<div class="dl-banner" style="margin-top:18px">
+<section class="register-hero">
   <div>
-    <div class="dl-title">Лаунчер LAPD Records</div>
-    <div class="muted small">Windows · ~19 МБ · Python не нужен · с автообновлением</div>
+    <div class="eyebrow">OFFICER ONBOARDING</div>
+    <h1>Регистрация офицера</h1>
+    <p class="muted">Регистрация проходит прямо в установщике: он запишет твой позывной в игру
+      и подключит её к сайту. Ничего вручную настраивать не нужно.</p>
   </div>
-  <a class="btn primary" href="https://github.com/osminoog09-star/dispatch-one-records/releases/latest/download/LAPD-Records-Launcher.exe">⬇ Скачать лаунчер</a>
-</div>
+  <div class="download-card">
+    <div class="download-mark">★</div>
+    <div>
+      <div class="dl-title">Лаунчер LAPD Records</div>
+      <div class="muted small">Windows · ~19 МБ · автообновление · Python не нужен</div>
+    </div>
+    <a class="btn primary" href="https://github.com/osminoog09-star/dispatch-one-records/releases/latest/download/LAPD-Records-Launcher.exe">Скачать лаунчер</a>
+  </div>
+</section>
 
 <h2>Как всё сделать (4 шага)</h2>
 <ol class="steps">
@@ -92,9 +97,9 @@
   </li>
 </ol>
 
-<div class="dl-banner" style="background:#16233a;border-color:#31517a">
+<div class="dl-banner notice-banner">
   <div>
-    <div class="dl-title">⚠️ Важно: не закрывай окно агента сразу</div>
+    <div class="dl-title">Важно: не закрывай окно агента сразу</div>
     <div class="muted small">После выхода из игры в чёрном окне агента появится строка
       <span class="cs">[github] отправлено (N задержаний...)</span> — это значит данные ушли.
       Если написано <b>«новых данных нет»</b> — значит за сессию не было арестов/штрафов.</div>

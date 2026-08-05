@@ -18,7 +18,7 @@ import tkinter as tk
 from tkinter import messagebox
 
 APP_NAME = "LAPD Records"
-VERSION = "1.4.7"
+VERSION = "1.4.8"
 GITHUB_REPO = "osminoog09-star/dispatch-one-records"
 # Шлюз приёма данных (Cloudflare Worker) — вшивается при сборке, токена в клиенте нет.
 try:
@@ -837,11 +837,10 @@ class Launcher(tk.Tk):
         ensure_agent_installed()
         # ставим плагин сразу — тогда он грузится при ЛЮБОМ запуске игры
         # (наш лаунчер, Vinewood, Steam) как обычный плагин LSPDFR
+        # установку плагина делаем В ФОНЕ — копирование в Program Files + скан антивируса
+        # не должны подвешивать окно («Не отвечает»)
         if self.game:
-            pok, pmsg = install_plugin(self.game)
-            log(f"плагин при старте: {pmsg}")
-            if not pok and "уже установлен" not in pmsg:
-                self.after(1200, lambda: self._set_status(f"Плагин: {pmsg}", "#e0a0a0"))
+            threading.Thread(target=self._startup_install_plugin, daemon=True).start()
         log(f"лаунчер запущен v{VERSION}, игра={self.game}")
         threading.Thread(target=self._check_update_async, daemon=True).start()
         # окно само подгоняется под содержимое — чтобы низ (кнопки) никогда не обрезался
@@ -856,6 +855,16 @@ class Launcher(tk.Tk):
             self.geometry("580x%d" % min(max(need, 600), maxh))
         except Exception:
             log_exc("_fit_height")
+
+    def _startup_install_plugin(self):
+        """Ставит плагин в фоне (не блокирует окно)."""
+        try:
+            pok, pmsg = install_plugin(self.game)
+            log(f"плагин при старте: {pmsg}")
+            if not pok and "уже установлен" not in pmsg:
+                self.after(0, lambda: self._set_status(f"Плагин: {pmsg}", "#e0a0a0"))
+        except Exception:
+            log_exc("_startup_install_plugin")
 
     def _animate_hero(self):
         """Чередует кадры баннера (красная/синяя мигалка) — эффект включённых огней."""

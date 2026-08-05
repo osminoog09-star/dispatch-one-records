@@ -100,6 +100,8 @@ AI подключать вторым этапом, только после уд�
 - После заметного изменения сайта делать commit + push.
 - Проверять GitHub Pages после обновления.
 - Если Pages кэширует старую версию, сверять raw GitHub и ждать обновления Actions/Pages.
+- После изменения `launcher/launcher.py` пересобрать `launcher/dist/LAPD-Records-Launcher.exe` и проверить, что в комплект попали `pdcomp_sync.exe`, `DispatchOne.MDT.dll` и нужные изображения баннера.
+- Не считать изменение лаунчера доставленным игрокам, пока не обновлён exe/manifest.
 
 ## Definition of done
 

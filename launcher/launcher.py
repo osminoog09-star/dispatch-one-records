@@ -588,6 +588,8 @@ def start_agent():
         ensure_agent_installed()
     if not os.path.exists(exe):
         return False, "агент не установлен"
+    if is_agent_running():
+        return True, "агент уже запущен"
     try:
         subprocess.Popen([exe], cwd=INSTALL_DIR,
                          creationflags=0x08000000)  # без окна
@@ -595,6 +597,35 @@ def start_agent():
         return True, "агент запущен"
     except Exception as e:
         log_exc("start_agent")
+        return False, str(e)
+
+
+def is_agent_running():
+    """True, если процесс агента уже висит в системе."""
+    try:
+        r = subprocess.run(["tasklist", "/FI", f"IMAGENAME eq {AGENT_EXE}"],
+                           capture_output=True, text=True, creationflags=0x08000000)
+        return AGENT_EXE.lower() in (r.stdout or "").lower()
+    except Exception:
+        log_exc("is_agent_running")
+        return False
+
+
+def stop_agent():
+    """Останавливает агент синхронизации вручную из лаунчера."""
+    if not is_agent_running():
+        return True, "агент уже выключен"
+    try:
+        r = subprocess.run(["taskkill", "/F", "/IM", AGENT_EXE],
+                           capture_output=True, text=True, creationflags=0x08000000)
+        if r.returncode == 0:
+            log("агент остановлен")
+            return True, "агент выключен"
+        msg = (r.stderr or r.stdout or "").strip() or f"код {r.returncode}"
+        log(f"агент не остановлен: {msg}", "WARN")
+        return False, msg
+    except Exception as e:
+        log_exc("stop_agent")
         return False, str(e)
 
 
@@ -728,7 +759,7 @@ class Launcher(tk.Tk):
     def __init__(self):
         super().__init__()
         self.title(APP_NAME)
-        self.geometry("580x780")
+        self.geometry("580x840")
         self.resizable(False, False)
         self.configure(bg=BG)
         self.after(80, self._front)
@@ -810,6 +841,30 @@ class Launcher(tk.Tk):
                           "Через лаунчер ходить не нужно.", bg=CARD, fg=MUTED,
                  font=("Segoe UI", 8), wraplength=470, justify="left").pack(anchor="w", pady=(4, 0))
 
+        # ─── РУЧНОЕ УПРАВЛЕНИЕ АГЕНТОМ ───
+        agent_card = self._card()
+        agent_card.pack(fill="x", padx=32, pady=(14, 0))
+        ag = tk.Frame(agent_card, bg=CARD)
+        ag.pack(fill="x", padx=18, pady=12)
+        top = tk.Frame(ag, bg=CARD)
+        top.pack(fill="x")
+        tk.Label(top, text="АГЕНТ СИНХРОНИЗАЦИИ", bg=CARD, fg=MUTED,
+                 font=("Segoe UI", 8, "bold")).pack(side="left")
+        self.agent_state = tk.Label(top, text="● проверяю", bg=CARD, fg=MUTED,
+                                    font=("Segoe UI", 9, "bold"))
+        self.agent_state.pack(side="right")
+        tk.Label(ag, text="Можно включить агент прямо сейчас или выключить его без изменения автозапуска.",
+                 bg=CARD, fg=MUTED, font=("Segoe UI", 8), wraplength=470,
+                 justify="left").pack(anchor="w", pady=(5, 8))
+        row = tk.Frame(ag, bg=CARD)
+        row.pack(fill="x")
+        self.agent_btn = self._button(row, "Включить агент", self.toggle_agent,
+                                      ACCENT, ACCENT2, small=True)
+        self.agent_btn.pack(side="left", fill="x", expand=True)
+        self.agent_logs_btn = self._button(row, "Открыть логи", self.open_logs,
+                                           CARD2, BORDER, small=True)
+        self.agent_logs_btn.pack(side="left", fill="x", expand=True, padx=(8, 0))
+
         # ─── КНОПКА ПОДДЕРЖКИ (заметная) ───
         self._button(self, "Написать в поддержку", self.support_chat,
                      CARD2, BORDER).pack(fill="x", padx=32, pady=(14, 0))
@@ -822,6 +877,7 @@ class Launcher(tk.Tk):
 
         self.status = tk.Label(self, text="", bg=BG, fg=MUTED, font=("Segoe UI", 9))
         self.status.pack(pady=(8, 0))
+        self._refresh_agent_status()
 
         # ─── ФУТЕР ───
         bottom = tk.Frame(self, bg=BG)
@@ -915,6 +971,25 @@ class Launcher(tk.Tk):
 
     def _set_status(self, text, color="#98a1ac"):
         self.status.config(text=text, fg=color)
+
+    def _refresh_agent_status(self, schedule=True):
+        running = is_agent_running()
+        if hasattr(self, "agent_state"):
+            self.agent_state.config(text="● включён" if running else "● выключен",
+                                    fg=OKGRN if running else MUTED)
+        if hasattr(self, "agent_btn"):
+            self.agent_btn.config(text="Выключить агент" if running else "Включить агент")
+        if schedule:
+            self.after(4000, self._refresh_agent_status)
+
+    def toggle_agent(self):
+        if is_agent_running():
+            ok, msg = stop_agent()
+            self._set_status(msg, "#7fbf7f" if ok else "#e0a0a0")
+        else:
+            ok, msg = start_agent()
+            self._set_status(msg, "#7fbf7f" if ok else "#e0a0a0")
+        self._refresh_agent_status(schedule=False)
 
     def bug_report(self):
         """Окно баг-репорта: описание + скриншот → GitHub Issue."""
@@ -1245,6 +1320,7 @@ class Launcher(tk.Tk):
             self._set_status("Автозапуск включён — агент стартует с Windows и сам ловит игру."
                              if on else "Автозапуск выключен.",
                              "#7fbf7f" if on else "#98a1ac")
+            self._refresh_agent_status(schedule=False)
         else:
             self._set_status("Не удалось изменить автозапуск.", "#e0a0a0")
             self.autostart_var.set(not on)
@@ -1256,6 +1332,7 @@ class Launcher(tk.Tk):
         log(f"play: плагин — {pmsg}")
         # 2) запустить агент (синхронизация/публикация)
         aok, amsg = start_agent()
+        self._refresh_agent_status(schedule=False)
         # 3) запустить игру через Vinewood (он поднимает игру со своими модами).
         #    Если Vinewood не найден — запасом напрямую через RagePluginHook.
         if start_vinewood():

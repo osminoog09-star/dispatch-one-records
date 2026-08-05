@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Смена #5 · LAPD</title>
+  <meta name="generator" content="Dispatch One Records — osminoog09-star">
+  <meta name="author" content="LAPD Records · osminoog09-star.github.io/dispatch-one-records">
+  <link rel="stylesheet" href="/dispatch-one-records/static/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="wrap">
+      <a class="brand" href="/dispatch-one-records/">
+        <span class="badge">★</span> LAPD <span class="sub">Records</span>
+      </a>
+      <nav>
+        <a href="/dispatch-one-records/">Главная</a>
+        <div class="nav-drop">
+          <span class="nav-drop-t">Записи ▾</span>
+          <div class="nav-menu">
+            <a href="/dispatch-one-records/files">Дела</a>
+            <a href="/dispatch-one-records/cases">Задержания</a>
+            <a href="/dispatch-one-records/citations">Штрафы</a>
+            <a href="/dispatch-one-records/warnings">Предупреждения</a>
+            <a href="/dispatch-one-records/callouts">Вызовы</a>
+            <a href="/dispatch-one-records/vehicles">Транспорт</a>
+          </div>
+        </div>
+        <a href="/dispatch-one-records/court">Суд</a>
+        <a href="/dispatch-one-records/shifts">Смены</a>
+        <a href="/dispatch-one-records/map">Карта</a>
+        <a href="/dispatch-one-records/staff">Персонал</a>
+        <div class="nav-drop admin-only" style="display:none">
+          <span class="nav-drop-t">Админ ▾</span>
+          <div class="nav-menu">
+            <a href="/dispatch-one-records/tickets">Тикеты</a>
+            <a href="/dispatch-one-records/dictionaries">Справочники</a>
+          </div>
+        </div>
+        <a href="/dispatch-one-records/register">Регистрация</a>
+        <span id="auth-slot" class="auth-slot"></span>
+      </nav>
+    </div>
+  </header>
+
+  <main class="wrap">
+    
+      
+    
+    
+<a class="back" href="/dispatch-one-records/shifts">← к сменам</a>
+
+<div class="case-head">
+  <h1>Рапорт смены #5</h1>
+  
+  <span class="tag big">дневная</span>
+</div>
+
+<div class="case-grid">
+  <section class="card report">
+    <div class="report-top">
+      <span class="badge">🕓</span>
+      <div>
+        <div class="rep-title">LAPD · Рапорт смены</div>
+        <div class="rep-sub">
+          Офицер <a href="/dispatch-one-records/officer/1-ADAM-13"><span class="cs">1-ADAM-13</span></a>
+          Tim Bredford · начало 05.08.2026 16:10
+        </div>
+      </div>
+    </div>
+
+    <div class="shift-metrics">
+      <div class="metric big-metric"><div class="mnum">0ч 16м</div><div class="mlbl">Длительность</div></div>
+      <div class="metric"><div class="mnum">1</div><div class="mlbl">Задержаний</div></div>
+      <div class="metric"><div class="mnum">2</div><div class="mlbl">Остановок</div></div>
+      <div class="metric"><div class="mnum">0</div><div class="mlbl">Погонь</div></div>
+      <div class="metric"><div class="mnum">0</div><div class="mlbl">PIT-манёвров</div></div>
+      <div class="metric"><div class="mnum">0</div><div class="mlbl">Вызовов</div></div>
+      <div class="metric"><div class="mnum">$740</div><div class="mlbl">Штрафов</div></div>
+    </div>
+  </section>
+
+  <aside class="side">
+    <div class="card">
+      <h3>Скопировать для Discord</h3>
+      <p class="muted small">Вставь текст рапорта смены в канал вручную.</p>
+      <textarea id="dmd" class="dmd" readonly rows="9">🕓 **Рапорт смены #5 — дневная**
+**Офицер:** 1-ADAM-13 (Tim Bredford)
+**Длительность:** 0ч 16м
+**Задержаний:** 1
+**Остановок транспорта:** 2
+**Погонь:** 0 · **PIT-манёвров:** 0
+**Вызовов обработано:** 0
+**Штрафов на сумму:** $740
+*Начало смены: 05.08.2026 16:10*</textarea>
+      <button class="btn primary" onclick="copyDiscord()">📋 Скопировать текст</button>
+      <p id="copied" class="sent" style="display:none">✓ Скопировано! Вставь в канал (Ctrl+V)</p>
+    </div>
+  </aside>
+</div>
+
+<script>
+function copyDiscord(){
+  var ta=document.getElementById('dmd');
+  var done=function(){var c=document.getElementById('copied');c.style.display='block';setTimeout(function(){c.style.display='none';},3000);};
+  if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(ta.value).then(done,function(){ta.select();document.execCommand('copy');done();});}
+  else{ta.select();document.execCommand('copy');done();}
+}
+</script>
+
+  </main>
+
+  <footer class="wrap foot">
+    LAPD Records · данные синхронизируются из игры<br>
+    <span class="foot-attr">© Dispatch One Records · система разработана для LAPD ·
+      осминоог09-star</span>
+  </footer>
+  <!-- Dispatch One Records — исходная система: github.com/osminoog09-star/dispatch-one-records
+       Копирование оформления и кода без разрешения запрещено. build:20260805 -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/dispatch-one-records/static/supa.js"></script>
+</body>
+</html>

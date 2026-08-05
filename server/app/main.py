@@ -292,6 +292,12 @@ def tickets():
     return render_template("tickets.html")
 
 
+@app.route("/dictionaries")
+def dictionaries():
+    # редактор справочников (звания/отделы) — правит supabase-js, RLS = только админ
+    return render_template("dictionaries.html")
+
+
 @app.route("/vehicle/<plate>")
 def vehicle_view(plate):
     v = db.get_vehicle(plate)

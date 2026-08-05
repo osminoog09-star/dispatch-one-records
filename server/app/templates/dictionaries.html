@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+{% block title %}Справочники{% endblock %}
+{% block content %}
+<h1>Справочники</h1>
+<p class="muted">Звания и отделы департамента. Добавляй, переименовывай, меняй цвет и порядок.</p>
+
+<div id="dic-gate" class="muted">Проверяю доступ…</div>
+
+<div id="dic-app" style="display:none">
+  <h2>Звания</h2>
+  <div id="ranks-list" class="dic-list"></div>
+  <div class="dic-add">
+    <input id="rk-name" placeholder="Название звания">
+    <input id="rk-color" type="color" value="#2f81f7">
+    <input id="rk-level" type="number" placeholder="старшинство" value="50" style="width:110px">
+    <button onclick="addRank()">Добавить звание</button>
+  </div>
+
+  <h2 style="margin-top:26px">Отделы</h2>
+  <div id="depts-list" class="dic-list"></div>
+  <div class="dic-add">
+    <input id="dp-name" placeholder="Название отдела">
+    <input id="dp-color" type="color" value="#8b949e">
+    <button onclick="addDept()">Добавить отдел</button>
+  </div>
+</div>
+
+<style>
+  .dic-list{display:flex;flex-direction:column;gap:6px;margin:10px 0}
+  .dic-row{display:flex;gap:8px;align-items:center;background:#161b22;border:1px solid #30363d;border-radius:8px;padding:8px 10px}
+  .dic-row input[type=text]{flex:1}
+  .dic-row input,.dic-add input{background:#1c232c;border:1px solid #30363d;color:#e6edf3;border-radius:6px;padding:6px 8px;font-size:13px}
+  .dic-row input[type=number],.dic-add input[type=number]{width:90px}
+  .dic-row input[type=color],.dic-add input[type=color]{width:38px;height:30px;padding:2px;cursor:pointer}
+  .dic-row button,.dic-add button{background:#238636;color:#fff;border:0;border-radius:6px;padding:6px 12px;cursor:pointer;font-size:13px}
+  .dic-row button.del{background:#30363d}
+  .dic-add{display:flex;gap:8px;align-items:center;margin-top:8px}
+  .dic-ok{font-size:12px;color:#3fb950;min-width:14px}
+</style>
+
+<script>
+(function () {
+  let sb;
+  function esc(s){return (s||"").replace(/"/g,"&quot;");}
+
+  async function loadRanks() {
+    const { data } = await sb.from("ranks").select("*").order("level", { ascending: false });
+    const box = document.getElementById("ranks-list");
+    box.innerHTML = (data || []).map(r =>
+      '<div class="dic-row" data-id="'+r.id+'">' +
+      '<input type="text" class="n" value="'+esc(r.name)+'">' +
+      '<input type="color" class="c" value="'+(r.color||"#2f81f7")+'">' +
+      '<input type="number" class="l" value="'+(r.level||0)+'" title="старшинство">' +
+      '<button class="save">Сохранить</button><button class="del">Удалить</button>' +
+      '<span class="dic-ok"></span></div>').join("");
+    box.querySelectorAll(".dic-row").forEach(function (row) {
+      const id = row.getAttribute("data-id"), ok = row.querySelector(".dic-ok");
+      row.querySelector(".save").onclick = async function () {
+        const { error } = await sb.from("ranks").update({
+          name: row.querySelector(".n").value.trim(),
+          color: row.querySelector(".c").value,
+          level: parseInt(row.querySelector(".l").value) || 0,
+        }).eq("id", id);
+        ok.textContent = error ? "!" : "✓"; ok.style.color = error ? "#f85149" : "#3fb950";
+        setTimeout(()=>ok.textContent="", 1500);
+      };
+      row.querySelector(".del").onclick = async function () {
+        if (!confirm("Удалить звание «"+row.querySelector(".n").value+"»?")) return;
+        await sb.from("ranks").delete().eq("id", id); loadRanks();
+      };
+    });
+  }
+
+  async function loadDepts() {
+    const { data } = await sb.from("departments").select("*").order("ord");
+    const box = document.getElementById("depts-list");
+    box.innerHTML = (data || []).map(d =>
+      '<div class="dic-row" data-id="'+d.id+'">' +
+      '<input type="text" class="n" value="'+esc(d.name)+'">' +
+      '<input type="color" class="c" value="'+(d.color||"#8b949e")+'">' +
+      '<button class="save">Сохранить</button><button class="del">Удалить</button>' +
+      '<span class="dic-ok"></span></div>').join("");
+    box.querySelectorAll(".dic-row").forEach(function (row) {
+      const id = row.getAttribute("data-id"), ok = row.querySelector(".dic-ok");
+      row.querySelector(".save").onclick = async function () {
+        const { error } = await sb.from("departments").update({
+          name: row.querySelector(".n").value.trim(),
+          color: row.querySelector(".c").value,
+        }).eq("id", id);
+        ok.textContent = error ? "!" : "✓"; ok.style.color = error ? "#f85149" : "#3fb950";
+        setTimeout(()=>ok.textContent="", 1500);
+      };
+      row.querySelector(".del").onclick = async function () {
+        if (!confirm("Удалить отдел «"+row.querySelector(".n").value+"»?")) return;
+        await sb.from("departments").delete().eq("id", id); loadDepts();
+      };
+    });
+  }
+
+  window.addRank = async function () {
+    const name = document.getElementById("rk-name").value.trim(); if (!name) return;
+    const { error } = await sb.from("ranks").insert({
+      name: name, color: document.getElementById("rk-color").value,
+      level: parseInt(document.getElementById("rk-level").value) || 0 });
+    if (error) { alert("Ошибка: " + error.message); return; }
+    document.getElementById("rk-name").value = ""; loadRanks();
+  };
+  window.addDept = async function () {
+    const name = document.getElementById("dp-name").value.trim(); if (!name) return;
+    const cnt = document.querySelectorAll("#depts-list .dic-row").length;
+    const { error } = await sb.from("departments").insert({
+      name: name, color: document.getElementById("dp-color").value, ord: cnt + 1 });
+    if (error) { alert("Ошибка: " + error.message); return; }
+    document.getElementById("dp-name").value = ""; loadDepts();
+  };
+
+  document.addEventListener("lapd:auth", function () {
+    sb = window.lapd.sb;
+    const gate = document.getElementById("dic-gate");
+    if (!window.lapd.admin) { gate.innerHTML = "Только для админов. Войди через <b>Discord</b> вверху."; return; }
+    gate.style.display = "none";
+    document.getElementById("dic-app").style.display = "";
+    loadRanks(); loadDepts();
+  });
+})();
+</script>
+{% endblock %}

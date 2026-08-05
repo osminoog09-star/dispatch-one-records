@@ -481,9 +481,19 @@ def update_launcher(manifest, on_progress=None):
 # ─────────────────────── ЗАПУСК ───────────────────────
 
 def _bundled(name):
-    """Файл, вшитый в лаунчер (PyInstaller), или рядом со скриптом."""
-    base = getattr(sys, "_MEIPASS", os.path.dirname(os.path.abspath(__file__)))
-    return os.path.join(base, name)
+    """Файл, вшитый в PyInstaller, лежащий рядом с .exe или рядом со скриптом."""
+    roots = []
+    meipass = getattr(sys, "_MEIPASS", None)
+    if meipass:
+        roots.append(meipass)
+    if getattr(sys, "frozen", False):
+        roots.append(os.path.dirname(sys.executable))
+    roots.append(os.path.dirname(os.path.abspath(__file__)))
+    for base in roots:
+        p = os.path.join(base, name)
+        if os.path.exists(p):
+            return p
+    return os.path.join(roots[0], name)
 
 
 def get_embedded_token():
@@ -740,26 +750,26 @@ def set_autostart(enable):
 
 # ─────────────────────── ИНТЕРФЕЙС ───────────────────────
 
-# ── палитра (тёмная тема в стиле GitHub) ──
-BG      = "#0d1117"
-CARD    = "#161b22"
-CARD2   = "#1c232c"
-BORDER  = "#30363d"
-TEXT    = "#e6edf3"
-MUTED   = "#8b949e"
+# ── палитра: премиальная тёмная MDT-тема с холодным LAPD-свечением ──
+BG      = "#070b12"
+CARD    = "#111923"
+CARD2   = "#172231"
+BORDER  = "#26364a"
+TEXT    = "#edf5ff"
+MUTED   = "#96a4b8"
 ACCENT  = "#2f81f7"
-ACCENT2 = "#4c8dff"
-GREEN   = "#238636"
-GREEN2  = "#2ea043"
-OKGRN   = "#3fb950"
-REDT    = "#f85149"
+ACCENT2 = "#62a7ff"
+GREEN   = "#1f8f3a"
+GREEN2  = "#31b45a"
+OKGRN   = "#4dd176"
+REDT    = "#ff5d66"
 
 
 class Launcher(tk.Tk):
     def __init__(self):
         super().__init__()
         self.title(APP_NAME)
-        self.geometry("580x840")
+        self.geometry("580x860")
         self.resizable(False, False)
         self.configure(bg=BG)
         self.after(80, self._front)
@@ -784,13 +794,19 @@ class Launcher(tk.Tk):
 
         # ─── ШАПКА ───
         header = tk.Frame(self, bg=BG)
-        header.pack(fill="x", pady=(26, 0))
-        tk.Label(header, text="★", bg=ACCENT, fg="white",
-                 font=("Segoe UI", 15, "bold"), width=2, height=1).pack()
-        tk.Label(header, text="LAPD Records", bg=BG, fg=TEXT,
-                 font=("Segoe UI Semibold", 24)).pack(pady=(10, 0))
-        tk.Label(header, text=f"лаунчер · v{VERSION}", bg=BG, fg=MUTED,
-                 font=("Segoe UI", 9)).pack()
+        header.pack(fill="x", pady=(10 if self._frames else 24, 0))
+        if self._frames:
+            tk.Label(header, text=f"LAPD Records · лаунчер v{VERSION}", bg=BG, fg=TEXT,
+                     font=("Segoe UI Semibold", 12)).pack()
+            tk.Label(header, text="профиль офицера, агент синхронизации и запуск игры",
+                     bg=BG, fg=MUTED, font=("Segoe UI", 8)).pack(pady=(2, 0))
+        else:
+            tk.Label(header, text="★", bg=ACCENT, fg="white",
+                     font=("Segoe UI", 15, "bold"), width=2, height=1).pack()
+            tk.Label(header, text="LAPD Records", bg=BG, fg=TEXT,
+                     font=("Segoe UI Semibold", 24)).pack(pady=(10, 0))
+            tk.Label(header, text=f"лаунчер · v{VERSION}", bg=BG, fg=MUTED,
+                     font=("Segoe UI", 9)).pack()
 
         # статус игры — плашка
         pill = tk.Label(self, bg=CARD, fg=OKGRN if self.game else REDT,

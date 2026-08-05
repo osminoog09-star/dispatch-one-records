@@ -65,8 +65,15 @@ def main():
         urls.append("/file/" + f["name"])   # без quote — папка с именем как есть
     for v in db.list_vehicles(500):
         urls.append("/vehicle/" + v["plate"])
+    _off_seen = set()
     for o in db.list_officers_with_stats():
         urls.append(f"/officer/{o['callsign']}")
+        _off_seen.add(o["callsign"])
+    # страница для КАЖДОГО офицера (в т.ч. без записей) — иначе клик по нему = 404
+    with db.get_conn() as _c:
+        for _r in _c.execute("SELECT callsign FROM officers WHERE callsign IS NOT NULL AND callsign!=''"):
+            if _r["callsign"] not in _off_seen:
+                urls.append("/officer/" + _r["callsign"])
 
     client = app.test_client()
     ok = 0

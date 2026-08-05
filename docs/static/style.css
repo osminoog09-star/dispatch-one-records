@@ -162,18 +162,20 @@ h3{font-size:14px;margin:0 0 .5em;color:var(--muted);text-transform:uppercase;le
 .clean-map-image{object-fit:contain;filter:saturate(1.08) contrast(1.05) brightness(.92)}
 .map-district-overlay{z-index:2}
 .map-district{cursor:pointer}
-.map-district-shape{fill:var(--district-color);fill-opacity:.08;stroke:var(--district-color);
-  stroke-width:5;stroke-opacity:.76;stroke-dasharray:20 16;vector-effect:non-scaling-stroke;
+.map-coastline{fill:transparent;stroke:#d8edff;stroke-width:2.5;stroke-opacity:.34;
+  filter:drop-shadow(0 0 8px rgba(88,166,255,.35));pointer-events:none}
+.map-district-shape{fill:var(--district-color);fill-opacity:.11;stroke:var(--district-color);
+  stroke-width:2.4;stroke-opacity:.78;stroke-dasharray:0;vector-effect:non-scaling-stroke;
   transition:fill-opacity .16s,stroke-opacity .16s,stroke-width .16s}
 .map-district:hover .map-district-shape,.map-district.active .map-district-shape{
-  fill-opacity:.18;stroke-opacity:1;stroke-width:9;stroke-dasharray:0}
-.map-district-text{fill:#f7fbff;font-size:34px;font-weight:800;text-anchor:middle;
-  paint-order:stroke;stroke:#06101d;stroke-width:8px;letter-spacing:1px;pointer-events:none;
+  fill-opacity:.24;stroke-opacity:1;stroke-width:4.4;stroke-dasharray:0}
+.map-district-text{fill:#f7fbff;font-size:31px;font-weight:800;text-anchor:middle;
+  paint-order:stroke;stroke:#06101d;stroke-width:7px;letter-spacing:1px;pointer-events:none;
   text-transform:uppercase}
 .map-district:hover .map-district-text,.map-district.active .map-district-text{
   fill:#fff;filter:drop-shadow(0 0 10px var(--district-color))}
-.air-sector .map-district-shape{fill:transparent;fill-opacity:0;stroke-width:5;stroke-opacity:.5;stroke-dasharray:34 22;pointer-events:stroke}
-.air-sector:hover .map-district-shape,.air-sector.active .map-district-shape{fill:transparent;stroke-width:8;stroke-dasharray:0}
+.air-sector .map-district-shape{fill:transparent;fill-opacity:0;stroke-width:3.4;stroke-opacity:.48;stroke-dasharray:24 18;pointer-events:stroke}
+.air-sector:hover .map-district-shape,.air-sector.active .map-district-shape{fill:transparent;stroke-width:5.6;stroke-dasharray:0}
 .map-legend{position:absolute;right:14px;top:62px;z-index:4;display:flex;flex-direction:column;align-items:flex-start;
   gap:7px;pointer-events:none}
 .map-legend span{display:inline-flex;align-items:center;gap:6px;padding:6px 8px;border:1px solid rgba(111,161,226,.24);

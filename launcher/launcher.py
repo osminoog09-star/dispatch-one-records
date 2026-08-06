@@ -18,7 +18,7 @@ import tkinter as tk
 from tkinter import messagebox
 
 APP_NAME = "LAPD Records"
-VERSION = "1.4.9"
+VERSION = "1.4.10"
 GITHUB_REPO = "osminoog09-star/dispatch-one-records"
 # Шлюз приёма данных (Cloudflare Worker) — вшивается при сборке, токена в клиенте нет.
 try:
@@ -772,6 +772,8 @@ class Launcher(tk.Tk):
         self.geometry("580x860")
         self.resizable(False, False)
         self.configure(bg=BG)
+        self._closing = False
+        self.protocol("WM_DELETE_WINDOW", self.on_close)
         self.after(80, self._front)
 
         cfg = read_config()
@@ -842,22 +844,11 @@ class Launcher(tk.Tk):
         self.upd_btn = self._button(ui, "Проверить обновления", self.do_update,
                                     CARD2, BORDER, small=True)
 
-        # ─── АВТОЗАПУСК АГЕНТА ───
+        # ─── АГЕНТ СИНХРОНИЗАЦИИ: статус, автозапуск, ручное управление ───
         self.autostart_var = tk.BooleanVar(value=autostart_enabled())
-        acard = self._card()
-        acard.pack(fill="x", padx=32, pady=(14, 0))
-        ai = tk.Frame(acard, bg=CARD)
-        ai.pack(fill="x", padx=18, pady=12)
-        cb = tk.Checkbutton(ai, text="  Автозапуск с Windows (агент сам ловит игру)",
-                            variable=self.autostart_var, command=self.toggle_autostart,
-                            bg=CARD, fg=TEXT, selectcolor=CARD2, activebackground=CARD,
-                            activeforeground=TEXT, font=("Segoe UI", 10), anchor="w")
-        cb.pack(fill="x")
-        tk.Label(ai, text="Включи — и запускай игру как угодно (Vinewood, Steam). "
-                          "Через лаунчер ходить не нужно.", bg=CARD, fg=MUTED,
-                 font=("Segoe UI", 8), wraplength=470, justify="left").pack(anchor="w", pady=(4, 0))
-
-        # ─── РУЧНОЕ УПРАВЛЕНИЕ АГЕНТОМ ───
+        self.close_agent_var = tk.BooleanVar(
+            value=cfg.get("CLOSE_AGENT_WITH_LAUNCHER", "1").lower() not in ("0", "false", "no")
+        )
         agent_card = self._card()
         agent_card.pack(fill="x", padx=32, pady=(14, 0))
         ag = tk.Frame(agent_card, bg=CARD)
@@ -869,9 +860,21 @@ class Launcher(tk.Tk):
         self.agent_state = tk.Label(top, text="● проверяю", bg=CARD, fg=MUTED,
                                     font=("Segoe UI", 9, "bold"))
         self.agent_state.pack(side="right")
-        tk.Label(ag, text="Можно включить агент прямо сейчас или выключить его без изменения автозапуска.",
+        tk.Label(ag, text="Агент ловит игру, читает pdComp и синхронизирует данные на сайт.",
                  bg=CARD, fg=MUTED, font=("Segoe UI", 8), wraplength=470,
                  justify="left").pack(anchor="w", pady=(5, 8))
+
+        cb = tk.Checkbutton(ag, text="  Автозапуск с Windows",
+                            variable=self.autostart_var, command=self.toggle_autostart,
+                            bg=CARD, fg=TEXT, selectcolor=CARD2, activebackground=CARD,
+                            activeforeground=TEXT, font=("Segoe UI", 9), anchor="w")
+        cb.pack(fill="x")
+        close_cb = tk.Checkbutton(ag, text="  Закрывать агент вместе с лаунчером",
+                                  variable=self.close_agent_var, command=self.save_agent_close_pref,
+                                  bg=CARD, fg=TEXT, selectcolor=CARD2, activebackground=CARD,
+                                  activeforeground=TEXT, font=("Segoe UI", 9), anchor="w")
+        close_cb.pack(fill="x", pady=(2, 8))
+
         row = tk.Frame(ag, bg=CARD)
         row.pack(fill="x")
         self.agent_btn = self._button(row, "Включить агент", self.toggle_agent,
@@ -989,6 +992,8 @@ class Launcher(tk.Tk):
         self.status.config(text=text, fg=color)
 
     def _refresh_agent_status(self, schedule=True):
+        if getattr(self, "_closing", False):
+            return
         running = is_agent_running()
         if hasattr(self, "agent_state"):
             self.agent_state.config(text="● включён" if running else "● выключен",
@@ -998,6 +1003,15 @@ class Launcher(tk.Tk):
         if schedule:
             self.after(4000, self._refresh_agent_status)
 
+    def save_agent_close_pref(self):
+        cfg = read_config()
+        cfg["CLOSE_AGENT_WITH_LAUNCHER"] = "1" if self.close_agent_var.get() else "0"
+        write_config(cfg)
+        self._set_status("Агент будет закрываться вместе с лаунчером."
+                         if self.close_agent_var.get()
+                         else "Агент останется работать после закрытия лаунчера.",
+                         "#98a1ac")
+
     def toggle_agent(self):
         if is_agent_running():
             ok, msg = stop_agent()
@@ -1006,6 +1020,18 @@ class Launcher(tk.Tk):
             ok, msg = start_agent()
             self._set_status(msg, "#7fbf7f" if ok else "#e0a0a0")
         self._refresh_agent_status(schedule=False)
+
+    def on_close(self):
+        self._closing = True
+        try:
+            self.save_agent_close_pref()
+            if self.close_agent_var.get() and is_agent_running():
+                ok, msg = stop_agent()
+                log(f"закрытие лаунчера: {msg}", "INFO" if ok else "WARN")
+        except Exception:
+            log_exc("on_close")
+        finally:
+            self.destroy()
 
     def bug_report(self):
         """Окно баг-репорта: описание + скриншот → GitHub Issue."""

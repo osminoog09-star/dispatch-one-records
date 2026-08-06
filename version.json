@@ -1,9 +1,9 @@
 {
-  "launcher": "1.4.9",
+  "launcher": "1.4.10",
   "agent": "1.1.1",
   "enabled": true,
   "min_launcher": "1.0.0",
-  "notes": "Новый премиальный баннер лаунчера с эффектом мигалок, ручное управление агентом и чат-поддержка. Обновление ставится само при запуске.",
+  "notes": "Агент, автозапуск и логи теперь собраны в одном блоке. По умолчанию агент закрывается вместе с лаунчером.",
   "launcher_url": "https://github.com/osminoog09-star/dispatch-one-records/releases/latest/download/LAPD-Records-Launcher.exe",
   "agent_url": "https://github.com/osminoog09-star/dispatch-one-records/releases/latest/download/pdcomp_sync.exe"
 }

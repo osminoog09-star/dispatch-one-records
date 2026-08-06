@@ -12,13 +12,15 @@ import time
 import threading
 import traceback
 import subprocess
+import shutil
+import zipfile
 import urllib.request
 import urllib.error
 import tkinter as tk
 from tkinter import messagebox
 
 APP_NAME = "LAPD Records"
-VERSION = "1.4.10"
+VERSION = "1.4.11"
 GITHUB_REPO = "osminoog09-star/dispatch-one-records"
 # Шлюз приёма данных (Cloudflare Worker) — вшивается при сборке, токена в клиенте нет.
 try:
@@ -454,16 +456,47 @@ def update_agent(manifest, on_progress=None):
 
 
 def update_launcher(manifest, on_progress=None):
-    """Самообновление: качает новый лаунчер и подменяет себя через bat."""
+    """Самообновление: поддерживает старый exe и новый onedir zip-релиз."""
     try:
         cur = sys.executable  # путь к текущему .exe (в собранном виде)
         if not cur.lower().endswith(".exe"):
             return False, "самообновление только в собранной версии"
-        new = cur + ".new"
-        _download(manifest.get("launcher_url"), new, on_progress)
-        # bat: ждёт закрытия, подменяет exe, запускает новый
+
+        url = manifest.get("launcher_url") or ""
         bat = os.path.join(INSTALL_DIR, "_update.bat")
         os.makedirs(INSTALL_DIR, exist_ok=True)
+
+        if url.lower().endswith(".zip"):
+            zip_path = os.path.join(INSTALL_DIR, "LAPD-Records-Launcher.zip")
+            stage = os.path.join(INSTALL_DIR, "launcher_update")
+            _download(url, zip_path, on_progress)
+            if os.path.isdir(stage):
+                shutil.rmtree(stage, ignore_errors=True)
+            os.makedirs(stage, exist_ok=True)
+            with zipfile.ZipFile(zip_path) as z:
+                z.extractall(stage)
+
+            cur_dir = os.path.dirname(cur)
+            if os.path.exists(os.path.join(cur_dir, "_internal")):
+                target_dir = cur_dir
+            else:
+                target_dir = os.path.join(INSTALL_DIR, "Launcher")
+            new_exe = os.path.join(target_dir, "LAPD-Records-Launcher.exe")
+            os.makedirs(target_dir, exist_ok=True)
+
+            with open(bat, "w", encoding="utf-8") as f:
+                f.write("@echo off\r\n")
+                f.write("ping 127.0.0.1 -n 3 >nul\r\n")
+                f.write(f'xcopy /E /I /Y "{stage}\\*" "{target_dir}\\" >nul\r\n')
+                f.write(f'start "" "{new_exe}"\r\n')
+                f.write('del "%~f0"\r\n')
+            log(f"самообновление onedir до {manifest.get('launcher')}")
+            subprocess.Popen(["cmd", "/c", bat], creationflags=0x08000000)
+            return True, "restart"
+
+        new = cur + ".new"
+        _download(url, new, on_progress)
+        # bat: ждёт закрытия, подменяет exe, запускает новый
         with open(bat, "w", encoding="utf-8") as f:
             f.write("@echo off\r\n")
             f.write("ping 127.0.0.1 -n 3 >nul\r\n")
@@ -487,7 +520,9 @@ def _bundled(name):
     if meipass:
         roots.append(meipass)
     if getattr(sys, "frozen", False):
-        roots.append(os.path.dirname(sys.executable))
+        exe_dir = os.path.dirname(sys.executable)
+        roots.append(exe_dir)
+        roots.append(os.path.join(exe_dir, "_internal"))
     roots.append(os.path.dirname(os.path.abspath(__file__)))
     for base in roots:
         p = os.path.join(base, name)
@@ -769,7 +804,7 @@ class Launcher(tk.Tk):
     def __init__(self):
         super().__init__()
         self.title(APP_NAME)
-        self.geometry("580x860")
+        self.geometry("760x720")
         self.resizable(False, False)
         self.configure(bg=BG)
         self._closing = False
@@ -778,6 +813,7 @@ class Launcher(tk.Tk):
 
         cfg = read_config()
         self.game = find_game()
+        self._nav_buttons = {}
 
         # ─── баннер: полицейский крузер с мигалкой (анимированная картинка) ───
         self._frames = []
@@ -796,12 +832,12 @@ class Launcher(tk.Tk):
 
         # ─── ШАПКА ───
         header = tk.Frame(self, bg=BG)
-        header.pack(fill="x", pady=(10 if self._frames else 24, 0))
+        header.pack(fill="x", padx=22, pady=(10 if self._frames else 22, 0))
         if self._frames:
             tk.Label(header, text=f"LAPD Records · лаунчер v{VERSION}", bg=BG, fg=TEXT,
-                     font=("Segoe UI Semibold", 12)).pack()
-            tk.Label(header, text="профиль офицера, агент синхронизации и запуск игры",
-                     bg=BG, fg=MUTED, font=("Segoe UI", 8)).pack(pady=(2, 0))
+                     font=("Segoe UI Semibold", 13)).pack(anchor="w")
+            tk.Label(header, text="разделы: запуск, профиль, агент, поддержка, настройки и инструкция",
+                     bg=BG, fg=MUTED, font=("Segoe UI", 8)).pack(anchor="w", pady=(2, 0))
         else:
             tk.Label(header, text="★", bg=ACCENT, fg="white",
                      font=("Segoe UI", 15, "bold"), width=2, height=1).pack()
@@ -810,97 +846,56 @@ class Launcher(tk.Tk):
             tk.Label(header, text=f"лаунчер · v{VERSION}", bg=BG, fg=MUTED,
                      font=("Segoe UI", 9)).pack()
 
-        # статус игры — плашка
-        pill = tk.Label(self, bg=CARD, fg=OKGRN if self.game else REDT,
-                        font=("Segoe UI", 9), padx=12, pady=5,
-                        text="● игра найдена" if self.game else "● игра не найдена")
-        pill.pack(pady=(12, 0))
-
-        # ─── КАРТОЧКА: ПРОФИЛЬ ───
-        card = self._card()
-        card.pack(fill="x", padx=32, pady=(18, 0))
-        inner = tk.Frame(card, bg=CARD)
-        inner.pack(fill="x", padx=18, pady=16)
-        tk.Label(inner, text="ПРОФИЛЬ ОФИЦЕРА", bg=CARD, fg=MUTED,
-                 font=("Segoe UI", 8, "bold")).pack(anchor="w", pady=(0, 6))
-        self.callsign = self._field(inner, "Позывной", cfg.get("CALLSIGN", ""))
-        self.nickname = self._field(inner, "Имя офицера", cfg.get("NICKNAME", ""))
-        self._button(inner, "Сохранить и прописать в игру",
-                     self.save_identity, ACCENT, ACCENT2).pack(fill="x", pady=(12, 0))
-
-        # ─── КАРТОЧКА: ОБНОВЛЕНИЯ ───
-        upd = self._card()
-        upd.pack(fill="x", padx=32, pady=(14, 0))
-        ui = tk.Frame(upd, bg=CARD)
-        ui.pack(fill="x", padx=18, pady=14)
-        self.upd_label = tk.Label(ui, text="⟳  проверяю обновления…", bg=CARD, fg=MUTED,
-                                  font=("Segoe UI", 9), anchor="w")
-        self.upd_label.pack(fill="x")
-        self.upd_notes = tk.Label(ui, text="", bg=CARD, fg=MUTED, font=("Segoe UI", 8),
-                                  anchor="w", justify="left", wraplength=480)
-        self.upd_notes.pack(fill="x", pady=(2, 0))
-        # кнопка обновления скрыта: лаунчер обновляется сам при запуске.
-        # объект оставлен (на него ссылается _check_update_async), но не показывается.
-        self.upd_btn = self._button(ui, "Проверить обновления", self.do_update,
-                                    CARD2, BORDER, small=True)
-
-        # ─── АГЕНТ СИНХРОНИЗАЦИИ: статус, автозапуск, ручное управление ───
         self.autostart_var = tk.BooleanVar(value=autostart_enabled())
         self.close_agent_var = tk.BooleanVar(
             value=cfg.get("CLOSE_AGENT_WITH_LAUNCHER", "1").lower() not in ("0", "false", "no")
         )
-        agent_card = self._card()
-        agent_card.pack(fill="x", padx=32, pady=(14, 0))
-        ag = tk.Frame(agent_card, bg=CARD)
-        ag.pack(fill="x", padx=18, pady=12)
-        top = tk.Frame(ag, bg=CARD)
-        top.pack(fill="x")
-        tk.Label(top, text="АГЕНТ СИНХРОНИЗАЦИИ", bg=CARD, fg=MUTED,
-                 font=("Segoe UI", 8, "bold")).pack(side="left")
-        self.agent_state = tk.Label(top, text="● проверяю", bg=CARD, fg=MUTED,
-                                    font=("Segoe UI", 9, "bold"))
-        self.agent_state.pack(side="right")
-        tk.Label(ag, text="Агент ловит игру, читает pdComp и синхронизирует данные на сайт.",
-                 bg=CARD, fg=MUTED, font=("Segoe UI", 8), wraplength=470,
-                 justify="left").pack(anchor="w", pady=(5, 8))
 
-        cb = tk.Checkbutton(ag, text="  Автозапуск с Windows",
-                            variable=self.autostart_var, command=self.toggle_autostart,
-                            bg=CARD, fg=TEXT, selectcolor=CARD2, activebackground=CARD,
-                            activeforeground=TEXT, font=("Segoe UI", 9), anchor="w")
-        cb.pack(fill="x")
-        close_cb = tk.Checkbutton(ag, text="  Закрывать агент вместе с лаунчером",
-                                  variable=self.close_agent_var, command=self.save_agent_close_pref,
-                                  bg=CARD, fg=TEXT, selectcolor=CARD2, activebackground=CARD,
-                                  activeforeground=TEXT, font=("Segoe UI", 9), anchor="w")
-        close_cb.pack(fill="x", pady=(2, 8))
+        shell = tk.Frame(self, bg=BG)
+        shell.pack(fill="both", expand=True, padx=22, pady=(14, 8))
+        nav = tk.Frame(shell, bg=BG, width=170)
+        nav.pack(side="left", fill="y", padx=(0, 14))
+        nav.pack_propagate(False)
+        self.body = tk.Frame(shell, bg=BG)
+        self.body.pack(side="left", fill="both", expand=True)
 
-        row = tk.Frame(ag, bg=CARD)
-        row.pack(fill="x")
-        self.agent_btn = self._button(row, "Включить агент", self.toggle_agent,
-                                      ACCENT, ACCENT2, small=True)
-        self.agent_btn.pack(side="left", fill="x", expand=True)
-        self.agent_logs_btn = self._button(row, "Открыть логи", self.open_logs,
-                                           CARD2, BORDER, small=True)
-        self.agent_logs_btn.pack(side="left", fill="x", expand=True, padx=(8, 0))
+        for key, label in (
+            ("home", "Главная"),
+            ("profile", "Профиль"),
+            ("agent", "Агент"),
+            ("support", "Поддержка"),
+            ("settings", "Настройки"),
+            ("help", "Инструкция"),
+        ):
+            b = tk.Button(nav, text=label, command=lambda k=key: self.show_section(k),
+                          bg=CARD2, fg=TEXT, activebackground=ACCENT,
+                          activeforeground="white", relief="flat", bd=0,
+                          font=("Segoe UI Semibold", 10), anchor="w",
+                          padx=14, pady=10, cursor="hand2")
+            b.pack(fill="x", pady=(0, 7))
+            self._nav_buttons[key] = b
 
-        # ─── КНОПКА ПОДДЕРЖКИ (заметная) ───
-        self._button(self, "Написать в поддержку", self.support_chat,
-                     CARD2, BORDER).pack(fill="x", padx=32, pady=(14, 0))
-
-        # ─── КНОПКА ИГРАТЬ ───
-        self._button(self, "▶   ИГРАТЬ", self.play, GREEN, GREEN2,
-                     big=True).pack(fill="x", padx=32, pady=(10, 4))
-        tk.Label(self, text="поставит плагин, запустит игру через Vinewood и синхронизацию",
-                 bg=BG, fg=MUTED, font=("Segoe UI", 8)).pack()
+        tk.Frame(nav, bg=BORDER, height=1).pack(fill="x", pady=(4, 10))
+        self.game_state = tk.Label(nav, bg=BG, fg=OKGRN if self.game else REDT,
+                                   text="● игра найдена" if self.game else "● игра не найдена",
+                                   font=("Segoe UI", 8, "bold"), anchor="w")
+        self.game_state.pack(fill="x", pady=(0, 6))
+        self.nav_agent_state = tk.Label(nav, bg=BG, fg=MUTED, text="● агент: проверяю",
+                                        font=("Segoe UI", 8, "bold"), anchor="w")
+        self.nav_agent_state.pack(fill="x")
 
         self.status = tk.Label(self, text="", bg=BG, fg=MUTED, font=("Segoe UI", 9))
-        self.status.pack(pady=(8, 0))
+        self.status.pack(fill="x", padx=22, pady=(0, 8))
+        self._upd_text = "⟳  проверяю обновления…"
+        self._upd_fg = MUTED
+        self._upd_notes_text = ""
+
+        self.show_section("home")
         self._refresh_agent_status()
 
         # ─── ФУТЕР ───
         bottom = tk.Frame(self, bg=BG)
-        bottom.pack(side="bottom", pady=14)
+        bottom.pack(side="bottom", pady=(0, 12))
         for txt, cmd in (("Поддержка", self.support_chat),
                          ("Открыть логи", self.open_logs), ("Открыть сайт", self.open_site)):
             b = tk.Label(bottom, text=txt, bg=BG, fg=MUTED, font=("Segoe UI", 8), cursor="hand2")
@@ -918,7 +913,8 @@ class Launcher(tk.Tk):
             threading.Thread(target=self._startup_install_plugin, daemon=True).start()
         log(f"лаунчер запущен v{VERSION}, игра={self.game}")
         threading.Thread(target=self._check_update_async, daemon=True).start()
-        # окно само подгоняется под содержимое — чтобы низ (кнопки) никогда не обрезался
+        if cfg.get("ONBOARDING_DONE", "0").lower() not in ("1", "true", "yes"):
+            self.after(350, self.show_onboarding)
         self.after(60, self._fit_height)
 
     def _fit_height(self):
@@ -927,9 +923,202 @@ class Launcher(tk.Tk):
             self.update_idletasks()
             need = self.winfo_reqheight()
             maxh = self.winfo_screenheight() - 90
-            self.geometry("580x%d" % min(max(need, 600), maxh))
+            self.geometry("760x%d" % min(max(need, 640), maxh))
         except Exception:
             log_exc("_fit_height")
+
+    def show_section(self, key):
+        for child in self.body.winfo_children():
+            child.destroy()
+        for name, btn in self._nav_buttons.items():
+            btn.config(bg=ACCENT if name == key else CARD2,
+                       fg="white" if name == key else TEXT)
+
+        builders = {
+            "home": self.build_home,
+            "profile": self.build_profile,
+            "agent": self.build_agent,
+            "support": self.build_support,
+            "settings": self.build_settings,
+            "help": self.build_help,
+        }
+        builders.get(key, self.build_home)()
+        self.after(40, self._fit_height)
+
+    def _section_title(self, parent, title, subtitle):
+        tk.Label(parent, text=title, bg=BG, fg=TEXT,
+                 font=("Segoe UI Semibold", 18)).pack(anchor="w")
+        if subtitle:
+            tk.Label(parent, text=subtitle, bg=BG, fg=MUTED,
+                     font=("Segoe UI", 9), wraplength=500, justify="left").pack(anchor="w", pady=(3, 14))
+
+    def _card(self, parent=None):
+        return tk.Frame(parent or self, bg=CARD, highlightbackground=BORDER, highlightthickness=1)
+
+    def build_home(self):
+        self._section_title(self.body, "Главная / Играть",
+                            "Быстрый запуск GTA V через Vinewood, установка плагина и синхронизация патруля.")
+        card = self._card(self.body)
+        card.pack(fill="x")
+        inner = tk.Frame(card, bg=CARD)
+        inner.pack(fill="x", padx=18, pady=18)
+        row = tk.Frame(inner, bg=CARD)
+        row.pack(fill="x")
+        tk.Label(row, text="Статус", bg=CARD, fg=MUTED,
+                 font=("Segoe UI", 8, "bold")).pack(anchor="w")
+        self.home_game_state = tk.Label(row, text="● игра найдена" if self.game else "● игра не найдена",
+                                        bg=CARD, fg=OKGRN if self.game else REDT,
+                                        font=("Segoe UI Semibold", 12), anchor="w")
+        self.home_game_state.pack(fill="x", pady=(4, 0))
+        self.home_agent_state = tk.Label(row, text="● агент: проверяю",
+                                         bg=CARD, fg=MUTED,
+                                         font=("Segoe UI", 9, "bold"), anchor="w")
+        self.home_agent_state.pack(fill="x", pady=(3, 12))
+
+        self._button(inner, "▶   ИГРАТЬ", self.play, GREEN, GREEN2, big=True).pack(fill="x")
+        tk.Label(inner, text="Лаунчер поставит плагин, запустит агент и откроет игру через Vinewood. "
+                             "Если Vinewood не найден, попробует RagePluginHook.",
+                 bg=CARD, fg=MUTED, font=("Segoe UI", 8), wraplength=500,
+                 justify="left").pack(anchor="w", pady=(10, 0))
+
+    def build_profile(self):
+        cfg = read_config()
+        self._section_title(self.body, "Профиль офицера",
+                            "Позывной и имя должны совпадать с ростером сервера, иначе записи могут уйти на модерацию.")
+        card = self._card(self.body)
+        card.pack(fill="x")
+        inner = tk.Frame(card, bg=CARD)
+        inner.pack(fill="x", padx=18, pady=16)
+        self.callsign = self._field(inner, "Позывной", cfg.get("CALLSIGN", ""))
+        self.nickname = self._field(inner, "Имя офицера", cfg.get("NICKNAME", ""))
+        tk.Label(inner, text="Пример правильно: 7-WILLIAM-1. Неправильно: 7 - WILIAM - 1.",
+                 bg=CARD, fg=MUTED, font=("Segoe UI", 8), wraplength=500,
+                 justify="left").pack(anchor="w", pady=(8, 0))
+        self._button(inner, "Сохранить и прописать в игру",
+                     self.save_identity, ACCENT, ACCENT2).pack(fill="x", pady=(12, 0))
+
+    def build_agent(self):
+        self._section_title(self.body, "Агент синхронизации",
+                            "Фоновый процесс читает pdComp, ловит запуск игры и отправляет данные на сайт.")
+        card = self._card(self.body)
+        card.pack(fill="x")
+        ag = tk.Frame(card, bg=CARD)
+        ag.pack(fill="x", padx=18, pady=16)
+        top = tk.Frame(ag, bg=CARD)
+        top.pack(fill="x")
+        tk.Label(top, text="Процесс", bg=CARD, fg=MUTED,
+                 font=("Segoe UI", 8, "bold")).pack(side="left")
+        self.agent_state = tk.Label(top, text="● проверяю", bg=CARD, fg=MUTED,
+                                    font=("Segoe UI", 9, "bold"))
+        self.agent_state.pack(side="right")
+        tk.Label(ag, text="Можно запускать игру как угодно: через кнопку ИГРАТЬ, Vinewood или Steam. "
+                          "Агент сам найдёт сессию, если включён.",
+                 bg=CARD, fg=MUTED, font=("Segoe UI", 8), wraplength=500,
+                 justify="left").pack(anchor="w", pady=(6, 10))
+        tk.Checkbutton(ag, text="  Автозапуск с Windows",
+                       variable=self.autostart_var, command=self.toggle_autostart,
+                       bg=CARD, fg=TEXT, selectcolor=CARD2, activebackground=CARD,
+                       activeforeground=TEXT, font=("Segoe UI", 9), anchor="w").pack(fill="x")
+        tk.Checkbutton(ag, text="  Закрывать агент вместе с лаунчером",
+                       variable=self.close_agent_var, command=self.save_agent_close_pref,
+                       bg=CARD, fg=TEXT, selectcolor=CARD2, activebackground=CARD,
+                       activeforeground=TEXT, font=("Segoe UI", 9), anchor="w").pack(fill="x", pady=(2, 12))
+        row = tk.Frame(ag, bg=CARD)
+        row.pack(fill="x")
+        self.agent_btn = self._button(row, "Включить агент", self.toggle_agent, ACCENT, ACCENT2, small=True)
+        self.agent_btn.pack(side="left", fill="x", expand=True)
+        self._button(row, "Открыть логи", self.open_logs, CARD2, BORDER, small=True).pack(
+            side="left", fill="x", expand=True, padx=(8, 0))
+
+    def build_support(self):
+        self._section_title(self.body, "Поддержка",
+                            "Если записи не появились, агент ругается или игра не запускается — напиши сюда.")
+        card = self._card(self.body)
+        card.pack(fill="x")
+        inner = tk.Frame(card, bg=CARD)
+        inner.pack(fill="x", padx=18, pady=16)
+        self._button(inner, "Открыть чат поддержки", self.support_chat, ACCENT, ACCENT2).pack(fill="x")
+        tk.Label(inner, text="Чат приложит RagePluginHook.log, если он найден. "
+                             "Оператор увидит описание, лог и сможет ответить прямо в тикете.",
+                 bg=CARD, fg=MUTED, font=("Segoe UI", 8), wraplength=500,
+                 justify="left").pack(anchor="w", pady=(10, 0))
+        self._button(inner, "Открыть папку логов", self.open_logs, CARD2, BORDER, small=True).pack(fill="x", pady=(12, 0))
+
+    def build_settings(self):
+        self._section_title(self.body, "Настройки",
+                            "Пути, обновления и служебные действия. Обычно менять ничего не нужно.")
+        card = self._card(self.body)
+        card.pack(fill="x")
+        inner = tk.Frame(card, bg=CARD)
+        inner.pack(fill="x", padx=18, pady=16)
+        tk.Label(inner, text="Игра", bg=CARD, fg=MUTED,
+                 font=("Segoe UI", 8, "bold")).pack(anchor="w")
+        tk.Label(inner, text=self.game or "GTA V не найдена автоматически",
+                 bg=CARD, fg=TEXT if self.game else REDT, font=("Segoe UI", 9),
+                 wraplength=500, justify="left").pack(anchor="w", pady=(3, 12))
+        tk.Label(inner, text="Обновления", bg=CARD, fg=MUTED,
+                 font=("Segoe UI", 8, "bold")).pack(anchor="w")
+        self.upd_label = tk.Label(inner, text=self._upd_text, bg=CARD, fg=self._upd_fg,
+                                  font=("Segoe UI", 9), anchor="w")
+        self.upd_label.pack(fill="x", pady=(3, 0))
+        self.upd_notes = tk.Label(inner, text=self._upd_notes_text, bg=CARD, fg=MUTED, font=("Segoe UI", 8),
+                                  anchor="w", justify="left", wraplength=500)
+        self.upd_notes.pack(fill="x", pady=(2, 10))
+        self.upd_btn = self._button(inner, "Проверить обновления", self.do_update, CARD2, BORDER, small=True)
+        self.upd_btn.pack(fill="x")
+        self._button(inner, "Открыть сайт", self.open_site, CARD2, BORDER, small=True).pack(fill="x", pady=(8, 0))
+
+    def build_help(self):
+        self._section_title(self.body, "Инструкция / Как это работает", "")
+        card = self._card(self.body)
+        card.pack(fill="both", expand=True)
+        inner = tk.Frame(card, bg=CARD)
+        inner.pack(fill="both", expand=True, padx=18, pady=16)
+        tk.Label(inner, text=self.instruction_text(), bg=CARD, fg=TEXT,
+                 font=("Segoe UI", 9), justify="left", wraplength=510).pack(anchor="w")
+
+    def instruction_text(self):
+        return (
+            "Что это.\n"
+            "LAPD Records — лаунчер для GTA V LSPDFR. Он ставит плагин учёта, запускает игру "
+            "через Vinewood и синхронизирует полицейскую активность на сайт.\n\n"
+            "Профиль.\n"
+            "Впиши позывной и имя офицера. Позывной должен точно совпадать с ростером сервера: "
+            "например 7-WILLIAM-1, без лишних пробелов и ошибок.\n\n"
+            "Агент.\n"
+            "pdcomp_sync.exe — фоновая программа. Она ловит игру, читает pdComp и отправляет данные "
+            "на сайт. Агент можно запускать с Windows и закрывать вместе с лаунчером.\n\n"
+            "Как играть.\n"
+            "Нажми ИГРАТЬ. Лаунчер поставит плагин, включит агент и откроет игру через Vinewood. "
+            "Играй как обычно; после выхода из игры записи появятся на сайте.\n\n"
+            "Где мои записи.\n"
+            "На сайте открой профиль по своему позывному: там будут аресты, штрафы, вызовы, суды и смены.\n\n"
+            "Логи и поддержка.\n"
+            "Если что-то не работает, открой раздел Поддержка. Лог RagePluginHook.log приложится к обращению, "
+            "а ответ оператора появится в этом же чате.\n\n"
+            "Если ничего не появилось.\n"
+            "Проверь позывной, статус агента и то, что игра была закрыта после смены. Если не помогло — отправь лог."
+        )
+
+    def show_onboarding(self):
+        dlg = tk.Toplevel(self)
+        dlg.title("Добро пожаловать")
+        dlg.geometry("520x560")
+        dlg.configure(bg=BG)
+        dlg.transient(self)
+        dlg.grab_set()
+        tk.Label(dlg, text="Добро пожаловать в LAPD Records", bg=BG, fg=TEXT,
+                 font=("Segoe UI Semibold", 17)).pack(anchor="w", padx=22, pady=(20, 6))
+        tk.Label(dlg, text=self.instruction_text(), bg=BG, fg=TEXT,
+                 font=("Segoe UI", 9), justify="left", wraplength=470).pack(anchor="w", padx=22)
+
+        def done():
+            cfg = read_config()
+            cfg["ONBOARDING_DONE"] = "1"
+            write_config(cfg)
+            dlg.destroy()
+
+        self._button(dlg, "Понятно, начать", done, ACCENT, ACCENT2).pack(fill="x", padx=22, pady=(16, 20))
 
     def _startup_install_plugin(self):
         """Ставит плагин в фоне (не блокирует окно)."""
@@ -951,10 +1140,6 @@ class Launcher(tk.Tk):
             self.after(500, self._animate_hero)
         except Exception:
             pass
-
-    # ── строительные блоки UI ──
-    def _card(self):
-        return tk.Frame(self, bg=CARD, highlightbackground=BORDER, highlightthickness=1)
 
     def _front(self):
         try:
@@ -991,6 +1176,23 @@ class Launcher(tk.Tk):
     def _set_status(self, text, color="#98a1ac"):
         self.status.config(text=text, fg=color)
 
+    def _update_status(self, text=None, fg=None, notes=None, btn_state=None, btn_text=None):
+        if text is not None:
+            self._upd_text = text
+        if fg is not None:
+            self._upd_fg = fg
+        if notes is not None:
+            self._upd_notes_text = notes
+        if hasattr(self, "upd_label") and self.upd_label.winfo_exists():
+            self.upd_label.config(text=self._upd_text, fg=self._upd_fg)
+        if hasattr(self, "upd_notes") and self.upd_notes.winfo_exists():
+            self.upd_notes.config(text=self._upd_notes_text)
+        if hasattr(self, "upd_btn") and self.upd_btn.winfo_exists():
+            if btn_state is not None:
+                self.upd_btn.config(state=btn_state)
+            if btn_text is not None:
+                self.upd_btn.config(text=btn_text)
+
     def _refresh_agent_status(self, schedule=True):
         if getattr(self, "_closing", False):
             return
@@ -1000,6 +1202,12 @@ class Launcher(tk.Tk):
                                     fg=OKGRN if running else MUTED)
         if hasattr(self, "agent_btn"):
             self.agent_btn.config(text="Выключить агент" if running else "Включить агент")
+        if hasattr(self, "nav_agent_state"):
+            self.nav_agent_state.config(text="● агент: включён" if running else "● агент: выключен",
+                                        fg=OKGRN if running else MUTED)
+        if hasattr(self, "home_agent_state"):
+            self.home_agent_state.config(text="● агент включён" if running else "● агент выключен",
+                                         fg=OKGRN if running else MUTED)
         if schedule:
             self.after(4000, self._refresh_agent_status)
 
@@ -1305,31 +1513,32 @@ class Launcher(tk.Tk):
 
         # ЛАУНЧЕР обновляем САМИ сразу: качаем, подменяем, перезапускаемся (без кнопки)
         if info.get("launcher_new"):
-            self.after(0, lambda: (self.upd_label.config(text=f"⬇ обновляю лаунчер до {m.get('launcher')}…", fg="#e3b341"),
-                                   self.upd_notes.config(text=notes),
-                                   self.upd_btn.config(state="disabled")))
+            self.after(0, lambda: self._update_status(
+                text=f"⬇ обновляю лаунчер до {m.get('launcher')}…",
+                fg="#e3b341", notes=notes, btn_state="disabled"))
             ok, msg = update_launcher(m)
             if ok and msg == "restart":
                 self.after(0, lambda: (self._set_status(f"Обновлено до {m.get('launcher')} — перезапуск…", "#7fbf7f"),
                                        self.after(1000, self.destroy)))
                 return
             # авто не вышло (напр. запуск из исходников) — попросим перезапустить
-            self.after(0, lambda: self.upd_label.config(
+            self.after(0, lambda: self._update_status(
                 text=f"● Обновление {m.get('launcher')} — перезапусти лаунчер", fg="#e3b341"))
             return
 
         # агент обновляем САМИ, тихо (безопасно, перезапуск не нужен)
         if info.get("agent_new"):
-            self.after(0, lambda: self.upd_label.config(text="⬇ обновляю агент…", fg="#e3b341"))
+            self.after(0, lambda: self._update_status(text="⬇ обновляю агент…", fg="#e3b341"))
             ok, _ = update_agent(m)
             info["agent_new"] = not ok
             if ok:
-                self.after(0, lambda: (self.upd_label.config(text="✓ Агент обновлён автоматически.", fg=OKGRN),
-                                       self.upd_notes.config(text=notes)))
+                self.after(0, lambda: self._update_status(
+                    text="✓ Агент обновлён автоматически.", fg=OKGRN, notes=notes))
                 return
 
-        self.after(0, lambda: (self.upd_label.config(text="✓ Установлена последняя версия.", fg=OKGRN),
-                               self.upd_notes.config(text=("Что нового: " + notes) if notes else "")))
+        self.after(0, lambda: self._update_status(
+            text="✓ Установлена последняя версия.", fg=OKGRN,
+            notes=("Что нового: " + notes) if notes else ""))
 
     def do_update(self):
         info = getattr(self, "_upd", None)
@@ -1338,7 +1547,7 @@ class Launcher(tk.Tk):
             return
         m = info["manifest"]
         self.upd_btn.config(state="disabled", text="Скачиваю…")
-        prog = lambda p: self.after(0, lambda: self.upd_label.config(text=f"Скачиваю… {int(p*100)}%"))
+        prog = lambda p: self.after(0, lambda: self._update_status(text=f"Скачиваю… {int(p*100)}%"))
 
         def work():
             if info.get("launcher_new"):
@@ -1351,8 +1560,8 @@ class Launcher(tk.Tk):
                 ok, msg = update_agent(m, prog)
             def done():
                 self._set_status(msg, "#7fbf7f" if ok else "#e0a0a0")
-                self.upd_label.config(text="Готово." if ok else "Ошибка обновления.")
-                self.upd_btn.config(state="normal", text="Проверить обновления")
+                self._update_status(text="Готово." if ok else "Ошибка обновления.",
+                                    btn_state="normal", btn_text="Проверить обновления")
             self.after(0, done)
         threading.Thread(target=work, daemon=True).start()
 

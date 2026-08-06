@@ -1,25 +1,65 @@
 # Сборка лаунчера
 
-Лаунчер теперь использует два баннера:
+Лаунчер собирается в режиме `--onedir`, а не `--onefile`.
 
-- `banner_red.png`
-- `banner_blue.png`
+Почему так:
 
-Их нужно либо вшить в PyInstaller, либо положить рядом с новым `LAPD-Records-Launcher.exe`.
+- `--onefile` распаковывает `python314.dll` во временную папку `_MEI...`;
+- у игроков антивирус или очистка temp иногда удаляет DLL до запуска;
+- появляется ошибка `Failed to load Python DLL ... _MEI...\\python314.dll`;
+- `--onedir` кладёт Python DLL рядом с `LAPD-Records-Launcher.exe`, поэтому temp не используется.
 
-Важно: предыдущая сборка включала приватные модули `embedded_token.py` и `gateway_config.py`.
-Не пересобирай релизный `.exe`, если этих файлов нет рядом с `launcher.py`, иначе лаунчер может потерять доступ к шлюзу/токену.
+## Приватные файлы
 
-Пример команды для релизной сборки, когда приватные файлы на месте:
+Перед релизной сборкой рядом с `launcher.py` должны быть локальные приватные файлы:
+
+- `embedded_token.py`
+- `gateway_config.py`
+- `pdcomp_sync.exe`
+
+Их нельзя коммитить. Если их нет, релизный лаунчер потеряет токен/шлюз/агент.
+
+## Команда сборки
 
 ```powershell
-py -m PyInstaller --onefile --windowed --name LAPD-Records-Launcher --distpath launcher/dist --workpath launcher/build --specpath launcher/build --add-data "launcher/banner_red.png;." --add-data "launcher/banner_blue.png;." --add-data "launcher/DispatchOne.MDT.dll;." --add-binary "agent/dist/pdcomp_sync.exe;." --hidden-import embedded_token --hidden-import gateway_config launcher/launcher.py
+py -m PyInstaller --onedir --windowed --name LAPD-Records-Launcher --distpath launcher/dist --workpath launcher/build --specpath launcher/build --add-data "launcher/banner_red.png;." --add-data "launcher/banner_blue.png;." --add-data "launcher/DispatchOne.MDT.dll;." --add-binary "launcher/pdcomp_sync.exe;." --hidden-import embedded_token --hidden-import gateway_config launcher/launcher.py
 ```
 
-После сборки проверь:
+Результат:
+
+- папка `launcher/dist/LAPD-Records-Launcher/`;
+- главный файл `launcher/dist/LAPD-Records-Launcher/LAPD-Records-Launcher.exe`;
+- рядом папка `_internal` с Python DLL и зависимостями.
+
+## Архив для релиза
+
+GitHub Release должен получать архив:
+
+```powershell
+Compress-Archive -Path launcher/dist/LAPD-Records-Launcher/* -DestinationPath launcher/dist/LAPD-Records-Launcher.zip -Force
+```
+
+В `version.json` `launcher_url` должен указывать на:
+
+```text
+https://github.com/osminoog09-star/dispatch-one-records/releases/latest/download/LAPD-Records-Launcher.zip
+```
+
+## Проверка
 
 ```powershell
 python -m py_compile launcher/launcher.py
 ```
 
-И глазами открой `launcher/dist/LAPD-Records-Launcher.exe`: сверху должен быть баннер LAPD с красно-синим эффектом мигалок.
+Затем открыть:
+
+```powershell
+launcher/dist/LAPD-Records-Launcher/LAPD-Records-Launcher.exe
+```
+
+Проверить глазами:
+
+- сверху баннер LAPD с красно-синим эффектом мигалок;
+- слева разделы `Главная`, `Профиль`, `Агент`, `Поддержка`, `Настройки`, `Инструкция`;
+- первый запуск показывает окно `Добро пожаловать`;
+- кнопка `ИГРАТЬ`, чат поддержки, агент и логи работают.

@@ -1,9 +1,9 @@
 {
-  "launcher": "1.4.10",
+  "launcher": "1.4.11",
   "agent": "1.1.1",
   "enabled": true,
   "min_launcher": "1.0.0",
-  "notes": "Агент, автозапуск и логи теперь собраны в одном блоке. По умолчанию агент закрывается вместе с лаунчером.",
-  "launcher_url": "https://github.com/osminoog09-star/dispatch-one-records/releases/latest/download/LAPD-Records-Launcher.exe",
+  "notes": "Лаунчер разнесён по разделам, добавлена инструкция и первый онбординг. Релиз теперь onedir-архив, чтобы не ловить ошибку Python DLL из временной папки.",
+  "launcher_url": "https://github.com/osminoog09-star/dispatch-one-records/releases/latest/download/LAPD-Records-Launcher.zip",
   "agent_url": "https://github.com/osminoog09-star/dispatch-one-records/releases/latest/download/pdcomp_sync.exe"
 }

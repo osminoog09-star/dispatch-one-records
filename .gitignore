@@ -54,6 +54,7 @@ Thumbs.db
 Desktop.ini
 launcher/embedded_token.py
 launcher/pdcomp_sync.exe
+launcher/dist/LAPD-Records-Launcher/
 gateway/.dev.vars
 launcher/gateway_config.py
 discord-webhooks.env

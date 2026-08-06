@@ -20,7 +20,7 @@ import tkinter as tk
 from tkinter import messagebox
 
 APP_NAME = "LAPD Records"
-VERSION = "1.4.11"
+VERSION = "1.4.12"
 GITHUB_REPO = "osminoog09-star/dispatch-one-records"
 # Шлюз приёма данных (Cloudflare Worker) — вшивается при сборке, токена в клиенте нет.
 try:
@@ -783,6 +783,90 @@ def set_autostart(enable):
         return False
 
 
+# ─────────────── полное удаление с компьютера ───────────────
+
+def _safe_in_install_dir(path):
+    try:
+        base = os.path.abspath(INSTALL_DIR)
+        target = os.path.abspath(path)
+        return target == base or target.startswith(base + os.sep)
+    except Exception:
+        return False
+
+
+def _known_shortcuts():
+    names = [
+        "LAPD-Records-Launcher.lnk",
+        "LAPD Records.lnk",
+        "Dispatch One.lnk",
+        "LAPD Records Agent.lnk",
+    ]
+    roots = [
+        os.path.join(os.environ.get("USERPROFILE", os.path.expanduser("~")), "Desktop"),
+        os.path.join(os.environ.get("APPDATA", ""), "Microsoft", "Windows", "Start Menu", "Programs"),
+        os.path.join(os.environ.get("APPDATA", ""), "Microsoft", "Windows", "Start Menu", "Programs", "Startup"),
+    ]
+    result = []
+    for root in roots:
+        for name in names:
+            result.append(os.path.join(root, name))
+    result.append(_startup_lnk())
+    return result
+
+
+def remove_game_plugin(game):
+    if not game:
+        return
+    dll = os.path.join(game, "plugins", "LSPDFR", PLUGIN_DLL)
+    try:
+        if os.path.exists(dll):
+            os.remove(dll)
+            log(f"плагин удалён из игры: {dll}")
+    except Exception:
+        log_exc("remove_game_plugin")
+
+
+def uninstall_local_files(game=None):
+    """Removes shortcuts/plugin now and schedules INSTALL_DIR removal after exit."""
+    try:
+        stop_agent()
+        set_autostart(False)
+        remove_game_plugin(game)
+        for lnk in set(_known_shortcuts()):
+            try:
+                if os.path.exists(lnk):
+                    os.remove(lnk)
+                    log(f"ярлык удалён: {lnk}")
+            except Exception:
+                log_exc("remove shortcut")
+
+        if not _safe_in_install_dir(INSTALL_DIR):
+            return False, "путь установки выглядит небезопасно, удаление остановлено"
+
+        bat = os.path.join(os.environ.get("TEMP", INSTALL_DIR), f"lapd_records_uninstall_{os.getpid()}.bat")
+        script = (
+            "@echo off\r\n"
+            "chcp 65001 >nul\r\n"
+            "timeout /t 2 /nobreak >nul\r\n"
+            f'taskkill /F /IM "{AGENT_EXE}" >nul 2>nul\r\n'
+            ":again\r\n"
+            f'rmdir /s /q "{INSTALL_DIR}" >nul 2>nul\r\n'
+            f'if exist "{INSTALL_DIR}" (\r\n'
+            "  timeout /t 1 /nobreak >nul\r\n"
+            "  goto again\r\n"
+            ")\r\n"
+            'del "%~f0" >nul 2>nul\r\n'
+        )
+        with open(bat, "w", encoding="utf-8") as f:
+            f.write(script)
+        subprocess.Popen(["cmd", "/c", bat], creationflags=0x08000000)
+        log("полное удаление запланировано после закрытия лаунчера")
+        return True, "Лаунчер удалится после закрытия окна"
+    except Exception:
+        log_exc("uninstall_local_files")
+        return False, "не удалось запустить удаление, открой логи"
+
+
 # ─────────────────────── ИНТЕРФЕЙС ───────────────────────
 
 # ── палитра: премиальная тёмная MDT-тема с холодным LAPD-свечением ──
@@ -1068,6 +1152,19 @@ class Launcher(tk.Tk):
         self.upd_btn.pack(fill="x")
         self._button(inner, "Открыть сайт", self.open_site, CARD2, BORDER, small=True).pack(fill="x", pady=(8, 0))
 
+        danger = self._card(self.body)
+        danger.pack(fill="x", pady=(12, 0))
+        din = tk.Frame(danger, bg=CARD)
+        din.pack(fill="x", padx=18, pady=16)
+        tk.Label(din, text="Полное удаление", bg=CARD, fg=REDT,
+                 font=("Segoe UI", 8, "bold")).pack(anchor="w")
+        tk.Label(din, text=("Удалит локальный лаунчер, агент синхронизации, автозапуск, ярлыки, "
+                            "логи и настройки с этого компьютера. Записи на сайте не удаляются."),
+                 bg=CARD, fg=MUTED, font=("Segoe UI", 8), wraplength=500,
+                 justify="left").pack(anchor="w", pady=(3, 10))
+        self._button(din, "Удалить LAPD-Records-Launcher с ПК",
+                     self.full_uninstall, "#5f1f29", "#8b2a36", small=True).pack(fill="x")
+
     def build_help(self):
         self._section_title(self.body, "Инструкция / Как это работает", "")
         card = self._card(self.body)
@@ -1228,6 +1325,26 @@ class Launcher(tk.Tk):
             ok, msg = start_agent()
             self._set_status(msg, "#7fbf7f" if ok else "#e0a0a0")
         self._refresh_agent_status(schedule=False)
+
+    def full_uninstall(self):
+        if not messagebox.askyesno(
+            APP_NAME,
+            "Удалить LAPD-Records-Launcher с этого компьютера?\n\n"
+            "Будут удалены лаунчер, агент, автозапуск, ярлыки, логи и локальные настройки.",
+        ):
+            return
+        if not messagebox.askyesno(
+            APP_NAME,
+            "Последнее подтверждение.\n\n"
+            "После удаления лаунчер закроется. Чтобы вернуть его, нужно снова скачать установщик.",
+        ):
+            return
+        ok, msg = uninstall_local_files(self.game)
+        self._set_status(msg, "#7fbf7f" if ok else "#e0a0a0")
+        if ok:
+            messagebox.showinfo(APP_NAME, "Удаление запущено. Лаунчер сейчас закроется.")
+            self._closing = True
+            self.destroy()
 
     def on_close(self):
         self._closing = True

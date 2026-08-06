@@ -4,6 +4,9 @@ name: Сборка сайта LAPD Records
 on:
   push:
     paths:
+      - ".github/workflows/build-site.yml"
+      - "version.json"
+      - "server/export_static.py"
       - "server/data.db"
       - "server/inbox/**"
       - "server/app/**"
@@ -16,7 +19,7 @@ permissions:
 
 concurrency:
   group: build-site
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   build:
@@ -57,5 +60,6 @@ jobs:
             echo "Изменений нет."
           else
             git commit -m "Автосборка сайта: новые данные из игры"
+            git pull --rebase origin main
             git push
           fi

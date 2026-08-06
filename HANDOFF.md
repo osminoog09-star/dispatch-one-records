@@ -2,6 +2,8 @@
 
 ## Codex note 2026-08-07
 
+- Выполнен полный audit-срез, детали в `SITE_AUDIT_2026-08-07.md`: live `/launcher/` и `/register/` уже ведут на `LAPD-Records-Launcher-Setup.exe`, публичных ZIP-ссылок нет, 115 docs-страниц и 3566 внутренних ссылок проверены, ключевые Flask routes отдают 200, release assets живые.
+- Починен workflow `.github/workflows/build-site.yml`: новые сборки теперь отменяют старые зависшие (`cancel-in-progress: true`), workflow триггерится на собственный файл/`version.json`/`server/export_static.py`, перед push автосборка делает `git pull --rebase origin main`.
 - Лаунчер обновлён до `1.4.12`: в разделе `Настройки` добавлена опасная карточка `Полное удаление`. Она с двойным подтверждением останавливает агент, выключает автозапуск, удаляет ярлыки, пробует убрать `DispatchOne.MDT.dll` из игры, затем через отложенный `.bat` удаляет `%LOCALAPPDATA%\DispatchOne` после закрытия лаунчера. Записи сайта/Supabase не трогает.
 - Публичная установка лаунчера теперь сделана как один файл `LAPD-Records-Launcher-Setup.exe`, как просил пользователь: игрок скачивает setup, запускает его, установщик сам скачивает актуальный пакет лаунчера, ставит его в `%LOCALAPPDATA%\DispatchOne\Launcher`, создаёт ярлыки и запускает `LAPD-Records-Launcher.exe`.
 - `version.json` получил отдельное поле `installer_url`. Страницы `/launcher` и `/register` должны вести именно на `installer_url`.

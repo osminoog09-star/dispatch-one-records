@@ -20,7 +20,7 @@ import tkinter as tk
 from tkinter import messagebox
 
 APP_NAME = "LAPD Records"
-VERSION = "1.4.12"
+VERSION = "1.4.13"
 GITHUB_REPO = "osminoog09-star/dispatch-one-records"
 # Шлюз приёма данных (Cloudflare Worker) — вшивается при сборке, токена в клиенте нет.
 try:
@@ -882,14 +882,18 @@ GREEN   = "#1f8f3a"
 GREEN2  = "#31b45a"
 OKGRN   = "#4dd176"
 REDT    = "#ff5d66"
+WINDOW_W = 860
+WINDOW_MIN_H = 700
+CONTENT_WRAP = 620
 
 
 class Launcher(tk.Tk):
     def __init__(self):
         super().__init__()
         self.title(APP_NAME)
-        self.geometry("760x720")
-        self.resizable(False, False)
+        self.geometry(f"{WINDOW_W}x760")
+        self.minsize(WINDOW_W, WINDOW_MIN_H)
+        self.resizable(True, True)
         self.configure(bg=BG)
         self._closing = False
         self.protocol("WM_DELETE_WINDOW", self.on_close)
@@ -916,7 +920,7 @@ class Launcher(tk.Tk):
 
         # ─── ШАПКА ───
         header = tk.Frame(self, bg=BG)
-        header.pack(fill="x", padx=22, pady=(10 if self._frames else 22, 0))
+        header.pack(fill="x", padx=24, pady=(10 if self._frames else 22, 0))
         if self._frames:
             tk.Label(header, text=f"LAPD Records · лаунчер v{VERSION}", bg=BG, fg=TEXT,
                      font=("Segoe UI Semibold", 13)).pack(anchor="w")
@@ -936,8 +940,8 @@ class Launcher(tk.Tk):
         )
 
         shell = tk.Frame(self, bg=BG)
-        shell.pack(fill="both", expand=True, padx=22, pady=(14, 8))
-        nav = tk.Frame(shell, bg=BG, width=170)
+        shell.pack(fill="both", expand=True, padx=24, pady=(14, 8))
+        nav = tk.Frame(shell, bg=BG, width=185)
         nav.pack(side="left", fill="y", padx=(0, 14))
         nav.pack_propagate(False)
         self.body = tk.Frame(shell, bg=BG)
@@ -959,17 +963,19 @@ class Launcher(tk.Tk):
             b.pack(fill="x", pady=(0, 7))
             self._nav_buttons[key] = b
 
-        tk.Frame(nav, bg=BORDER, height=1).pack(fill="x", pady=(4, 10))
-        self.game_state = tk.Label(nav, bg=BG, fg=OKGRN if self.game else REDT,
+        nav_status = tk.Frame(nav, bg=BG)
+        nav_status.pack(side="bottom", fill="x", pady=(10, 0))
+        tk.Frame(nav_status, bg=BORDER, height=1).pack(fill="x", pady=(0, 10))
+        self.game_state = tk.Label(nav_status, bg=BG, fg=OKGRN if self.game else REDT,
                                    text="● игра найдена" if self.game else "● игра не найдена",
                                    font=("Segoe UI", 8, "bold"), anchor="w")
         self.game_state.pack(fill="x", pady=(0, 6))
-        self.nav_agent_state = tk.Label(nav, bg=BG, fg=MUTED, text="● агент: проверяю",
+        self.nav_agent_state = tk.Label(nav_status, bg=BG, fg=MUTED, text="● агент: проверяю",
                                         font=("Segoe UI", 8, "bold"), anchor="w")
         self.nav_agent_state.pack(fill="x")
 
         self.status = tk.Label(self, text="", bg=BG, fg=MUTED, font=("Segoe UI", 9))
-        self.status.pack(fill="x", padx=22, pady=(0, 8))
+        self.status.pack(fill="x", padx=24, pady=(0, 8))
         self._upd_text = "⟳  проверяю обновления…"
         self._upd_fg = MUTED
         self._upd_notes_text = ""
@@ -1007,7 +1013,7 @@ class Launcher(tk.Tk):
             self.update_idletasks()
             need = self.winfo_reqheight()
             maxh = self.winfo_screenheight() - 90
-            self.geometry("760x%d" % min(max(need, 640), maxh))
+            self.geometry("%dx%d" % (max(self.winfo_width(), WINDOW_W), min(max(need, WINDOW_MIN_H), maxh)))
         except Exception:
             log_exc("_fit_height")
 
@@ -1034,7 +1040,7 @@ class Launcher(tk.Tk):
                  font=("Segoe UI Semibold", 18)).pack(anchor="w")
         if subtitle:
             tk.Label(parent, text=subtitle, bg=BG, fg=MUTED,
-                     font=("Segoe UI", 9), wraplength=500, justify="left").pack(anchor="w", pady=(3, 14))
+                     font=("Segoe UI", 9), wraplength=CONTENT_WRAP, justify="left").pack(anchor="w", pady=(3, 14))
 
     def _card(self, parent=None):
         return tk.Frame(parent or self, bg=CARD, highlightbackground=BORDER, highlightthickness=1)
@@ -1062,7 +1068,7 @@ class Launcher(tk.Tk):
         self._button(inner, "▶   ИГРАТЬ", self.play, GREEN, GREEN2, big=True).pack(fill="x")
         tk.Label(inner, text="Лаунчер поставит плагин, запустит агент и откроет игру через Vinewood. "
                              "Если Vinewood не найден, попробует RagePluginHook.",
-                 bg=CARD, fg=MUTED, font=("Segoe UI", 8), wraplength=500,
+                 bg=CARD, fg=MUTED, font=("Segoe UI", 8), wraplength=CONTENT_WRAP,
                  justify="left").pack(anchor="w", pady=(10, 0))
 
     def build_profile(self):
@@ -1076,7 +1082,7 @@ class Launcher(tk.Tk):
         self.callsign = self._field(inner, "Позывной", cfg.get("CALLSIGN", ""))
         self.nickname = self._field(inner, "Имя офицера", cfg.get("NICKNAME", ""))
         tk.Label(inner, text="Пример правильно: 7-WILLIAM-1. Неправильно: 7 - WILIAM - 1.",
-                 bg=CARD, fg=MUTED, font=("Segoe UI", 8), wraplength=500,
+                 bg=CARD, fg=MUTED, font=("Segoe UI", 8), wraplength=CONTENT_WRAP,
                  justify="left").pack(anchor="w", pady=(8, 0))
         self._button(inner, "Сохранить и прописать в игру",
                      self.save_identity, ACCENT, ACCENT2).pack(fill="x", pady=(12, 0))
@@ -1097,7 +1103,7 @@ class Launcher(tk.Tk):
         self.agent_state.pack(side="right")
         tk.Label(ag, text="Можно запускать игру как угодно: через кнопку ИГРАТЬ, Vinewood или Steam. "
                           "Агент сам найдёт сессию, если включён.",
-                 bg=CARD, fg=MUTED, font=("Segoe UI", 8), wraplength=500,
+                 bg=CARD, fg=MUTED, font=("Segoe UI", 8), wraplength=CONTENT_WRAP,
                  justify="left").pack(anchor="w", pady=(6, 10))
         tk.Checkbutton(ag, text="  Автозапуск с Windows",
                        variable=self.autostart_var, command=self.toggle_autostart,
@@ -1124,7 +1130,7 @@ class Launcher(tk.Tk):
         self._button(inner, "Открыть чат поддержки", self.support_chat, ACCENT, ACCENT2).pack(fill="x")
         tk.Label(inner, text="Чат приложит RagePluginHook.log, если он найден. "
                              "Оператор увидит описание, лог и сможет ответить прямо в тикете.",
-                 bg=CARD, fg=MUTED, font=("Segoe UI", 8), wraplength=500,
+                 bg=CARD, fg=MUTED, font=("Segoe UI", 8), wraplength=CONTENT_WRAP,
                  justify="left").pack(anchor="w", pady=(10, 0))
         self._button(inner, "Открыть папку логов", self.open_logs, CARD2, BORDER, small=True).pack(fill="x", pady=(12, 0))
 
@@ -1139,14 +1145,14 @@ class Launcher(tk.Tk):
                  font=("Segoe UI", 8, "bold")).pack(anchor="w")
         tk.Label(inner, text=self.game or "GTA V не найдена автоматически",
                  bg=CARD, fg=TEXT if self.game else REDT, font=("Segoe UI", 9),
-                 wraplength=500, justify="left").pack(anchor="w", pady=(3, 12))
+                 wraplength=CONTENT_WRAP, justify="left").pack(anchor="w", pady=(3, 12))
         tk.Label(inner, text="Обновления", bg=CARD, fg=MUTED,
                  font=("Segoe UI", 8, "bold")).pack(anchor="w")
         self.upd_label = tk.Label(inner, text=self._upd_text, bg=CARD, fg=self._upd_fg,
                                   font=("Segoe UI", 9), anchor="w")
         self.upd_label.pack(fill="x", pady=(3, 0))
         self.upd_notes = tk.Label(inner, text=self._upd_notes_text, bg=CARD, fg=MUTED, font=("Segoe UI", 8),
-                                  anchor="w", justify="left", wraplength=500)
+                                  anchor="w", justify="left", wraplength=CONTENT_WRAP)
         self.upd_notes.pack(fill="x", pady=(2, 10))
         self.upd_btn = self._button(inner, "Проверить обновления", self.do_update, CARD2, BORDER, small=True)
         self.upd_btn.pack(fill="x")
@@ -1160,7 +1166,7 @@ class Launcher(tk.Tk):
                  font=("Segoe UI", 8, "bold")).pack(anchor="w")
         tk.Label(din, text=("Удалит локальный лаунчер, агент синхронизации, автозапуск, ярлыки, "
                             "логи и настройки с этого компьютера. Записи на сайте не удаляются."),
-                 bg=CARD, fg=MUTED, font=("Segoe UI", 8), wraplength=500,
+                 bg=CARD, fg=MUTED, font=("Segoe UI", 8), wraplength=CONTENT_WRAP,
                  justify="left").pack(anchor="w", pady=(3, 10))
         self._button(din, "Удалить LAPD-Records-Launcher с ПК",
                      self.full_uninstall, "#5f1f29", "#8b2a36", small=True).pack(fill="x")
@@ -1170,9 +1176,19 @@ class Launcher(tk.Tk):
         card = self._card(self.body)
         card.pack(fill="both", expand=True)
         inner = tk.Frame(card, bg=CARD)
-        inner.pack(fill="both", expand=True, padx=18, pady=16)
-        tk.Label(inner, text=self.instruction_text(), bg=CARD, fg=TEXT,
-                 font=("Segoe UI", 9), justify="left", wraplength=510).pack(anchor="w")
+        inner.pack(fill="both", expand=True, padx=16, pady=14)
+        text_wrap = tk.Frame(inner, bg=BORDER)
+        text_wrap.pack(fill="both", expand=True)
+        txt = tk.Text(text_wrap, bg=CARD, fg=TEXT, relief="flat", bd=0,
+                      highlightthickness=0, insertbackground=ACCENT,
+                      font=("Segoe UI", 9), wrap="word", padx=14, pady=12,
+                      height=20, spacing1=2, spacing3=8)
+        sb = tk.Scrollbar(text_wrap, command=txt.yview)
+        txt.configure(yscrollcommand=sb.set)
+        txt.insert("1.0", self.instruction_text())
+        txt.configure(state="disabled", cursor="arrow")
+        txt.pack(side="left", fill="both", expand=True, padx=(1, 0), pady=1)
+        sb.pack(side="right", fill="y", padx=(0, 1), pady=1)
 
     def instruction_text(self):
         return (
@@ -1206,8 +1222,15 @@ class Launcher(tk.Tk):
         dlg.grab_set()
         tk.Label(dlg, text="Добро пожаловать в LAPD Records", bg=BG, fg=TEXT,
                  font=("Segoe UI Semibold", 17)).pack(anchor="w", padx=22, pady=(20, 6))
-        tk.Label(dlg, text=self.instruction_text(), bg=BG, fg=TEXT,
-                 font=("Segoe UI", 9), justify="left", wraplength=470).pack(anchor="w", padx=22)
+        box = tk.Frame(dlg, bg=BORDER)
+        box.pack(fill="both", expand=True, padx=22, pady=(0, 8))
+        txt = tk.Text(box, bg=CARD, fg=TEXT, relief="flat", bd=0,
+                      highlightthickness=0, font=("Segoe UI", 9),
+                      wrap="word", padx=14, pady=12, height=18,
+                      spacing1=2, spacing3=8)
+        txt.insert("1.0", self.instruction_text())
+        txt.configure(state="disabled", cursor="arrow")
+        txt.pack(fill="both", expand=True, padx=1, pady=1)
 
         def done():
             cfg = read_config()

@@ -1,9 +1,9 @@
 {
-  "launcher": "1.4.12",
+  "launcher": "1.4.13",
   "agent": "1.1.1",
   "enabled": true,
   "min_launcher": "1.0.0",
-  "notes": "Лаунчер 1.4.12: в настройках появилась кнопка полного удаления с ПК. Она убирает лаунчер, агент, автозапуск, ярлыки, логи и локальные настройки; записи на сайте не трогает.",
+  "notes": "Лаунчер 1.4.13: исправлено обрезание текста в разделах, окно стало шире и аккуратнее, инструкция теперь прокручивается, обновлён премиальный LAPD-баннер с эффектом мигалок.",
   "installer_url": "https://github.com/osminoog09-star/dispatch-one-records/releases/latest/download/LAPD-Records-Launcher-Setup.exe",
   "launcher_url": "https://github.com/osminoog09-star/dispatch-one-records/releases/latest/download/LAPD-Records-Launcher.zip",
   "agent_url": "https://github.com/osminoog09-star/dispatch-one-records/releases/latest/download/pdcomp_sync.exe"

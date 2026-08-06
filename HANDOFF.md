@@ -1,5 +1,9 @@
 # LAPD Records handoff
 
+## Codex note 2026-08-06
+
+- Hotfix скачивания: старая публичная ссылка `releases/download/v1.0/LAPD-Records-Launcher.exe` больше не рабочая. Новый лаунчер распространяется как onedir-архив `LAPD-Records-Launcher.zip`, чтобы убрать ошибку `_MEI/python314.dll`; страница регистрации, `docs/register` и памятка для игроков переведены на актуальную ссылку `releases/latest/download/LAPD-Records-Launcher.zip`.
+
 Последнее обновление: 2026-08-06, Codex.
 
 ## Текущее состояние

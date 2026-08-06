@@ -136,6 +136,7 @@ AI подключать вторым этапом, только после уд�
 - Если Pages кэширует старую версию, сверять raw GitHub и ждать обновления Actions/Pages.
 - После изменения `launcher/launcher.py` пересобрать `launcher/dist/LAPD-Records-Launcher.exe` и проверить, что в комплект попали `pdcomp_sync.exe`, `DispatchOne.MDT.dll` и нужные изображения баннера.
 - Не считать изменение лаунчера доставленным игрокам, пока не обновлён exe/manifest.
+- ВАЖНО (баг у игроков): ошибка `Failed to load Python DLL '…\_MEI…\python314.dll' … LoadLibrary: Не найден указанный модуль` лечится только пересборкой в `--onedir` (без `--onefile`). В onefile PyInstaller распаковывает `python314.dll` во временную `_MEI…`, антивирус/очистка temp её сносит → лаунчер не стартует. onedir кладёт DLL рядом с exe, в temp ничего не распаковывается. Детали и полный бриф переделки лаунчера: `launcher/REDESIGN_BRIEF.md`; распределение работ Claude↔Codex: `ROADMAP_TEAM.md`.
 
 ## Definition of done
 

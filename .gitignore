@@ -55,6 +55,7 @@ Desktop.ini
 launcher/embedded_token.py
 launcher/pdcomp_sync.exe
 launcher/dist/LAPD-Records-Launcher/
+launcher/dist/LAPD-Records-Launcher-Setup.exe
 gateway/.dev.vars
 launcher/gateway_config.py
 discord-webhooks.env

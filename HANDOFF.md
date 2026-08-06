@@ -1,9 +1,16 @@
 # LAPD Records handoff
 
+## Codex note 2026-08-07
+
+- Публичная установка лаунчера теперь сделана как один файл `LAPD-Records-Launcher-Setup.exe`, как просил пользователь: игрок скачивает setup, запускает его, установщик сам скачивает актуальный пакет лаунчера, ставит его в `%LOCALAPPDATA%\DispatchOne\Launcher`, создаёт ярлыки и запускает `LAPD-Records-Launcher.exe`.
+- `version.json` получил отдельное поле `installer_url`. Страницы `/launcher` и `/register` должны вести именно на `installer_url`.
+- `version.json.launcher_url` НЕ менять на setup-файл: это внутренний ZIP-пакет `LAPD-Records-Launcher.zip`, который нужен самому лаунчеру для автообновления onedir-сборки.
+- Release asset `LAPD-Records-Launcher-Setup.exe` загружен в GitHub Release `v1.0`; `releases/latest/download/LAPD-Records-Launcher-Setup.exe` проверен, отдаёт 200.
+
 ## Codex note 2026-08-06
 
-- Добавлена отдельная публичная страница `/launcher` под название `LAPD-Records-Launcher`: она показывает версию, кнопку скачивания архива, короткую инструкцию, возможности лаунчера и быстрые ссылки. В меню сайта пункт называется “Лаунчер”, главная кнопка “Скачать лаунчер” ведёт на `/launcher`, а не напрямую на GitHub.
-- Hotfix скачивания: старая публичная ссылка `releases/download/v1.0/LAPD-Records-Launcher.exe` больше не рабочая. Новый лаунчер распространяется как onedir-архив `LAPD-Records-Launcher.zip`, чтобы убрать ошибку `_MEI/python314.dll`; страница регистрации, `docs/register` и памятка для игроков переведены на актуальную ссылку `releases/latest/download/LAPD-Records-Launcher.zip`.
+- Добавлена отдельная публичная страница `/launcher` под название `LAPD-Records-Launcher`: она показывает версию, кнопку скачивания, короткую инструкцию, возможности лаунчера и быстрые ссылки. В меню сайта пункт называется “Лаунчер”, главная кнопка “Скачать лаунчер” ведёт на `/launcher`, а не напрямую на GitHub.
+- Историческая заметка: старая публичная ссылка `releases/download/v1.0/LAPD-Records-Launcher.exe` больше не рабочая. С 2026-08-07 игрокам выдаётся `LAPD-Records-Launcher-Setup.exe`; onedir-архив `LAPD-Records-Launcher.zip` оставлен только для установщика и автообновления.
 
 Последнее обновление: 2026-08-06, Codex.
 

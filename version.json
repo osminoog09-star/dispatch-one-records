@@ -3,7 +3,8 @@
   "agent": "1.1.1",
   "enabled": true,
   "min_launcher": "1.0.0",
-  "notes": "Лаунчер разнесён по разделам, добавлена инструкция и первый онбординг. Релиз теперь onedir-архив, чтобы не ловить ошибку Python DLL из временной папки.",
+  "notes": "Лаунчер разнесён по разделам, добавлена инструкция и первый онбординг. Игроки скачивают один установщик, а технический onedir-архив используется только установщиком и автообновлением.",
+  "installer_url": "https://github.com/osminoog09-star/dispatch-one-records/releases/latest/download/LAPD-Records-Launcher-Setup.exe",
   "launcher_url": "https://github.com/osminoog09-star/dispatch-one-records/releases/latest/download/LAPD-Records-Launcher.zip",
   "agent_url": "https://github.com/osminoog09-star/dispatch-one-records/releases/latest/download/pdcomp_sync.exe"
 }

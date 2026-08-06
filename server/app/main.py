@@ -55,6 +55,7 @@ def launcher_page():
     version_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
                                 "version.json")
     launcher = {"launcher": "1.4.11",
+                "installer_url": "https://github.com/osminoog09-star/dispatch-one-records/releases/latest/download/LAPD-Records-Launcher-Setup.exe",
                 "launcher_url": "https://github.com/osminoog09-star/dispatch-one-records/releases/latest/download/LAPD-Records-Launcher.zip",
                 "agent": "1.1.1"}
     try:

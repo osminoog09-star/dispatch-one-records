@@ -33,7 +33,7 @@ py -m PyInstaller --onedir --windowed --name LAPD-Records-Launcher --distpath la
 
 ## Архив для релиза
 
-GitHub Release должен получать архив:
+GitHub Release должен получать архив для внутреннего автообновления лаунчера:
 
 ```powershell
 Compress-Archive -Path launcher/dist/LAPD-Records-Launcher/* -DestinationPath launcher/dist/LAPD-Records-Launcher.zip -Force
@@ -45,10 +45,45 @@ Compress-Archive -Path launcher/dist/LAPD-Records-Launcher/* -DestinationPath la
 https://github.com/osminoog09-star/dispatch-one-records/releases/latest/download/LAPD-Records-Launcher.zip
 ```
 
+Это технический пакет. Его не нужно давать игрокам как основной способ установки.
+
+## Один установщик для игроков
+
+Для сайта и Discord нужен отдельный файл:
+
+```text
+LAPD-Records-Launcher-Setup.exe
+```
+
+Он скачивает архив лаунчера сам, устанавливает его в:
+
+```text
+%LOCALAPPDATA%\DispatchOne\Launcher
+```
+
+создаёт ярлыки и запускает `LAPD-Records-Launcher.exe`.
+
+Сборка установщика:
+
+```powershell
+python -m py_compile launcher/setup_installer.py
+py -m PyInstaller --onefile --windowed --name LAPD-Records-Launcher-Setup --distpath launcher/dist --workpath launcher/build/setup --specpath launcher/build --clean launcher/setup_installer.py
+```
+
+В `version.json` `installer_url` должен указывать на:
+
+```text
+https://github.com/osminoog09-star/dispatch-one-records/releases/latest/download/LAPD-Records-Launcher-Setup.exe
+```
+
+Публичная страница `/launcher` и регистрация должны вести именно на `installer_url`,
+а не на `launcher_url`.
+
 ## Проверка
 
 ```powershell
-python -m py_compile launcher/launcher.py
+python -m py_compile launcher/launcher.py launcher/setup_installer.py
+python launcher/setup_installer.py --dry-run
 ```
 
 Затем открыть:

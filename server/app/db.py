@@ -512,15 +512,72 @@ _TIMELINE_TITLE = {
     "Probation ordered": "Назначен испытательный срок",
     "Bench warrant issued": "Выдан ордер на арест",
     "Appeal filed": "Подана апелляция",
+    "Appeal resolved": "Апелляция рассмотрена",
 }
 # фразы — от длинных к коротким (порядок важен)
 _PHRASES = [
-    ("The defendant was found not responsible on this line.", "По этому пункту вина не установлена."),
-    ("The citation was heard and resolved in favor of the defendant.", "Дело по штрафу решено в пользу защиты."),
     ("The court accepted this line and assessed the applicable fine. Appearance was required for the hearing.",
      "Суд принял этот пункт и назначил штраф. Явка на слушание была обязательна."),
+    ("Responsibility was found on this citation line. Correction eligibility remains noted for fine handling.",
+     "Ответственность по пункту установлена. Возможность исправления отмечена для расчёта штрафа."),
+    ("Full payment received by the court clerk; the hearing was vacated.",
+     "Судебный секретарь получил полную оплату; слушание отменено."),
+    ("Paid without contest before the hearing date.",
+     "Оплачено без оспаривания до даты слушания."),
+    ("Officer testimony / citation record / Fix-It / correction status",
+     "Показания офицера / запись штрафа / исправимое нарушение / статус исправления"),
+    ("The citation line was sustained and the listed fine was entered.",
+     "Пункт штрафа подтверждён, указанная сумма внесена."),
+    ("The court sustained the citation and entered the listed fines.",
+     "Суд подтвердил штраф и внёс указанные суммы."),
+    ("The citation was upheld at hearing and costs were assessed.",
+     "Штраф подтверждён на слушании, издержки назначены."),
+    ("The court closed this citation line without a fine.",
+     "Суд закрыл этот пункт без штрафа."),
+    ("No separate supporting evidence was submitted for this count.",
+     "Отдельные подтверждающие материалы по этому пункту не представлены."),
+    ("This count was sustained after hearing.",
+     "Пункт подтверждён после слушания."),
+    ("Probation terms: obey laws, report as directed, submit to searches when required.",
+     "Условия испытательного срока: соблюдать законы, являться по требованию, проходить проверки при необходимости."),
+    ("Probation terms: obey laws, report as directed",
+     "Условия испытательного срока: соблюдать законы, являться по требованию"),
+    ("Failure to pay court-ordered citation fines",
+     "Неуплата назначенных судом штрафов"),
+    ("Appeal denied; original disposition affirmed.",
+     "Апелляция отклонена; исходное решение оставлено в силе."),
+    ("Defense filed notice of appeal.",
+     "Защита подала уведомление об апелляции."),
+    ("Motion to dismiss granted", "Ходатайство о прекращении удовлетворено"),
+    ("Defense appeal denied", "Апелляция защиты отклонена"),
+    ("No contest (fine paid)", "Без оспаривания (штраф оплачен)"),
+    ("Probation grant:", "Испытательный срок:"),
+    ("United States v.", "США против"),
+    ("The defendant was found not responsible on this line.", "По этому пункту вина не установлена."),
+    ("The citation was heard and resolved in favor of the defendant.", "Дело по штрафу решено в пользу защиты."),
     ("Responsibility was found on the filed citation; the fine order is now active.",
      "По штрафу установлена ответственность; постановление о штрафе действует."),
+    ("Alternate Public Defender", "альтернативный общественный защитник"),
+    ("Private Counsel", "частный защитник"),
+    ("Self-Represented", "самостоятельная защита"),
+    ("Public Defender", "общественный защитник"),
+    ("Deputy City Attorney", "заместитель городского прокурора"),
+    ("City Attorney", "городской прокурор"),
+    ("Traffic Commissioner", "комиссар по дорожным делам"),
+    ("Motion to dismiss", "ходатайство о прекращении"),
+    ("Failure to pay", "неуплата"),
+    ("No contest", "без оспаривания"),
+    ("Fine paid", "штраф оплачен"),
+    ("Fix-It", "исправимое нарушение"),
+    ("fine reduced", "штраф снижен"),
+    ("license suspension review", "пересмотр приостановки прав"),
+    ("appeal denied", "апелляция отклонена"),
+    ("affirmed", "решение оставлено в силе"),
+    ("felony probation", "испытательный срок по тяжкому делу"),
+    ("Not Guilty", "Не виновен"),
+    ("Not виновен", "Не виновен"),
+    ("not guilty", "не виновен"),
+    ("guilty", "виновен"),
     ("No sentence (case notguilty)", "Без наказания (не виновен)"),
     ("mandatory appearance tracked", "обязательная явка учтена"),
     ("case file opened", "дело заведено"),
@@ -784,6 +841,7 @@ def _row_to_court(r):
     d["timeline"] = timeline
 
     d["sentence"] = localize(d.get("sentence"))
+    d["source"] = localize(d.get("source"))
     d["plea"] = localize(d.get("plea"))
     d["notes"] = localize(d.get("notes"))
     d["judge"] = localize(d.get("judge"))
@@ -970,6 +1028,9 @@ def case_file(name):
             for key in ("zone", "location", "callout_type", "description", "notes"):
                 if d.get(key):
                     d[key] = localize_narrative(d[key])
+            for key in ("sentence", "source", "plea", "judge", "prosecutor", "defense", "courtroom"):
+                if d.get(key):
+                    d[key] = localize(d[key])
             items.append({"kind": kind, "id": d["id"], "when": d.get(time_key) or "",
                           "title": title_fn(d), "row": d})
 

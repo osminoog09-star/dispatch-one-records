@@ -85,7 +85,7 @@
         </tbody>
       </table>
     {% else %}
-      <p class="empty">Задержаний пока нет — появятся после игры.</p>
+      <p class="empty">Задержаний пока нет<span class="empty-sub">Появятся после игры.</span></p>
     {% endif %}
 
     <h2>Статистика по районам</h2>
@@ -99,7 +99,7 @@
         {% endfor %}
       </div>
     {% else %}
-      <p class="empty">Данных по районам пока нет.</p>
+      <p class="empty">Данных по районам пока нет<span class="empty-sub">Появятся, когда будут записи с местами.</span></p>
     {% endif %}
   </section>
 
@@ -122,7 +122,7 @@
         </tbody>
       </table>
     {% else %}
-      <p class="empty">Офицеров пока нет.</p>
+      <p class="empty">Офицеров пока нет<span class="empty-sub">Появятся после первой смены.</span></p>
     {% endif %}
 
     {% if evidence %}

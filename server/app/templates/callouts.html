@@ -67,6 +67,6 @@
   </tbody>
 </table>
 {% else %}
-  <p class="empty">Вызовов пока нет.{% if not static_export %} Добавь первый через форму выше.{% endif %}</p>
+  <p class="empty">Вызовов пока нет<span class="empty-sub">Появятся после игры.{% if not static_export %} Или добавь первый через форму выше.{% endif %}</span></p>
 {% endif %}
 {% endblock %}

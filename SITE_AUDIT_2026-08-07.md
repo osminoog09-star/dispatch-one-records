@@ -55,6 +55,8 @@
   - добавлены триггеры на `.github/workflows/build-site.yml`, `version.json`, `server/export_static.py`;
   - `concurrency.cancel-in-progress` включён, чтобы новые сборки отменяли старые зависшие;
   - перед `git push` в автосборке добавлен `git pull --rebase origin main`, чтобы снизить шанс push-конфликта.
+- Локальный токен релизов не имеет прав `actions:write`: отмена/ручной запуск workflow через API даёт 403.
+  Если нужно срочно проверить автосборку, запусти `Сборка сайта LAPD Records` вручную в GitHub UI.
 
 ## Что не трогать
 

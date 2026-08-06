@@ -39,7 +39,7 @@
             <a href="{{ url_for('dictionaries') }}">Справочники</a>
           </div>
         </div>
-        <a class="{% if request.endpoint == 'register' %}active{% endif %}" href="{{ url_for('register') }}">Регистрация</a>
+        <a class="{% if request.endpoint in ['launcher_page','register'] %}active{% endif %}" href="{{ url_for('launcher_page') }}">Лаунчер</a>
         <span id="auth-slot" class="auth-slot"></span>
       </nav>
     </div>

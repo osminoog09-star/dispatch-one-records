@@ -50,6 +50,23 @@ def index():
                            evidence=db.evidence_catalog())
 
 
+@app.route("/launcher")
+def launcher_page():
+    version_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
+                                "version.json")
+    launcher = {"launcher": "1.4.11",
+                "launcher_url": "https://github.com/osminoog09-star/dispatch-one-records/releases/latest/download/LAPD-Records-Launcher.zip",
+                "agent": "1.1.1"}
+    try:
+        with open(version_path, encoding="utf-8") as f:
+            launcher.update(json.load(f))
+    except Exception:
+        pass
+    return render_template("launcher.html", launcher=launcher,
+                           summary=db.summary_counts(),
+                           activity=db.activity_periods())
+
+
 # Районы Лос-Сантоса и округа Блэйн — позиции на схеме карты (x, y, радиус)
 MAP_ZONES = [
     # ===== ОКРУГ БЛЭЙН (север) =====

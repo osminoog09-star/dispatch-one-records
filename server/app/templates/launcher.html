@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block title %}LAPD-Records-Launcher{% endblock %}
+{% block content %}
+
+<section class="launcher-hero">
+  <div class="launcher-copy">
+    <div class="eyebrow">LAPD RECORDS · LAUNCHER</div>
+    <h1>LAPD-Records-Launcher</h1>
+    <p>Один вход для патруля: профиль офицера, запуск игры, агент синхронизации,
+      поддержка и обновления в одном аккуратном окне.</p>
+    <div class="launcher-actions">
+      <a class="btn primary" href="{{ launcher.launcher_url }}">Скачать LAPD-Records-Launcher</a>
+      <a class="btn" href="{{ url_for('register') }}">Открыть инструкцию</a>
+    </div>
+  </div>
+  <div class="launcher-card launcher-status-card">
+    <span class="status-dot on"></span>
+    <div>
+      <b>Актуальная версия</b>
+      <strong>v{{ launcher.launcher }}</strong>
+      <small>Windows · архив ZIP · Python не нужен</small>
+    </div>
+  </div>
+</section>
+
+<section class="launcher-grid">
+  <article class="launcher-card">
+    <span>01</span>
+    <h2>Скачай архив</h2>
+    <p>Загрузи <span class="cs">LAPD-Records-Launcher.zip</span> с этой страницы и распакуй папку в любое удобное место.</p>
+  </article>
+  <article class="launcher-card">
+    <span>02</span>
+    <h2>Запусти лаунчер</h2>
+    <p>Открой <span class="cs">LAPD-Records-Launcher.exe</span>. Если Windows спросит разрешение администратора, согласись.</p>
+  </article>
+  <article class="launcher-card">
+    <span>03</span>
+    <h2>Заполни профиль</h2>
+    <p>Укажи позывной, имя офицера и Discord. Затем нажми “Сохранить и прописать в игру”.</p>
+  </article>
+  <article class="launcher-card">
+    <span>04</span>
+    <h2>Играй и синхронизируй</h2>
+    <p>Лаунчер запускает игру и агент. Записи попадают на сайт автоматически после синхронизации.</p>
+  </article>
+</section>
+
+<section class="launcher-panel">
+  <div>
+    <div class="section-kicker">Что внутри</div>
+    <h2>LAPD-Records-Launcher делает всё нужное сам</h2>
+  </div>
+  <div class="launcher-feature-grid">
+    <div><b>Профиль офицера</b><small>позывной, имя и Discord в одном месте</small></div>
+    <div><b>Агент синхронизации</b><small>ручное включение, выключение и логи</small></div>
+    <div><b>Запуск игры</b><small>Vinewood / Steam без лишних действий</small></div>
+    <div><b>Поддержка</b><small>быстрый переход к тикету и логам</small></div>
+    <div><b>Автообновление</b><small>лаунчер сам проверяет свежую версию</small></div>
+    <div><b>Инструкция</b><small>понятные шаги всегда под рукой</small></div>
+  </div>
+</section>
+
+<section class="launcher-panel launcher-split">
+  <div>
+    <div class="section-kicker">Если не запускается</div>
+    <h2>Важно после скачивания</h2>
+    <p class="muted">Новый лаунчер распространяется архивом, чтобы рядом с <span class="cs">.exe</span> лежали нужные файлы.
+      Так мы убрали ошибку <span class="cs">Failed to load Python DLL ... python314.dll</span>.</p>
+  </div>
+  <div class="launcher-note">
+    <b>Не запускай старую ссылку на `.exe`</b>
+    <p>Используй только актуальный архив <span class="cs">LAPD-Records-Launcher.zip</span>.
+      Старые Discord-ссылки на <span class="cs">LAPD-Records-Launcher.exe</span> могут вести в 404.</p>
+  </div>
+</section>
+
+<section class="launcher-panel">
+  <div class="section-kicker">Быстрые переходы</div>
+  <div class="launcher-links">
+    <a class="btn" href="{{ url_for('index') }}">Главная база</a>
+    <a class="btn" href="{{ url_for('game_map') }}">Карта зон</a>
+    <a class="btn" href="{{ url_for('staff') }}">Личный состав</a>
+    <a class="btn" href="{{ url_for('tickets') }}">Поддержка</a>
+  </div>
+</section>
+
+{% endblock %}

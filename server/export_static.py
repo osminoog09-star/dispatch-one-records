@@ -50,7 +50,8 @@ def main():
     os.makedirs(OUT, exist_ok=True)
 
     urls = ["/", "/map", "/cases", "/court", "/shifts", "/citations", "/warnings",
-            "/callouts", "/files", "/vehicles", "/tickets", "/admin", "/dictionaries", "/register", "/staff"]
+            "/callouts", "/files", "/vehicles", "/tickets", "/admin", "/dictionaries",
+            "/launcher", "/register", "/staff"]
     for c in db.list_cases(500):
         urls.append(f"/case/{c['id']}")
     for c in db.list_court_cases(500):

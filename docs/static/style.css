@@ -658,3 +658,52 @@ main.wrap{padding-top:34px}
 @media(max-width:640px){
   .admin-hero,.admin-grid,.admin-tools,.admin-add,.admin-user{grid-template-columns:1fr}
 }
+
+.launcher-hero{position:relative;overflow:hidden;display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:22px;
+  align-items:stretch;margin-bottom:18px;padding:28px;border:1px solid rgba(96,165,250,.26);border-radius:22px;
+  background:linear-gradient(135deg,rgba(21,42,76,.88),rgba(10,15,23,.96) 56%,rgba(7,38,30,.76));
+  box-shadow:var(--shadow),0 0 46px -28px #3b82f6}
+.launcher-hero::before{content:"";position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(120deg,rgba(96,165,250,.08),transparent 34%),
+    repeating-linear-gradient(135deg,rgba(147,197,253,.08) 0 1px,transparent 1px 30px)}
+.launcher-copy,.launcher-status-card{position:relative;z-index:1}
+.launcher-copy h1{margin:6px 0 10px;font-size:42px;line-height:1;letter-spacing:0}
+.launcher-copy p{max-width:640px;margin:0;color:#aab6c6;font-size:16px}
+.launcher-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:22px}
+.launcher-actions .btn{width:auto}
+.launcher-card{position:relative;overflow:hidden;padding:16px;border:1px solid rgba(111,161,226,.22);border-radius:16px;
+  background:linear-gradient(180deg,rgba(20,25,34,.94),rgba(10,15,23,.96));box-shadow:var(--shadow)}
+.launcher-status-card{display:flex;align-items:center;gap:14px;align-self:center;min-height:160px}
+.launcher-status-card .status-dot{width:14px;height:14px;flex-shrink:0;box-shadow:0 0 20px rgba(34,197,94,.55)}
+.launcher-status-card b,.launcher-status-card small{display:block;color:#9aa8ba}
+.launcher-status-card strong{display:block;margin:4px 0;color:#fff;font-size:34px;line-height:1}
+.launcher-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
+.launcher-card span{display:inline-flex;align-items:center;justify-content:center;min-width:34px;height:26px;padding:0 9px;
+  border-radius:999px;background:rgba(59,130,246,.16);border:1px solid rgba(96,165,250,.28);
+  color:#93c5fd;font-size:12px;font-weight:900;letter-spacing:.08em}
+.launcher-card h2{margin:12px 0 6px;font-size:17px}
+.launcher-card p{margin:0;color:#9aa8ba;font-size:13px;line-height:1.45}
+.launcher-panel{margin:16px 0;padding:18px;border:1px solid rgba(89,111,139,.3);border-radius:18px;
+  background:linear-gradient(180deg,rgba(20,27,39,.84),rgba(9,14,22,.94));box-shadow:var(--shadow)}
+.launcher-panel h2{margin:3px 0 6px;font-size:22px}
+.launcher-feature-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px}
+.launcher-feature-grid div{padding:13px;border:1px solid rgba(111,161,226,.18);border-radius:12px;background:rgba(10,15,23,.54)}
+.launcher-feature-grid b,.launcher-feature-grid small{display:block}
+.launcher-feature-grid small{margin-top:4px;color:#97a3b3;font-size:12px}
+.launcher-split{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:18px;align-items:center}
+.launcher-note{padding:14px;border:1px solid rgba(245,158,11,.28);border-radius:14px;
+  background:linear-gradient(180deg,rgba(67,45,10,.28),rgba(10,15,23,.84))}
+.launcher-note b{display:block;color:#fde68a}
+.launcher-note p{margin:6px 0 0;color:#c7ced8;font-size:13px}
+.launcher-links{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.launcher-links .btn{width:auto}
+@media(max-width:900px){
+  .launcher-hero,.launcher-split{grid-template-columns:1fr}
+  .launcher-grid,.launcher-feature-grid{grid-template-columns:repeat(2,1fr)}
+}
+@media(max-width:620px){
+  .launcher-hero{padding:20px;border-radius:16px}
+  .launcher-copy h1{font-size:32px}
+  .launcher-actions .btn,.launcher-links .btn{width:100%;text-align:center}
+  .launcher-grid,.launcher-feature-grid{grid-template-columns:1fr}
+}

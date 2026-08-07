@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Вход лаунчера · LAPD</title>
+  <meta name="generator" content="Dispatch One Records — osminoog09-star">
+  <meta name="author" content="LAPD Records · osminoog09-star.github.io/dispatch-one-records">
+  <link rel="stylesheet" href="/dispatch-one-records/static/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="wrap">
+      <a class="brand" href="/dispatch-one-records/">
+        <span class="badge">★</span> LAPD <span class="sub">Реестр</span>
+      </a>
+      <input type="checkbox" id="nav-toggle-cb" class="nav-toggle-cb" hidden>
+      <label class="nav-toggle" for="nav-toggle-cb" aria-label="Открыть меню">☰</label>
+      <nav>
+        <a class="" href="/dispatch-one-records/">Главная</a>
+        <div class="nav-drop">
+          <span class="nav-drop-t">Записи ▾</span>
+          <div class="nav-menu">
+            <a href="/dispatch-one-records/files">Дела</a>
+            <a href="/dispatch-one-records/cases">Задержания</a>
+            <a href="/dispatch-one-records/citations">Штрафы</a>
+            <a href="/dispatch-one-records/warnings">Предупреждения</a>
+            <a href="/dispatch-one-records/callouts">Вызовы</a>
+            <a href="/dispatch-one-records/vehicles">Транспорт</a>
+          </div>
+        </div>
+        <a class="" href="/dispatch-one-records/court">Суд</a>
+        <a class="" href="/dispatch-one-records/shifts">Смены</a>
+        <a class="" href="/dispatch-one-records/map">Карта</a>
+        <a class="" href="/dispatch-one-records/staff">Персонал</a>
+        <a class="" href="/dispatch-one-records/support">Поддержка</a>
+        <div class="nav-drop admin-only" style="display:none">
+          <span class="nav-drop-t">Админ ▾</span>
+          <div class="nav-menu">
+            <a href="/dispatch-one-records/admin">Управление</a>
+            <a href="/dispatch-one-records/tickets">Тикеты</a>
+            <a href="/dispatch-one-records/dictionaries">Справочники</a>
+          </div>
+        </div>
+        <a class="" href="/dispatch-one-records/launcher">Лаунчер</a>
+        <span id="auth-slot" class="auth-slot"></span>
+      </nav>
+    </div>
+  </header>
+
+  <main class="wrap">
+    
+      
+    
+    
+<section class="card launcher-login-card">
+  <div class="section-kicker">LAPD RECORDS</div>
+  <h1>Вход в лаунчер через Discord</h1>
+  <p class="muted" id="ll-status">Подготавливаю единый аккаунт для сайта и лаунчера…</p>
+  <button class="btn primary" id="ll-login" type="button" style="display:none">Войти через Discord</button>
+  <p class="muted small">После входа браузер вернёт сессию только локальному лаунчеру на этом компьютере.</p>
+</section>
+
+<script>
+(function () {
+  const qs = new URLSearchParams(location.search);
+  const port = qs.get("port");
+  const state = qs.get("state");
+  const status = document.getElementById("ll-status");
+  const btn = document.getElementById("ll-login");
+
+  function setStatus(text) { status.textContent = text; }
+
+  async function run() {
+    if (!port || !state || !/^\d+$/.test(port)) {
+      setStatus("Эта страница открывается только из LAPD Records Launcher.");
+      return;
+    }
+    if (!window.lapd || !window.lapd.sb) {
+      setTimeout(run, 80);
+      return;
+    }
+    const sb = window.lapd.sb;
+    const sessionResult = await sb.auth.getSession();
+    const session = sessionResult && sessionResult.data && sessionResult.data.session;
+    if (!session) {
+      btn.style.display = "";
+      btn.onclick = async function () {
+        btn.disabled = true;
+        setStatus("Открываю Discord…");
+        await sb.auth.signInWithOAuth({
+          provider: "discord",
+          options: { redirectTo: location.href },
+        });
+      };
+      setStatus("Нажми кнопку и войди через Discord.");
+      return;
+    }
+
+    const user = session.user || {};
+    const meta = user.user_metadata || {};
+    const name = meta.full_name || meta.name || meta.preferred_username || user.email || "";
+    const out = new URLSearchParams({
+      state: state,
+      access_token: session.access_token || "",
+      refresh_token: session.refresh_token || "",
+      expires_at: String(session.expires_at || ""),
+      user_id: user.id || "",
+      provider_id: meta.provider_id || meta.sub || "",
+      email: user.email || "",
+      name: name,
+      avatar_url: meta.avatar_url || meta.picture || "",
+    });
+    setStatus("Discord подтверждён. Возвращаю вход в лаунчер…");
+    location.replace("http://127.0.0.1:" + port + "/callback?" + out.toString());
+  }
+
+  run().catch(function (err) {
+    setStatus("Ошибка входа: " + (err && err.message ? err.message : err));
+  });
+})();
+</script>
+
+  </main>
+
+  <footer class="wrap foot">
+    LAPD Реестр · данные синхронизируются из игры<br>
+    <span class="foot-attr">© Реестр Dispatch One · система разработана для LAPD ·
+      осминоог09-star</span>
+  </footer>
+  <!-- Dispatch One Records — исходная система: github.com/osminoog09-star/dispatch-one-records
+       Копирование оформления и кода без разрешения запрещено. build:20260807 -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/dispatch-one-records/static/supa.js"></script>
+</body>
+</html>

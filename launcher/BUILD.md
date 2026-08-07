@@ -49,7 +49,7 @@ https://github.com/osminoog09-star/dispatch-one-records/releases/latest/download
 
 ## Один установщик для игроков
 
-Для сайта и Discord нужен отдельный файл:
+Для сайта и игроков нужен отдельный файл:
 
 ```text
 LAPD-Records-Launcher-Setup.exe
@@ -78,6 +78,18 @@ https://github.com/osminoog09-star/dispatch-one-records/releases/latest/download
 
 Публичная страница `/launcher` и регистрация должны вести именно на `installer_url`,
 а не на `launcher_url`.
+
+## Discord-вход лаунчера
+
+Лаунчер не хранит Discord-секреты и не запускает Discord-бота. Вход работает через сайт:
+
+1. лаунчер поднимает временный callback на `127.0.0.1`;
+2. открывает `/launcher-login/?port=...&state=...`;
+3. сайт выполняет обычный Supabase OAuth через Discord;
+4. после входа сайт возвращает Supabase session локальному лаунчеру.
+
+Для полного связывания сайта и лаунчера в базе нужно прогнать актуальный
+`supabase/unified_tickets.sql`: он добавляет `user_id` и RLS-чтение по `auth.uid()`.
 
 ## Проверка
 

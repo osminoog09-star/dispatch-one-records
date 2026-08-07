@@ -129,6 +129,13 @@
   const dateRu = s => s ? new Date(s).toLocaleString("ru-RU", { dateStyle: "short", timeStyle: "short" }) : "";
   let logSummary = "";
 
+  async function currentUserId() {
+    try {
+      const s = window.lapd && window.lapd.session ? await window.lapd.session() : null;
+      return s && s.user && s.user.id ? s.user.id : "";
+    } catch (e) { return ""; }
+  }
+
   function scrubLog(text) {
     return text
       .replace(/(token|apikey|authorization|webhook|service_role)[=:]\s*\S+/gi, "$1=[скрыто]")
@@ -161,11 +168,13 @@
 
   async function loadTickets() {
     const box = document.getElementById("sp-list");
-    let result = await sb.from("tickets")
-      .select("id,title,status,created_at,updated_at,callsign,source")
-      .eq("client_id", clientId())
+    const uid = await currentUserId();
+    let query = sb.from("tickets")
+      .select("id,title,status,created_at,updated_at,callsign,source,user_id")
       .order("updated_at", { ascending: false })
       .limit(20);
+    query = uid ? query.or("client_id.eq." + clientId() + ",user_id.eq." + uid) : query.eq("client_id", clientId());
+    let result = await query;
     if (result.error) {
       result = await sb.from("tickets")
         .select("id,title,status,created_at,updated_at,callsign")
@@ -205,6 +214,7 @@
     }
     btn.disabled = true;
     result.textContent = "Создаю обращение…";
+    const uid = await currentUserId();
     const ticketPayload = {
       title: title.slice(0, 120),
       body,
@@ -216,7 +226,8 @@
       created_by: name || callsign || "Игрок сайта",
       source: "site",
     };
-    const ticket = await insertSafe("tickets", ticketPayload, ["source"]);
+    if (uid) ticketPayload.user_id = uid;
+    const ticket = await insertSafe("tickets", ticketPayload, ["source", "user_id"]);
     if (ticket.error) {
       result.textContent = "Не получилось создать тикет: " + ticket.error.message;
       btn.disabled = false;
@@ -229,7 +240,8 @@
       author: name || callsign || "Игрок сайта",
       source: "site",
     };
-    await insertSafe("ticket_comments", commentPayload, ["source"]);
+    if (uid) commentPayload.user_id = uid;
+    await insertSafe("ticket_comments", commentPayload, ["source", "user_id"]);
     document.getElementById("sp-title").value = "";
     document.getElementById("sp-body").value = "";
     result.textContent = "Тикет #" + ticket.data.id + " создан. Оператор ответит здесь или в чате лаунчера.";

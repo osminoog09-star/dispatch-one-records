@@ -13,6 +13,19 @@
 
 ## Codex note 2026-08-07
 
+### Unified Discord account for site and launcher
+
+Добавлен первый срез единого аккаунта без возврата Discord-бота тикетов:
+
+- Сайт получил маршрут `/launcher-login` и шаблон `server/app/templates/launcher_login.html`.
+- Лаунчер открывает `/launcher-login/?port=...&state=...`; сайт выполняет обычный Supabase OAuth через Discord и возвращает сессию на локальный `http://127.0.0.1:<port>/callback`.
+- В `launcher/launcher.py` добавлены хранение `AUTH_ACCESS_TOKEN`, `AUTH_REFRESH_TOKEN`, `AUTH_USER_ID`, Discord-имени/email и кнопки “Войти через Discord” / “Выйти” в разделе “Профиль”.
+- Supabase REST/Storage запросы лаунчера используют user access token, если он живой; старый `x-client-id` сохранён как fallback для уже созданных тикетов.
+- `/support` на сайте теперь пишет `user_id` в тикеты/комментарии, если пользователь вошёл через Discord, и читает обращения по `client_id` или `user_id`.
+- `supabase/chat.sql` и `supabase/unified_tickets.sql` добавляют `user_id` и RLS-чтение `user_id = auth.uid()`.
+
+Важно: чтобы общий аккаунт полностью связал сайт и лаунчер в продовой базе, прогнать обновлённый `supabase/unified_tickets.sql` в Supabase SQL Editor. До этого всё работает по старому `client_id`.
+
 ### Unified support tickets
 
 Сделан безопасный срез единой поддержки без Discord-бота:

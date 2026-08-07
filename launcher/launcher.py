@@ -16,11 +16,14 @@ import shutil
 import zipfile
 import urllib.request
 import urllib.error
+import urllib.parse
+import http.server
+import socketserver
 import tkinter as tk
 from tkinter import messagebox
 
 APP_NAME = "LAPD Records"
-VERSION = "1.4.14"
+VERSION = "1.4.15"
 GITHUB_REPO = "osminoog09-star/dispatch-one-records"
 # Шлюз приёма данных (Cloudflare Worker) — вшивается при сборке, токена в клиенте нет.
 try:
@@ -32,6 +35,7 @@ except Exception:
 # Supabase — чат-поддержка (publishable-ключ публичный, безопасен в клиенте)
 SUPABASE_URL = "https://gwvqfiwdbviwoimvhdvg.supabase.co"
 SUPABASE_KEY = "sb_publishable_gkXQmLngTvpGQfLFDk2YnA_nuv0krkk"
+SITE_URL = "https://osminoog09-star.github.io/dispatch-one-records"
 INSTALL_DIR = os.path.join(os.environ.get("LOCALAPPDATA", os.path.expanduser("~")), "DispatchOne")
 CONFIG = os.path.join(INSTALL_DIR, "sync-config.ini")
 LOG_DIR = os.path.join(INSTALL_DIR, "logs")
@@ -161,13 +165,133 @@ def _client_id():
     return cid
 
 
+def _auth_name(cfg=None):
+    cfg = cfg or read_config()
+    return cfg.get("DISCORD_NAME") or cfg.get("DISCORD_EMAIL") or cfg.get("DISCORD_ID") or ""
+
+
+def _clear_auth(cfg=None):
+    cfg = cfg or read_config()
+    for key in (
+        "AUTH_ACCESS_TOKEN", "AUTH_REFRESH_TOKEN", "AUTH_EXPIRES_AT", "AUTH_LOGGED_AT",
+        "AUTH_USER_ID", "DISCORD_ID", "DISCORD_NAME", "DISCORD_EMAIL", "DISCORD_AVATAR",
+    ):
+        cfg.pop(key, None)
+    write_config(cfg)
+
+
+def _refresh_auth_if_needed(cfg=None):
+    """Обновляет Supabase session, если access_token скоро истечёт."""
+    cfg = cfg or read_config()
+    refresh = cfg.get("AUTH_REFRESH_TOKEN")
+    exp = int(float(cfg.get("AUTH_EXPIRES_AT") or 0))
+    if not refresh or not cfg.get("AUTH_ACCESS_TOKEN"):
+        return cfg
+    if exp and exp - int(time.time()) > 120:
+        return cfg
+    try:
+        url = f"{SUPABASE_URL}/auth/v1/token?grant_type=refresh_token"
+        body = json.dumps({"refresh_token": refresh}).encode("utf-8")
+        req = urllib.request.Request(url, data=body, method="POST")
+        req.add_header("apikey", SUPABASE_KEY)
+        req.add_header("Content-Type", "application/json")
+        with urllib.request.urlopen(req, timeout=20) as r:
+            data = json.loads(r.read().decode("utf-8") or "{}")
+        if data.get("access_token"):
+            cfg["AUTH_ACCESS_TOKEN"] = data["access_token"]
+            cfg["AUTH_REFRESH_TOKEN"] = data.get("refresh_token") or refresh
+            cfg["AUTH_EXPIRES_AT"] = str(data.get("expires_at") or (int(time.time()) + int(data.get("expires_in") or 3600)))
+            write_config(cfg)
+            log("Discord-сессия лаунчера обновлена")
+    except Exception:
+        log_exc("refresh_auth")
+    return cfg
+
+
+def _auth_bearer():
+    cfg = _refresh_auth_if_needed()
+    exp = int(float(cfg.get("AUTH_EXPIRES_AT") or 0))
+    if cfg.get("AUTH_ACCESS_TOKEN") and (not exp or exp > int(time.time())):
+        return cfg["AUTH_ACCESS_TOKEN"]
+    return SUPABASE_KEY
+
+
+def _store_launcher_session(params):
+    cfg = read_config()
+    token = params.get("access_token", [""])[0]
+    if not token:
+        raise RuntimeError("сайт не вернул access_token")
+    cfg["AUTH_ACCESS_TOKEN"] = token
+    cfg["AUTH_REFRESH_TOKEN"] = params.get("refresh_token", [""])[0]
+    cfg["AUTH_EXPIRES_AT"] = params.get("expires_at", [""])[0] or str(int(time.time()) + 3600)
+    cfg["AUTH_LOGGED_AT"] = str(int(time.time()))
+    cfg["AUTH_USER_ID"] = params.get("user_id", [""])[0]
+    cfg["DISCORD_ID"] = params.get("provider_id", [""])[0] or cfg["AUTH_USER_ID"]
+    cfg["DISCORD_EMAIL"] = params.get("email", [""])[0]
+    cfg["DISCORD_NAME"] = params.get("name", [""])[0] or cfg["DISCORD_EMAIL"] or cfg["DISCORD_ID"]
+    cfg["DISCORD_AVATAR"] = params.get("avatar_url", [""])[0]
+    write_config(cfg)
+    return cfg
+
+
+def _launcher_login_callback(timeout=180):
+    """Поднимает localhost callback и возвращает (url, event, result, server)."""
+    state = f"{int(time.time())}-{os.getpid()}"
+    done = threading.Event()
+    result = {}
+
+    class Handler(http.server.BaseHTTPRequestHandler):
+        def log_message(self, fmt, *args):
+            return
+
+        def do_GET(self):
+            parsed = urllib.parse.urlparse(self.path)
+            if parsed.path != "/callback":
+                self.send_error(404)
+                return
+            params = urllib.parse.parse_qs(parsed.query)
+            if params.get("state", [""])[0] != state:
+                result["error"] = "Неверный state входа. Попробуй ещё раз."
+            elif params.get("error"):
+                result["error"] = params.get("error_description", params.get("error"))[0]
+            else:
+                result["params"] = params
+            done.set()
+            html = (
+                "<!doctype html><meta charset='utf-8'>"
+                "<body style='font-family:Segoe UI;background:#070b12;color:#edf5ff;padding:32px'>"
+                "<h2>Вход выполнен</h2><p>Можно вернуться в LAPD Records Launcher.</p></body>"
+            )
+            self.send_response(200)
+            self.send_header("Content-Type", "text/html; charset=utf-8")
+            self.end_headers()
+            self.wfile.write(html.encode("utf-8"))
+
+    server = socketserver.TCPServer(("127.0.0.1", 0), Handler)
+    server.timeout = 1
+    port = server.server_address[1]
+    url = f"{SITE_URL}/launcher-login/?port={port}&state={urllib.parse.quote(state)}"
+
+    def serve():
+        stop_at = time.time() + timeout
+        while time.time() < stop_at and not done.is_set():
+            server.handle_request()
+        if not done.is_set():
+            result["error"] = "Время входа истекло. Открой вход ещё раз."
+            done.set()
+        server.server_close()
+
+    threading.Thread(target=serve, daemon=True).start()
+    return url, done, result
+
+
 def _sb(path, method="GET", body=None, prefer=None):
-    """Запрос к Supabase REST с publishable-ключом и заголовкомx-client-id."""
+    """Запрос к Supabase REST с publishable-ключом и заголовком x-client-id."""
     url = f"{SUPABASE_URL}/rest/v1/{path}"
     data = json.dumps(body).encode("utf-8") if body is not None else None
     req = urllib.request.Request(url, data=data, method=method)
     req.add_header("apikey", SUPABASE_KEY)
-    req.add_header("Authorization", "Bearer " + SUPABASE_KEY)
+    req.add_header("Authorization", "Bearer " + _auth_bearer())
     req.add_header("Content-Type", "application/json")
     req.add_header("x-client-id", _client_id())
     if prefer:
@@ -193,6 +317,7 @@ def sb_create_ticket(title):
     payload = {
         "title": title[:120] or "Обращение",
         "client_id": _client_id(),
+        "user_id": cfg.get("AUTH_USER_ID") or None,
         "callsign": cfg.get("CALLSIGN", ""),
         "created_by": cfg.get("NICKNAME") or cfg.get("CALLSIGN", "") or "Игрок",
         "category": "support",
@@ -201,9 +326,10 @@ def sb_create_ticket(title):
     try:
         _, rows = _sb("tickets", "POST", payload, prefer="return=representation")
     except urllib.error.HTTPError:
-        # Старые базы без unified_tickets.sql не знают source/category.
+        # Старые базы без unified_tickets.sql не знают source/category/user_id.
         payload.pop("source", None)
         payload.pop("category", None)
+        payload.pop("user_id", None)
         _, rows = _sb("tickets", "POST", payload, prefer="return=representation")
     return rows[0]["id"] if rows else None
 
@@ -213,6 +339,7 @@ def sb_add_comment(ticket_id, body, attachment_url=None):
     payload = {
         "ticket_id": ticket_id,
         "client_id": _client_id(),
+        "user_id": cfg.get("AUTH_USER_ID") or None,
         "body": body,
         "author": cfg.get("NICKNAME") or cfg.get("CALLSIGN", "") or "Игрок",
         "attachment_url": attachment_url,
@@ -222,6 +349,7 @@ def sb_add_comment(ticket_id, body, attachment_url=None):
         _sb("ticket_comments", "POST", payload)
     except urllib.error.HTTPError:
         payload.pop("source", None)
+        payload.pop("user_id", None)
         _sb("ticket_comments", "POST", payload)
 
 
@@ -248,7 +376,7 @@ def sb_upload(name, data_bytes, content_type):
         url = f"{SUPABASE_URL}/storage/v1/object/support/{name}"
         req = urllib.request.Request(url, data=data_bytes, method="POST")
         req.add_header("apikey", SUPABASE_KEY)
-        req.add_header("Authorization", "Bearer " + SUPABASE_KEY)
+        req.add_header("Authorization", "Bearer " + _auth_bearer())
         req.add_header("Content-Type", content_type)
         req.add_header("x-upsert", "true")
         with urllib.request.urlopen(req, timeout=60) as r:
@@ -1086,10 +1214,79 @@ class Launcher(tk.Tk):
                  bg=CARD, fg=MUTED, font=("Segoe UI", 8), wraplength=CONTENT_WRAP,
                  justify="left").pack(anchor="w", pady=(10, 0))
 
+    def login_discord(self):
+        self._set_status("Открываю Discord-вход в браузере…", "#98a1ac")
+        try:
+            url, done, result = _launcher_login_callback()
+            os.startfile(url)
+        except Exception as e:
+            log_exc("login_discord_start")
+            messagebox.showerror(APP_NAME, f"Не удалось открыть вход: {e}")
+            return
+
+        def wait_login():
+            done.wait()
+            err = result.get("error")
+            if err:
+                self.after(0, lambda: self._set_status("Discord-вход не выполнен: " + err, "#e0a0a0"))
+                return
+            try:
+                cfg = _store_launcher_session(result.get("params") or {})
+                name = _auth_name(cfg) or "Discord"
+                log(f"Discord-вход лаунчера: {name}")
+                self.after(0, lambda: (
+                    self._set_status("Discord подключён: " + name, "#7fbf7f"),
+                    self.show_section("profile"),
+                ))
+            except Exception as e:
+                log_exc("login_discord_store")
+                self.after(0, lambda: self._set_status("Discord-вход не сохранён: " + str(e), "#e0a0a0"))
+
+        threading.Thread(target=wait_login, daemon=True).start()
+
+    def logout_discord(self):
+        if not messagebox.askyesno(APP_NAME, "Выйти из Discord-аккаунта в лаунчере?"):
+            return
+        _clear_auth()
+        self._set_status("Discord-аккаунт отключён в лаунчере.", "#98a1ac")
+        self.show_section("profile")
+
     def build_profile(self):
         cfg = read_config()
         self._section_title(self.body, "Профиль офицера",
                             "Позывной и имя должны совпадать с ростером сервера, иначе записи могут уйти на модерацию.")
+        auth_card = self._card(self.body)
+        auth_card.pack(fill="x", pady=(0, 12))
+        auth = tk.Frame(auth_card, bg=CARD)
+        auth.pack(fill="x", padx=18, pady=14)
+        tk.Label(auth, text="Единый аккаунт", bg=CARD, fg=MUTED,
+                 font=("Segoe UI", 8, "bold")).pack(anchor="w")
+        name = _auth_name(cfg)
+        self.discord_state = tk.Label(
+            auth,
+            text=("✓ Discord: " + name) if name else "Discord не подключён",
+            bg=CARD, fg=OKGRN if name else MUTED,
+            font=("Segoe UI Semibold", 10), anchor="w",
+        )
+        self.discord_state.pack(fill="x", pady=(4, 8))
+        row = tk.Frame(auth, bg=CARD)
+        row.pack(fill="x")
+        self.discord_btn = self._button(
+            row,
+            "Сменить Discord" if name else "Войти через Discord",
+            self.login_discord,
+            ACCENT,
+            ACCENT2,
+            small=True,
+        )
+        self.discord_btn.pack(side="left", fill="x", expand=True)
+        if name:
+            self._button(row, "Выйти", self.logout_discord, CARD2, BORDER, small=True).pack(
+                side="left", fill="x", expand=True, padx=(8, 0))
+        tk.Label(auth, text="Этот же Discord используется на сайте. Позывной ниже остаётся игровым профилем для pdComp.",
+                 bg=CARD, fg=MUTED, font=("Segoe UI", 8), wraplength=CONTENT_WRAP,
+                 justify="left").pack(anchor="w", pady=(8, 0))
+
         card = self._card(self.body)
         card.pack(fill="x")
         inner = tk.Frame(card, bg=CARD)
@@ -1211,7 +1408,8 @@ class Launcher(tk.Tk):
             "LAPD Records — лаунчер для GTA V LSPDFR. Он ставит плагин учёта, запускает игру "
             "через Vinewood и синхронизирует полицейскую активность на сайт.\n\n"
             "Профиль.\n"
-            "Впиши позывной и имя офицера. Позывной должен точно совпадать с ростером сервера: "
+            "Войди через Discord, чтобы сайт и лаунчер использовали один аккаунт. Затем впиши позывной "
+            "и имя офицера. Позывной должен точно совпадать с ростером сервера: "
             "например 7-WILLIAM-1, без лишних пробелов и ошибок.\n\n"
             "Агент.\n"
             "pdcomp_sync.exe — фоновая программа. Она ловит игру, читает pdComp и отправляет данные "

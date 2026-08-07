@@ -68,6 +68,12 @@ def launcher_page():
                            activity=db.activity_periods())
 
 
+@app.route("/launcher-login")
+def launcher_login():
+    """Мост входа: сайт авторизует Discord через Supabase и отдаёт сессию локальному лаунчеру."""
+    return render_template("launcher_login.html")
+
+
 # Районы Лос-Сантоса и округа Блэйн — позиции на схеме карты (x, y, радиус)
 MAP_ZONES = [
     # ===== ОКРУГ БЛЭЙН (север) =====

@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block title %}Вход лаунчера{% endblock %}
+{% block content %}
+<section class="card launcher-login-card">
+  <div class="section-kicker">LAPD RECORDS</div>
+  <h1>Вход в лаунчер через Discord</h1>
+  <p class="muted" id="ll-status">Подготавливаю единый аккаунт для сайта и лаунчера…</p>
+  <button class="btn primary" id="ll-login" type="button" style="display:none">Войти через Discord</button>
+  <p class="muted small">После входа браузер вернёт сессию только локальному лаунчеру на этом компьютере.</p>
+</section>
+
+<script>
+(function () {
+  const qs = new URLSearchParams(location.search);
+  const port = qs.get("port");
+  const state = qs.get("state");
+  const status = document.getElementById("ll-status");
+  const btn = document.getElementById("ll-login");
+
+  function setStatus(text) { status.textContent = text; }
+
+  async function run() {
+    if (!port || !state || !/^\d+$/.test(port)) {
+      setStatus("Эта страница открывается только из LAPD Records Launcher.");
+      return;
+    }
+    if (!window.lapd || !window.lapd.sb) {
+      setTimeout(run, 80);
+      return;
+    }
+    const sb = window.lapd.sb;
+    const sessionResult = await sb.auth.getSession();
+    const session = sessionResult && sessionResult.data && sessionResult.data.session;
+    if (!session) {
+      btn.style.display = "";
+      btn.onclick = async function () {
+        btn.disabled = true;
+        setStatus("Открываю Discord…");
+        await sb.auth.signInWithOAuth({
+          provider: "discord",
+          options: { redirectTo: location.href },
+        });
+      };
+      setStatus("Нажми кнопку и войди через Discord.");
+      return;
+    }
+
+    const user = session.user || {};
+    const meta = user.user_metadata || {};
+    const name = meta.full_name || meta.name || meta.preferred_username || user.email || "";
+    const out = new URLSearchParams({
+      state: state,
+      access_token: session.access_token || "",
+      refresh_token: session.refresh_token || "",
+      expires_at: String(session.expires_at || ""),
+      user_id: user.id || "",
+      provider_id: meta.provider_id || meta.sub || "",
+      email: user.email || "",
+      name: name,
+      avatar_url: meta.avatar_url || meta.picture || "",
+    });
+    setStatus("Discord подтверждён. Возвращаю вход в лаунчер…");
+    location.replace("http://127.0.0.1:" + port + "/callback?" + out.toString());
+  }
+
+  run().catch(function (err) {
+    setStatus("Ошибка входа: " + (err && err.message ? err.message : err));
+  });
+})();
+</script>
+{% endblock %}

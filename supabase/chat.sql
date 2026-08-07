@@ -5,8 +5,10 @@
 -- ============================================================
 
 alter table public.tickets         add column if not exists client_id text;
+alter table public.tickets         add column if not exists user_id uuid references auth.users(id) on delete set null;
 alter table public.tickets         add column if not exists callsign text;
 alter table public.ticket_comments add column if not exists client_id text;
+alter table public.ticket_comments add column if not exists user_id uuid references auth.users(id) on delete set null;
 alter table public.ticket_comments add column if not exists from_admin boolean default false;
 alter table public.ticket_comments add column if not exists attachment_url text;
 
@@ -23,12 +25,14 @@ create policy tcom_insert on public.ticket_comments
 drop policy if exists tickets_read on public.tickets;
 create policy tickets_read on public.tickets for select using (
   public.is_admin()
+  or user_id = auth.uid()
   or client_id = ((current_setting('request.headers', true))::json ->> 'x-client-id')
 );
 
 drop policy if exists tcom_read on public.ticket_comments;
 create policy tcom_read on public.ticket_comments for select using (
   public.is_admin()
+  or user_id = auth.uid()
   or client_id = ((current_setting('request.headers', true))::json ->> 'x-client-id')
 );
 

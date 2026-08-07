@@ -1,9 +1,9 @@
 {
-  "launcher": "1.4.14",
+  "launcher": "1.4.15",
   "agent": "1.1.1",
   "enabled": true,
   "min_launcher": "1.0.0",
-  "notes": "Лаунчер 1.4.14: исправлен плагин учёта DispatchOne.MDT — раньше он не загружался в игре из-за конфликта загрузки, теперь работает. Обновление ставится само при запуске.",
+  "notes": "Лаунчер 1.4.15: добавлен вход через Discord для единого аккаунта сайта и лаунчера. Discord-бот тикетов не используется; поддержка остаётся через сайт и лаунчер.",
   "installer_url": "https://github.com/osminoog09-star/dispatch-one-records/releases/latest/download/LAPD-Records-Launcher-Setup.exe",
   "launcher_url": "https://github.com/osminoog09-star/dispatch-one-records/releases/latest/download/LAPD-Records-Launcher.zip",
   "agent_url": "https://github.com/osminoog09-star/dispatch-one-records/releases/latest/download/pdcomp_sync.exe"

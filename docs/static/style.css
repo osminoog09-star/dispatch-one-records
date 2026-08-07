@@ -432,9 +432,6 @@ h3{font-size:14px;margin:0 0 .5em;color:var(--muted);text-transform:uppercase;le
 .callout-form button{margin-top:8px}
 @media(max-width:700px){.callout-form .cf-row{grid-template-columns:1fr}}
 
-/* меню — перенос при нехватке места */
-.topbar .wrap{flex-wrap:wrap;height:auto;min-height:58px;padding-top:8px;padding-bottom:8px}
-nav{display:flex;flex-wrap:wrap;gap:2px 0}
 /* таймлайн дела */
 .timeline{position:relative;margin-top:10px}
 .tl-item{display:flex;gap:14px;padding:0 0 4px}
@@ -515,7 +512,8 @@ main a.cs,main a[href]:not(.btn):not(.chip):not(.tag):hover{color:var(--accent2)
 .foot{text-align:center}
 
 /* ---- компактное меню с выпадашками ---- */
-nav{align-items:center}
+nav{display:flex;flex-wrap:wrap;align-items:center}
+.nav-toggle{display:none}   /* гамбургер виден только на мобиле (см. @media) */
 .nav-drop{position:relative;display:inline-block}
 .nav-drop-t{color:var(--muted);padding:7px 12px;border-radius:9px;cursor:pointer;
   display:inline-block;font-size:14px;transition:background .15s,color .15s}
@@ -530,6 +528,28 @@ nav{align-items:center}
 /* фикс: выпадашка не пропадает при движении курсора к пунктам */
 .nav-menu{top:100%}
 .nav-drop::after{content:"";position:absolute;left:0;top:100%;width:100%;height:10px}
+
+/* мобильная шапка: гамбургер + разворот меню плоским списком (чекбокс-хак, без JS).
+   Ниже десктопных nav-правил, чтобы по порядку каскада выигрывать на узких экранах. */
+@media(max-width:760px){
+  .topbar .wrap{flex-wrap:wrap;height:auto;min-height:58px;padding-top:8px;padding-bottom:8px}
+  .nav-toggle{display:inline-flex;align-items:center;justify-content:center;
+    width:44px;height:38px;margin-left:auto;border:1px solid var(--border);border-radius:10px;
+    background:var(--surface2);color:var(--text);font-size:20px;line-height:1;cursor:pointer;
+    -webkit-tap-highlight-color:transparent}
+  nav{display:none;flex-basis:100%;flex-direction:column;align-items:stretch;gap:2px;padding:8px 0 4px}
+  .nav-toggle-cb:checked ~ nav{display:flex}
+  nav>a,.nav-drop-t{display:block;margin:0;padding:11px 12px;border-radius:9px;font-size:15px}
+  /* выпадашки разворачиваются плоским списком — доступны по тапу, без hover */
+  .nav-drop{display:block;position:static}
+  .nav-drop-t{color:var(--text);font-weight:600;cursor:default}
+  .nav-drop::after{display:none}
+  .nav-menu{position:static;display:flex;box-shadow:none;border:0;background:none;
+    padding:0 0 6px 10px;min-width:0}
+  .nav-menu a{padding:9px 12px}
+  .auth-slot{display:block;width:100%;margin:6px 0 0;padding:9px 0 2px;
+    border-left:0;border-top:1px solid var(--border)}
+}
 
 /* ============ РЕДИЗАЙН ОСНОВНЫХ ЭКРАНОВ ============ */
 body{

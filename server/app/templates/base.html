@@ -14,6 +14,8 @@
       <a class="brand" href="{{ url_for('index') }}">
         <span class="badge">★</span> {{ community }} <span class="sub">Реестр</span>
       </a>
+      <input type="checkbox" id="nav-toggle-cb" class="nav-toggle-cb" hidden>
+      <label class="nav-toggle" for="nav-toggle-cb" aria-label="Открыть меню">☰</label>
       <nav>
         <a class="{% if request.endpoint == 'index' %}active{% endif %}" href="{{ url_for('index') }}">Главная</a>
         <div class="nav-drop">

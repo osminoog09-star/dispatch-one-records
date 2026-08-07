@@ -3,7 +3,7 @@
   "agent": "1.1.1",
   "enabled": true,
   "min_launcher": "1.0.0",
-  "notes": "Лаунчер 1.4.15: добавлен вход через Discord для единого аккаунта сайта и лаунчера. Discord-бот тикетов не используется; поддержка остаётся через сайт и лаунчер.",
+  "notes": "Новый лаунчер LAPD Records: скачай LAPD-Records-Launcher-Setup.exe, войди через Discord, проверь позывной и запускай игру через новый лаунчер. Старые ZIP-версии лучше не использовать. Агент теперь можно включать и выключать прямо из лаунчера, а поддержка привязывается к твоему аккаунту.",
   "installer_url": "https://github.com/osminoog09-star/dispatch-one-records/releases/latest/download/LAPD-Records-Launcher-Setup.exe",
   "launcher_url": "https://github.com/osminoog09-star/dispatch-one-records/releases/latest/download/LAPD-Records-Launcher.zip",
   "agent_url": "https://github.com/osminoog09-star/dispatch-one-records/releases/latest/download/pdcomp_sync.exe"

@@ -15,9 +15,16 @@ using LSPD_First_Response.Mod.API;   // Functions (статус смены)
 using CI = CalloutInterfaceAPI;       // CI.Events (проверки ped/plate)
 using CalloutInterfaceAPI.Records;    // PedRecord, VehicleRecord
 
+// RagePluginHook распознаёт сборку-плагин по этому атрибуту (как у рабочих плагинов LSPDFR).
+[assembly: Rage.Attributes.Plugin("DispatchOne MDT",
+    Description = "Синхронизация проверок ped/plate и статуса смены для LAPD Records.",
+    Author = "LAPD Records")]
+
 namespace DispatchOne
 {
-    public class DispatchOneMdt : Rage.Plugin
+    // ВАЖНО: базовый класс — LSPDFR-шный Plugin, НЕ Rage.Plugin (тот в реальном RPH sealed,
+    // от него нельзя наследоваться → плагин не грузился, TypeLoadException).
+    public class DispatchOneMdt : LSPD_First_Response.Mod.API.Plugin
     {
         private static string _outFile;
 

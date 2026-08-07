@@ -63,7 +63,7 @@
   </div>
   <div class="support-status">
     <b>Один тикет</b>
-    <span>виден на сайте, в лаунчере и после подключения Discord-бота</span>
+    <span>виден на сайте и в лаунчере, без лишних каналов и токенов</span>
   </div>
 </section>
 
@@ -77,8 +77,8 @@
       <input id="sp-callsign" placeholder="например 7-WILLIAM-1">
     </label>
     <label>
-      Имя или Discord
-      <input id="sp-name" placeholder="например Denis Sherman / osminoowka">
+      Имя офицера
+      <input id="sp-name" placeholder="например Denis Sherman">
     </label>
     <label>
       Тема
@@ -232,7 +232,7 @@
     await insertSafe("ticket_comments", commentPayload, ["source"]);
     document.getElementById("sp-title").value = "";
     document.getElementById("sp-body").value = "";
-    result.textContent = "Тикет #" + ticket.data.id + " создан. Оператор ответит здесь или в Discord, если канал уже подключен.";
+    result.textContent = "Тикет #" + ticket.data.id + " создан. Оператор ответит здесь или в чате лаунчера.";
     btn.disabled = false;
     loadTickets();
   }

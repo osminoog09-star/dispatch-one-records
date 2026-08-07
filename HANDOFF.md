@@ -15,42 +15,25 @@
 
 ### Unified support tickets
 
-Сделан первый безопасный срез единой поддержки:
+Сделан безопасный срез единой поддержки без Discord-бота:
 
 - Добавлен маршрут `/support` и шаблон `server/app/templates/support.html`.
 - На сайте появилась публичная форма обращения без входа; игрок видит свои тикеты по стабильному `client_id` браузера.
 - `server/app/static/supa.js` теперь создаёт `lapd_support_client_id` в `localStorage` и отправляет его в Supabase как `x-client-id`.
-- Админский `/tickets` показывает источник обращения: сайт, лаунчер или Discord; статусы отображаются по-русски.
+- Админский `/tickets` показывает источник обращения: сайт или лаунчер; статусы отображаются по-русски.
 - Лаунчер при создании тикета пишет `source = launcher`, но имеет fallback для старой базы без новых колонок.
-- Добавлена миграция `supabase/unified_tickets.sql`: поля `source`, Discord channel/thread/message id, `last_message_at`, `closed_at`, таблица `ticket_attachments`, индексы и триггеры.
-- Добавлен документ `DISCORD_TICKETS.md` — контракт для будущего Discord-бота.
+- Добавлена миграция `supabase/unified_tickets.sql`: поля `source`, `last_message_at`, `closed_at`, таблица `ticket_attachments`, индексы и триггеры. Discord-поля в миграции остаются как совместимость, но активная схема их не использует.
+- `/support` делает локальную rule-based диагностику `.log/.txt`; в Supabase уходит только краткая сводка, не весь лог.
+- По решению пользователя удалены `discord_ticket_bot/` и `DISCORD_TICKETS.md`: тикеты ведём без отдельного Discord-бота и без webhook-секретов.
 - `docs/` пересобран через `python server/export_static.py`, `/support` отдаёт 200.
 
-Важно: чтобы новые поля заработали в проде, прогнать в Supabase SQL Editor файл `supabase/unified_tickets.sql`. До этого сайт/лаунчер имеют fallback, но Discord-синхронизация не сможет хранить channel/message id.
+Важно: чтобы новые поля заработали в проде, прогнать в Supabase SQL Editor файл `supabase/unified_tickets.sql`. До этого сайт/лаунчер имеют fallback для старой базы.
 
-Следующий Codex-срез по поддержке: либо rule-based диагностика логов на `/support`, либо минимальный Discord-бот, который создаёт канал тикета и синхронизирует комментарии по контракту из `DISCORD_TICKETS.md`.
+Следующий Codex-срез по поддержке: вложения сайта через storage bucket `support`, фильтры открытые/закрытые/источник/приоритет, назначение ответственного helper/moderator и быстрые шаблоны ответов.
 
-### Discord ticket bot
+### Support tickets without Discord
 
-Добавлен второй срез тикетной системы:
-
-- `discord_ticket_bot/bot.py` — Discord-бот на `discord.py`.
-- `discord_ticket_bot/.env.example` — список нужных секретов без реальных значений.
-- `discord_ticket_bot/requirements.txt` — зависимость `discord.py`.
-- `discord_ticket_bot/README.md` — как включить bot token, message content intent, права и команду `!ticket-panel`.
-- Бот создаёт приватный канал для Discord-тикета, пишет тикет в Supabase и сохраняет `discord_channel_id`.
-- Бот подхватывает тикеты сайта/лаунчера без `discord_channel_id`, создаёт для них Discord-канал и шлёт туда историю.
-- Сообщения Discord пишутся в `ticket_comments` с `discord_message_id`, ответы с сайта без `discord_message_id` уходят обратно в Discord.
-- Команда `!close` закрывает тикет в Supabase.
-- `/support` получил локальную rule-based диагностику `.log/.txt`; в Supabase уходит только краткая сводка, не весь лог.
-
-Что нужно сделать вручную перед live-проверкой Discord:
-
-1. Прогнать `supabase/unified_tickets.sql` в Supabase SQL Editor.
-2. Создать Discord application/bot, включить Message Content Intent.
-3. Заполнить локальный `discord_ticket_bot/.env`.
-4. Запустить `python discord_ticket_bot/bot.py`.
-5. В Discord канале поддержки отправить `!ticket-panel`.
+Пользователь отменил Discord-каналы тикетов. Не возвращать `discord_ticket_bot/` без отдельного подтверждения. Рабочая схема сейчас такая: сайт `/support` + лаунчер `support_chat` + админская очередь `/tickets`.
 
 ### Roadmap cleanup
 

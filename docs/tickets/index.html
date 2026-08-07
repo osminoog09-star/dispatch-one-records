@@ -33,6 +33,7 @@
         <a class="" href="/dispatch-one-records/shifts">Смены</a>
         <a class="" href="/dispatch-one-records/map">Карта</a>
         <a class="" href="/dispatch-one-records/staff">Персонал</a>
+        <a class="" href="/dispatch-one-records/support">Поддержка</a>
         <div class="nav-drop admin-only" style="display:none">
           <span class="nav-drop-t">Админ ▾</span>
           <div class="nav-menu">
@@ -53,7 +54,7 @@
     
     
 <h1>Тикеты поддержки</h1>
-<p class="muted">Обращения игроков из лаунчера. Ответ уходит игроку в чат поддержки.</p>
+<p class="muted">Единая очередь обращений из лаунчера, сайта и Discord. Ответ уходит игроку в тот же тикет.</p>
 
 <div id="tk-gate" class="muted">Проверяю доступ…</div>
 
@@ -82,6 +83,10 @@
   .tk-reply button.muted{background:#30363d}
   .tk-badge{font-size:11px;padding:1px 6px;border-radius:6px;background:#30363d}
   .tk-badge.open{background:#238636}
+  .tk-meta{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+  .tk-source{font-size:11px;padding:2px 7px;border-radius:999px;border:1px solid #30363d;color:#9fc3f0;background:#101722}
+  .tk-source.launcher{color:#9fe0bd;border-color:#2f6f4f;background:#102117}
+  .tk-source.discord{color:#c9a6f0;border-color:#5f3f7a;background:#1b1425}
   @media(max-width:820px){
     .tk-wrap{flex-direction:column}
     .tk-list,.tk-chat{width:100%;flex:auto}
@@ -94,15 +99,27 @@
 (function () {
   let sb, curId = null;
   function esc(s){return (s||"").replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));}
+  function statusRu(s){return ({open:"Открыт",in_progress:"В работе",closed:"Закрыт"}[s] || s || "Открыт");}
+  function sourceRu(s){return ({site:"Сайт",launcher:"Лаунчер",discord:"Discord"}[s] || "Сайт");}
+  function dateRu(s){return s ? new Date(s).toLocaleString("ru-RU", { dateStyle:"short", timeStyle:"short" }) : "";}
+  async function insertComment(payload) {
+    const first = await sb.from("ticket_comments").insert(payload);
+    if (!first.error) return first;
+    const retry = Object.assign({}, payload);
+    delete retry.source;
+    return sb.from("ticket_comments").insert(retry);
+  }
 
   async function load() {
-    const { data: tickets } = await sb.from("tickets").select("*").order("created_at", { ascending: false });
+    const { data: tickets } = await sb.from("tickets").select("*").order("updated_at", { ascending: false });
     const list = document.getElementById("tk-list");
     if (!tickets || !tickets.length) { list.innerHTML = '<p class="muted">Обращений нет.</p>'; return; }
     list.innerHTML = tickets.map(t =>
       '<div class="tk-item' + (String(t.id)===String(curId)?' active':'') + '" data-id="' + t.id + '">' +
-        '<b>#' + t.id + ' ' + esc(t.title || "") + '</b> <span class="tk-badge ' + (t.status||'') + '">' + (t.status||'') + '</span>' +
-        '<br><span class="muted small">' + esc(t.callsign || "") + ' · ' + esc(t.created_by || "") + '</span></div>'
+        '<b>#' + t.id + ' ' + esc(t.title || "") + '</b> <span class="tk-badge ' + (t.status||'') + '">' + statusRu(t.status) + '</span>' +
+        '<div class="tk-meta"><span class="tk-source ' + esc(t.source || "site") + '">' + sourceRu(t.source) + '</span>' +
+        '<span class="muted small">' + esc(t.callsign || "без позывного") + ' · ' + esc(t.created_by || "игрок") + '</span>' +
+        '<span class="muted small">' + dateRu(t.updated_at || t.created_at) + '</span></div></div>'
     ).join("");
     list.querySelectorAll(".tk-item").forEach(el => el.onclick = () => openTicket(el.dataset.id));
   }
@@ -131,8 +148,8 @@
     if (!body || !curId) return;
     // берём client_id тикета — чтобы игрок увидел ответ в лаунчере (он читает по своему client_id)
     const { data: t } = await sb.from("tickets").select("client_id").eq("id", curId).single();
-    const { error } = await sb.from("ticket_comments").insert({
-      ticket_id: curId, body: body, author: "Оператор", client_id: t && t.client_id,
+    const { error } = await insertComment({
+      ticket_id: curId, body: body, author: "Оператор", client_id: t && t.client_id, source: "site",
     });
     if (error) { alert("Не отправилось: " + error.message); return; }
     inp.value = "";
@@ -141,7 +158,8 @@
 
   window.tkClose = async function () {
     if (!curId) return;
-    await sb.from("tickets").update({ status: "closed" }).eq("id", curId);
+    const first = await sb.from("tickets").update({ status: "closed", closed_at: new Date().toISOString() }).eq("id", curId);
+    if (first.error) await sb.from("tickets").update({ status: "closed" }).eq("id", curId);
     load();
   };
 

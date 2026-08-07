@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Поддержка · LAPD</title>
+  <meta name="generator" content="Dispatch One Records — osminoog09-star">
+  <meta name="author" content="LAPD Records · osminoog09-star.github.io/dispatch-one-records">
+  <link rel="stylesheet" href="/dispatch-one-records/static/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="wrap">
+      <a class="brand" href="/dispatch-one-records/">
+        <span class="badge">★</span> LAPD <span class="sub">Реестр</span>
+      </a>
+      <input type="checkbox" id="nav-toggle-cb" class="nav-toggle-cb" hidden>
+      <label class="nav-toggle" for="nav-toggle-cb" aria-label="Открыть меню">☰</label>
+      <nav>
+        <a class="" href="/dispatch-one-records/">Главная</a>
+        <div class="nav-drop">
+          <span class="nav-drop-t">Записи ▾</span>
+          <div class="nav-menu">
+            <a href="/dispatch-one-records/files">Дела</a>
+            <a href="/dispatch-one-records/cases">Задержания</a>
+            <a href="/dispatch-one-records/citations">Штрафы</a>
+            <a href="/dispatch-one-records/warnings">Предупреждения</a>
+            <a href="/dispatch-one-records/callouts">Вызовы</a>
+            <a href="/dispatch-one-records/vehicles">Транспорт</a>
+          </div>
+        </div>
+        <a class="" href="/dispatch-one-records/court">Суд</a>
+        <a class="" href="/dispatch-one-records/shifts">Смены</a>
+        <a class="" href="/dispatch-one-records/map">Карта</a>
+        <a class="" href="/dispatch-one-records/staff">Персонал</a>
+        <a class="active" href="/dispatch-one-records/support">Поддержка</a>
+        <div class="nav-drop admin-only" style="display:none">
+          <span class="nav-drop-t">Админ ▾</span>
+          <div class="nav-menu">
+            <a href="/dispatch-one-records/admin">Управление</a>
+            <a href="/dispatch-one-records/tickets">Тикеты</a>
+            <a href="/dispatch-one-records/dictionaries">Справочники</a>
+          </div>
+        </div>
+        <a class="" href="/dispatch-one-records/launcher">Лаунчер</a>
+        <span id="auth-slot" class="auth-slot"></span>
+      </nav>
+    </div>
+  </header>
+
+  <main class="wrap">
+    
+      
+    
+    
+
+<section class="support-hero">
+  <div>
+    <div class="section-kicker">LAPD RECORDS · SUPPORT</div>
+    <h1>Поддержка игроков</h1>
+    <p class="muted">Создай обращение, если лаунчер не запускается, агент не отправляет данные,
+      записи не появились на сайте или нужна помощь администратора.</p>
+  </div>
+  <div class="support-status">
+    <b>Один тикет</b>
+    <span>виден на сайте, в лаунчере и после подключения Discord-бота</span>
+  </div>
+</section>
+
+<div class="support-grid">
+  <section class="card support-card">
+    <h2>Новое обращение</h2>
+    <p class="muted">Пиши коротко и по делу. Если проблема из лаунчера, лучше открыть чат прямо в лаунчере:
+      он сам приложит лог.</p>
+    <label>
+      Позывной
+      <input id="sp-callsign" placeholder="например 7-WILLIAM-1">
+    </label>
+    <label>
+      Имя или Discord
+      <input id="sp-name" placeholder="например Denis Sherman / osminoowka">
+    </label>
+    <label>
+      Тема
+      <input id="sp-title" placeholder="например записи не появились на сайте">
+    </label>
+    <label>
+      Описание
+      <textarea id="sp-body" rows="7" placeholder="Что произошло, когда началось, что уже пробовал"></textarea>
+    </label>
+    <button class="btn primary" id="sp-send">Создать тикет</button>
+    <p class="muted small" id="sp-result">После отправки обращение появится ниже и в админской панели тикетов.</p>
+  </section>
+
+  <section class="card support-card">
+    <h2>Мои обращения</h2>
+    <p class="muted">Здесь видны тикеты, созданные с этого браузера. Ответ оператора появится в карточке.</p>
+    <div id="sp-list" class="support-list">
+      <p class="muted">Загружаю обращения…</p>
+    </div>
+  </section>
+</div>
+
+<section class="card support-help">
+  <div>
+    <div class="section-kicker">Что приложить</div>
+    <h2>Чтобы ответ был быстрее</h2>
+  </div>
+  <div class="support-help-grid">
+    <div><b>Позывной</b><span>точно как в лаунчере и на сервере</span></div>
+    <div><b>Лог</b><span>если есть ошибка, прикрепи его через лаунчер</span></div>
+    <div><b>Время</b><span>когда была смена, арест, штраф или запуск игры</span></div>
+  </div>
+</section>
+
+<script>
+(function () {
+  let sb;
+  const clientId = () => window.lapd && window.lapd.clientId;
+  const esc = s => (s || "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  const statusRu = s => ({ open: "Открыт", in_progress: "В работе", closed: "Закрыт" }[s] || s || "Открыт");
+  const dateRu = s => s ? new Date(s).toLocaleString("ru-RU", { dateStyle: "short", timeStyle: "short" }) : "";
+
+  async function insertSafe(table, payload, fallbackKeys) {
+    const first = await sb.from(table).insert(payload).select().single();
+    if (!first.error) return first;
+    const retry = Object.assign({}, payload);
+    fallbackKeys.forEach(k => delete retry[k]);
+    return sb.from(table).insert(retry).select().single();
+  }
+
+  async function loadTickets() {
+    const box = document.getElementById("sp-list");
+    let result = await sb.from("tickets")
+      .select("id,title,status,created_at,updated_at,callsign,source")
+      .eq("client_id", clientId())
+      .order("updated_at", { ascending: false })
+      .limit(20);
+    if (result.error) {
+      result = await sb.from("tickets")
+        .select("id,title,status,created_at,updated_at,callsign")
+        .eq("client_id", clientId())
+        .order("updated_at", { ascending: false })
+        .limit(20);
+    }
+    const { data, error } = result;
+    if (error) {
+      box.innerHTML = '<p class="muted">Не удалось загрузить обращения: ' + esc(error.message) + "</p>";
+      return;
+    }
+    if (!data || !data.length) {
+      box.innerHTML = '<p class="empty">Обращений пока нет<span class="empty-sub">Создай первый тикет слева.</span></p>';
+      return;
+    }
+    box.innerHTML = data.map(t =>
+      '<article class="support-ticket">' +
+        '<div><b>#' + t.id + " " + esc(t.title) + '</b>' +
+        '<small>' + esc(t.callsign || "без позывного") + " · " + dateRu(t.updated_at || t.created_at) + '</small></div>' +
+        '<span class="tag ' + (t.status === "closed" ? "st-closed" : "ok") + '">' + statusRu(t.status) + '</span>' +
+      '</article>'
+    ).join("");
+  }
+
+  async function sendTicket() {
+    const btn = document.getElementById("sp-send");
+    const result = document.getElementById("sp-result");
+    const callsign = document.getElementById("sp-callsign").value.trim();
+    const name = document.getElementById("sp-name").value.trim();
+    const title = document.getElementById("sp-title").value.trim();
+    const body = document.getElementById("sp-body").value.trim();
+    if (!title || !body) {
+      result.textContent = "Заполни тему и описание.";
+      return;
+    }
+    btn.disabled = true;
+    result.textContent = "Создаю обращение…";
+    const ticketPayload = {
+      title: title.slice(0, 120),
+      body,
+      status: "open",
+      priority: "normal",
+      category: "support",
+      client_id: clientId(),
+      callsign,
+      created_by: name || callsign || "Игрок сайта",
+      source: "site",
+    };
+    const ticket = await insertSafe("tickets", ticketPayload, ["source"]);
+    if (ticket.error) {
+      result.textContent = "Не получилось создать тикет: " + ticket.error.message;
+      btn.disabled = false;
+      return;
+    }
+    const commentPayload = {
+      ticket_id: ticket.data.id,
+      client_id: clientId(),
+      body,
+      author: name || callsign || "Игрок сайта",
+      source: "site",
+    };
+    await insertSafe("ticket_comments", commentPayload, ["source"]);
+    document.getElementById("sp-title").value = "";
+    document.getElementById("sp-body").value = "";
+    result.textContent = "Тикет #" + ticket.data.id + " создан. Оператор ответит здесь или в Discord, если канал уже подключен.";
+    btn.disabled = false;
+    loadTickets();
+  }
+
+  document.addEventListener("lapd:auth", function () {
+    sb = window.lapd.sb;
+    document.getElementById("sp-send").addEventListener("click", sendTicket);
+    loadTickets();
+  });
+})();
+</script>
+
+
+  </main>
+
+  <footer class="wrap foot">
+    LAPD Реестр · данные синхронизируются из игры<br>
+    <span class="foot-attr">© Реестр Dispatch One · система разработана для LAPD ·
+      осминоог09-star</span>
+  </footer>
+  <!-- Dispatch One Records — исходная система: github.com/osminoog09-star/dispatch-one-records
+       Копирование оформления и кода без разрешения запрещено. build:20260807 -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/dispatch-one-records/static/supa.js"></script>
+</body>
+</html>

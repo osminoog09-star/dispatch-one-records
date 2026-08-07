@@ -33,6 +33,7 @@
         <a class="{% if request.endpoint == 'shifts' %}active{% endif %}" href="{{ url_for('shifts') }}">Смены</a>
         <a class="{% if request.endpoint == 'game_map' %}active{% endif %}" href="{{ url_for('game_map') }}">Карта</a>
         <a class="{% if request.endpoint == 'staff' %}active{% endif %}" href="{{ url_for('staff') }}">Персонал</a>
+        <a class="{% if request.endpoint == 'support' %}active{% endif %}" href="{{ url_for('support') }}">Поддержка</a>
         <div class="nav-drop admin-only" style="display:none">
           <span class="nav-drop-t">Админ ▾</span>
           <div class="nav-menu">

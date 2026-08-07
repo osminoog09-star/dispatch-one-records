@@ -190,24 +190,39 @@ def sb_open_ticket_id():
 
 def sb_create_ticket(title):
     cfg = read_config()
-    _, rows = _sb("tickets", "POST", {
+    payload = {
         "title": title[:120] or "Обращение",
         "client_id": _client_id(),
         "callsign": cfg.get("CALLSIGN", ""),
         "created_by": cfg.get("NICKNAME") or cfg.get("CALLSIGN", "") or "Игрок",
-    }, prefer="return=representation")
+        "category": "support",
+        "source": "launcher",
+    }
+    try:
+        _, rows = _sb("tickets", "POST", payload, prefer="return=representation")
+    except urllib.error.HTTPError:
+        # Старые базы без unified_tickets.sql не знают source/category.
+        payload.pop("source", None)
+        payload.pop("category", None)
+        _, rows = _sb("tickets", "POST", payload, prefer="return=representation")
     return rows[0]["id"] if rows else None
 
 
 def sb_add_comment(ticket_id, body, attachment_url=None):
     cfg = read_config()
-    _sb("ticket_comments", "POST", {
+    payload = {
         "ticket_id": ticket_id,
         "client_id": _client_id(),
         "body": body,
         "author": cfg.get("NICKNAME") or cfg.get("CALLSIGN", "") or "Игрок",
         "attachment_url": attachment_url,
-    })
+        "source": "launcher",
+    }
+    try:
+        _sb("ticket_comments", "POST", payload)
+    except urllib.error.HTTPError:
+        payload.pop("source", None)
+        _sb("ticket_comments", "POST", payload)
 
 
 def sb_list_comments(ticket_id):

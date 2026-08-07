@@ -13,6 +13,23 @@
 
 ## Codex note 2026-08-07
 
+### Unified support tickets
+
+Сделан первый безопасный срез единой поддержки:
+
+- Добавлен маршрут `/support` и шаблон `server/app/templates/support.html`.
+- На сайте появилась публичная форма обращения без входа; игрок видит свои тикеты по стабильному `client_id` браузера.
+- `server/app/static/supa.js` теперь создаёт `lapd_support_client_id` в `localStorage` и отправляет его в Supabase как `x-client-id`.
+- Админский `/tickets` показывает источник обращения: сайт, лаунчер или Discord; статусы отображаются по-русски.
+- Лаунчер при создании тикета пишет `source = launcher`, но имеет fallback для старой базы без новых колонок.
+- Добавлена миграция `supabase/unified_tickets.sql`: поля `source`, Discord channel/thread/message id, `last_message_at`, `closed_at`, таблица `ticket_attachments`, индексы и триггеры.
+- Добавлен документ `DISCORD_TICKETS.md` — контракт для будущего Discord-бота.
+- `docs/` пересобран через `python server/export_static.py`, `/support` отдаёт 200.
+
+Важно: чтобы новые поля заработали в проде, прогнать в Supabase SQL Editor файл `supabase/unified_tickets.sql`. До этого сайт/лаунчер имеют fallback, но Discord-синхронизация не сможет хранить channel/message id.
+
+Следующий Codex-срез по поддержке: либо rule-based диагностика логов на `/support`, либо минимальный Discord-бот, который создаёт канал тикета и синхронизирует комментарии по контракту из `DISCORD_TICKETS.md`.
+
 ### Roadmap cleanup
 
 Roadmap-документы синхронизированы:

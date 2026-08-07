@@ -316,6 +316,12 @@ def tickets():
     return render_template("tickets.html")
 
 
+@app.route("/support")
+def support():
+    # публичная форма обращения: данные тянет supabase-js на клиенте (RLS = только свой client_id)
+    return render_template("support.html")
+
+
 @app.route("/admin")
 def admin_panel():
     # статичная панель: роли и права подтягиваются через Supabase RPC + RLS.

@@ -4,8 +4,22 @@
   const SUPABASE_URL = "https://gwvqfiwdbviwoimvhdvg.supabase.co";
   const SUPABASE_KEY = "sb_publishable_gkXQmLngTvpGQfLFDk2YnA_nuv0krkk";
   if (!window.supabase) { console.warn("supabase-js не загрузился"); return; }
-  const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-  window.lapd = { sb };
+  function supportClientId() {
+    const key = "lapd_support_client_id";
+    let id = localStorage.getItem(key);
+    if (!id) {
+      id = (window.crypto && window.crypto.randomUUID)
+        ? window.crypto.randomUUID()
+        : "site-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2);
+      localStorage.setItem(key, id);
+    }
+    return id;
+  }
+  const clientId = supportClientId();
+  const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+    global: { headers: { "x-client-id": clientId } },
+  });
+  window.lapd = { sb, clientId };
 
   async function session() {
     const { data } = await sb.auth.getSession();

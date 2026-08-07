@@ -36,6 +36,13 @@
       Описание
       <textarea id="sp-body" rows="7" placeholder="Что произошло, когда началось, что уже пробовал"></textarea>
     </label>
+    <label>
+      Лог для быстрой проверки
+      <input id="sp-log" type="file" accept=".log,.txt">
+    </label>
+    <div id="sp-diagnosis" class="support-diagnosis muted small">
+      Лог не выбран. Если лаунчер открывается, удобнее отправить лог через него.
+    </div>
     <button class="btn primary" id="sp-send">Создать тикет</button>
     <p class="muted small" id="sp-result">После отправки обращение появится ниже и в админской панели тикетов.</p>
   </section>
@@ -68,6 +75,29 @@
   const esc = s => (s || "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
   const statusRu = s => ({ open: "Открыт", in_progress: "В работе", closed: "Закрыт" }[s] || s || "Открыт");
   const dateRu = s => s ? new Date(s).toLocaleString("ru-RU", { dateStyle: "short", timeStyle: "short" }) : "";
+  let logSummary = "";
+
+  function scrubLog(text) {
+    return text
+      .replace(/(token|apikey|authorization|webhook|service_role)[=:]\s*\S+/gi, "$1=[скрыто]")
+      .replace(/https:\/\/discord(?:app)?\.com\/api\/webhooks\/\S+/gi, "[discord webhook скрыт]")
+      .replace(/[A-Z]:\\Users\\[^\\\r\n]+/gi, "C:\\Users\\[скрыто]");
+  }
+
+  function diagnoseLog(text) {
+    const checks = [
+      [/Failed to load Python DLL|python\d+\.dll|_MEI/i, "Похоже, антивирус или временная папка ломает onefile-сборку Python DLL. Нужен актуальный установщик/onedir-лаунчер."],
+      [/pdComp|pdcomp/i, "Есть строки про pdComp. Проверь, что игра запускалась с LSPDFR и агент видит папку pdComp."],
+      [/WinError 10061|connection refused|network|timeout/i, "Есть сетевая ошибка. Проверь интернет, Supabase/GitHub и повтори отправку."],
+      [/permission denied|access is denied|WinError 5/i, "Есть отказ доступа. Запусти лаунчер от обычного пользователя и проверь права к папке игры/логов."],
+      [/Usage limit reached|rate limit|secondary rate/i, "Похоже на лимит GitHub Actions/API. Нужно подождать сброс лимита или отправить данные позже."],
+      [/Vinewood|GTA V|RagePluginHook/i, "В логе есть строки про запуск игры. Важно указать, через что запускал: Vinewood, Steam или RPH."],
+      [/\b\d+\s*-\s*[A-Z]+\s*-\s*\d+\b/i, "В логе похожий позывной с пробелами вокруг дефисов. Правильно: 7-WILLIAM-1 без лишних пробелов."],
+      [/Traceback|Exception|ERROR|failed/i, "Есть явная ошибка/исключение. Оператору нужна эта сводка и время запуска."],
+    ];
+    const found = checks.filter(([rx]) => rx.test(text)).map(([, msg]) => msg);
+    return found.length ? found : ["Критичных известных ошибок не найдено. Нужны описание действий и время проблемы."];
+  }
 
   async function insertSafe(table, payload, fallbackKeys) {
     const first = await sb.from(table).insert(payload).select().single();
@@ -115,7 +145,8 @@
     const callsign = document.getElementById("sp-callsign").value.trim();
     const name = document.getElementById("sp-name").value.trim();
     const title = document.getElementById("sp-title").value.trim();
-    const body = document.getElementById("sp-body").value.trim();
+    const bodyRaw = document.getElementById("sp-body").value.trim();
+    const body = (bodyRaw + (logSummary ? "\n\nДиагностика лога:\n" + logSummary : "")).trim();
     if (!title || !body) {
       result.textContent = "Заполни тему и описание.";
       return;
@@ -157,6 +188,26 @@
   document.addEventListener("lapd:auth", function () {
     sb = window.lapd.sb;
     document.getElementById("sp-send").addEventListener("click", sendTicket);
+    document.getElementById("sp-log").addEventListener("change", function () {
+      const file = this.files && this.files[0];
+      const out = document.getElementById("sp-diagnosis");
+      logSummary = "";
+      if (!file) {
+        out.textContent = "Лог не выбран. Если лаунчер открывается, удобнее отправить лог через него.";
+        return;
+      }
+      if (file.size > 1024 * 1024) {
+        out.textContent = "Лог слишком большой для браузерной проверки. Отправь его через лаунчер или оставь только последние строки.";
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = function () {
+        const text = scrubLog(String(reader.result || "")).slice(-40000);
+        logSummary = diagnoseLog(text).map(x => "- " + x).join("\n");
+        out.innerHTML = "<b>Что найдено:</b><br>" + esc(logSummary).replace(/\n/g, "<br>");
+      };
+      reader.readAsText(file);
+    });
     loadTickets();
   });
 })();

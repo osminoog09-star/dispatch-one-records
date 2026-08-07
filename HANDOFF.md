@@ -30,6 +30,28 @@
 
 Следующий Codex-срез по поддержке: либо rule-based диагностика логов на `/support`, либо минимальный Discord-бот, который создаёт канал тикета и синхронизирует комментарии по контракту из `DISCORD_TICKETS.md`.
 
+### Discord ticket bot
+
+Добавлен второй срез тикетной системы:
+
+- `discord_ticket_bot/bot.py` — Discord-бот на `discord.py`.
+- `discord_ticket_bot/.env.example` — список нужных секретов без реальных значений.
+- `discord_ticket_bot/requirements.txt` — зависимость `discord.py`.
+- `discord_ticket_bot/README.md` — как включить bot token, message content intent, права и команду `!ticket-panel`.
+- Бот создаёт приватный канал для Discord-тикета, пишет тикет в Supabase и сохраняет `discord_channel_id`.
+- Бот подхватывает тикеты сайта/лаунчера без `discord_channel_id`, создаёт для них Discord-канал и шлёт туда историю.
+- Сообщения Discord пишутся в `ticket_comments` с `discord_message_id`, ответы с сайта без `discord_message_id` уходят обратно в Discord.
+- Команда `!close` закрывает тикет в Supabase.
+- `/support` получил локальную rule-based диагностику `.log/.txt`; в Supabase уходит только краткая сводка, не весь лог.
+
+Что нужно сделать вручную перед live-проверкой Discord:
+
+1. Прогнать `supabase/unified_tickets.sql` в Supabase SQL Editor.
+2. Создать Discord application/bot, включить Message Content Intent.
+3. Заполнить локальный `discord_ticket_bot/.env`.
+4. Запустить `python discord_ticket_bot/bot.py`.
+5. В Discord канале поддержки отправить `!ticket-panel`.
+
 ### Roadmap cleanup
 
 Roadmap-документы синхронизированы:

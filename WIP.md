@@ -22,7 +22,7 @@
 
 ## Done
 
-- 2026-08-07 Codex: добавлен единый Discord-аккаунт для сайта и лаунчера без Discord-бота тикетов. Сайт получил `/launcher-login`, лаунчер 1.4.15 получил вход/выход Discord в профиле и хранит Supabase session, тикеты сайта/лаунчера могут связываться через `user_id` после прогона `supabase/unified_tickets.sql`. Собран onedir zip и обновлён release asset `LAPD-Records-Launcher.zip`; `docs/` пересобран.
+- 2026-08-07 Codex: добавлен единый Discord-аккаунт для сайта и лаунчера без Discord-бота тикетов. Сайт получил `/launcher-login`, лаунчер 1.4.15 получил вход/выход Discord в профиле и хранит Supabase session, тикеты сайта/лаунчера связываются через `user_id`; `supabase/unified_tickets.sql` прогнан в продовой Supabase (`Success. No rows returned`). Собран onedir zip и обновлён release asset `LAPD-Records-Launcher.zip`; `docs/` пересобран.
 - 2026-08-07 Codex: Discord-бот тикетов убран по решению пользователя; активная поддержка теперь сайт+лаунчер+диагностика логов. Удалены `discord_ticket_bot/` и `DISCORD_TICKETS.md`, тексты `/support` и `/tickets` очищены от обещаний Discord.
 - 2026-08-07 Codex: второй срез тикетной системы. `/support` получил локальную диагностику `.log/.txt`, которая добавляет краткую сводку в тикет без отправки полного лога. Ранее подготовленный Discord-бот отменён и удалён следующим срезом.
 - 2026-08-07 Codex: первый срез единой поддержки сайт/лаунчер. Добавлен `/support`, общий `client_id` сайта для RLS, метки источника в `/tickets`, `source=launcher` в лаунчере с fallback и миграция `supabase/unified_tickets.sql`. Проверено: py_compile, экспорт `docs/`, маршруты `/`, `/support`, `/tickets`, `/launcher`, `/register`, `/map`, `/staff`, `/admin` отдают 200.

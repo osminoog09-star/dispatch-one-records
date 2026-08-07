@@ -88,8 +88,10 @@ https://github.com/osminoog09-star/dispatch-one-records/releases/latest/download
 3. сайт выполняет обычный Supabase OAuth через Discord;
 4. после входа сайт возвращает Supabase session локальному лаунчеру.
 
-Для полного связывания сайта и лаунчера в базе нужно прогнать актуальный
-`supabase/unified_tickets.sql`: он добавляет `user_id` и RLS-чтение по `auth.uid()`.
+Продовая Supabase уже обновлена 2026-08-07: актуальный
+`supabase/unified_tickets.sql` прогнан в SQL Editor проекта `gwvqfiwdbviwoimvhdvg`
+с результатом `Success. No rows returned`. Он добавляет `user_id` и RLS-чтение
+по `auth.uid()`.
 
 ## Проверка
 

@@ -143,6 +143,7 @@
 - Лаунчер помечает тикеты источником `launcher`.
 - `/tickets` показывает единую очередь и источник обращения.
 - `supabase/unified_tickets.sql` добавляет служебные поля для источника, `user_id`, закрытия, времени последнего сообщения и будущих вложений.
+- Продовая Supabase обновлена 2026-08-07: `supabase/unified_tickets.sql` прогнан в SQL Editor проекта `gwvqfiwdbviwoimvhdvg`, результат `Success. No rows returned`.
 - `discord_ticket_bot/` и `DISCORD_TICKETS.md` удалены по решению пользователя: тикеты не ведём через Discord.
 
 Этап 1, без AI:
@@ -163,7 +164,6 @@
 
 Этап 1.5, сайт+лаунчер:
 
-- Прогнать `supabase/unified_tickets.sql` в продовой Supabase.
 - Добавить нормальные вложения с сайта через storage bucket `support`.
 - Добавить фильтры тикетов: открытые, закрытые, источник, приоритет.
 - Добавить назначение ответственного helper/moderator.

@@ -24,7 +24,7 @@
 - `/support` на сайте теперь пишет `user_id` в тикеты/комментарии, если пользователь вошёл через Discord, и читает обращения по `client_id` или `user_id`.
 - `supabase/chat.sql` и `supabase/unified_tickets.sql` добавляют `user_id` и RLS-чтение `user_id = auth.uid()`.
 
-Важно: чтобы общий аккаунт полностью связал сайт и лаунчер в продовой базе, прогнать обновлённый `supabase/unified_tickets.sql` в Supabase SQL Editor. До этого всё работает по старому `client_id`.
+Продовая Supabase уже обновлена: 2026-08-07 Codex прогнал `supabase/unified_tickets.sql` в SQL Editor проекта `gwvqfiwdbviwoimvhdvg`, результат `Success. No rows returned`. Общий Discord-аккаунт сайта и лаунчера теперь может связывать тикеты через `user_id`; старый `client_id` остаётся fallback для старых/анонимных обращений.
 
 ### Unified support tickets
 
@@ -40,7 +40,7 @@
 - По решению пользователя удалены `discord_ticket_bot/` и `DISCORD_TICKETS.md`: тикеты ведём без отдельного Discord-бота и без webhook-секретов.
 - `docs/` пересобран через `python server/export_static.py`, `/support` отдаёт 200.
 
-Важно: чтобы новые поля заработали в проде, прогнать в Supabase SQL Editor файл `supabase/unified_tickets.sql`. До этого сайт/лаунчер имеют fallback для старой базы.
+Продовая Supabase уже обновлена: 2026-08-07 Codex прогнал `supabase/unified_tickets.sql` в SQL Editor проекта `gwvqfiwdbviwoimvhdvg`, результат `Success. No rows returned`. Сайт/лаунчер всё равно сохраняют fallback по `client_id` для старых тикетов и анонимных обращений.
 
 Следующий Codex-срез по поддержке: вложения сайта через storage bucket `support`, фильтры открытые/закрытые/источник/приоритет, назначение ответственного helper/moderator и быстрые шаблоны ответов.
 

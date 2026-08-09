@@ -56,10 +56,68 @@ def _setting(key, default):
     return _FILE.get(key) or os.environ.get(key) or default
 
 
-PDCOMP_STORE = _setting(
-    "PDCOMP_STORE",
-    r"C:\Program Files\Rockstar Games\Grand Theft Auto V Legacy\plugins\LSPDFR\pdComp\data\store",
-)
+# Папка store pdComp. По умолчанию АВТО-определяется: игра может стоять на любом
+# диске / в Steam / Epic, поэтому жёсткий путь C:\... не годится (у игроков было 0 записей).
+_STORE_CFG = _setting("PDCOMP_STORE", "")   # если игрок задал явно — высший приоритет
+_STORE_DEFAULT = r"C:\Program Files\Rockstar Games\Grand Theft Auto V Legacy\plugins\LSPDFR\pdComp\data\store"
+_STORE_REL = os.path.join("plugins", "LSPDFR", "pdComp", "data", "store")
+_store_cache = None
+
+
+def _running_game_exes():
+    """Полные пути к запущенным exe игры/RPH — чтобы вычислить корень установки GTA V."""
+    import subprocess
+    q = "name='" + "' or name='".join(GAME_PROCESSES) + "'"
+    exes = []
+    try:
+        out = subprocess.run(["wmic", "process", "where", q, "get", "ExecutablePath"],
+                             capture_output=True, text=True, timeout=15,
+                             creationflags=0x08000000)
+        for line in (out.stdout or "").splitlines():
+            line = line.strip()
+            if line.lower().endswith(".exe") and os.path.exists(line):
+                exes.append(line)
+    except Exception:
+        pass
+    return exes
+
+
+def pdcomp_store():
+    """Определяет папку store pdComp: явная настройка → путь запущенной игры →
+    скан типовых установок на всех дисках → дефолт. Результат кешируется."""
+    global _store_cache
+    if _store_cache and os.path.isdir(_store_cache):
+        return _store_cache
+    if _STORE_CFG and os.path.isdir(_STORE_CFG):
+        _store_cache = _STORE_CFG
+        return _store_cache
+    for exe in _running_game_exes():
+        cand = os.path.join(os.path.dirname(exe), _STORE_REL)
+        if os.path.isdir(cand):
+            _store_cache = cand
+            return _store_cache
+    import string
+    subs = [
+        r"Program Files\Rockstar Games\Grand Theft Auto V Legacy",
+        r"Program Files\Rockstar Games\Grand Theft Auto V",
+        r"Program Files (x86)\Steam\steamapps\common\Grand Theft Auto V",
+        r"Steam\steamapps\common\Grand Theft Auto V",
+        r"SteamLibrary\steamapps\common\Grand Theft Auto V",
+        r"steam\steamapps\common\Grand Theft Auto V",
+        r"Epic Games\GTAV",
+        r"Games\Grand Theft Auto V",
+        r"Grand Theft Auto V",
+    ]
+    for d in string.ascii_uppercase:
+        root = d + ":\\"
+        if not os.path.exists(root):
+            continue
+        for s in subs:
+            cand = os.path.join(root, s, _STORE_REL)
+            if os.path.isdir(cand):
+                _store_cache = cand
+                return _store_cache
+    return _STORE_CFG or _STORE_DEFAULT
 SITE_URL = _setting("SITE_URL", "http://localhost:8000").rstrip("/")
 API_KEY = _setting("RECORDS_API_KEY", "dev-key")
 POLL_SECONDS = int(_setting("POLL_SECONDS", "8"))
@@ -103,8 +161,8 @@ def fetch_profile():
 
 
 def _lspdfr_dir():
-    # PDCOMP_STORE = ...\LSPDFR\pdComp\data\store → LSPDFR на 3 уровня выше
-    return os.path.dirname(os.path.dirname(os.path.dirname(PDCOMP_STORE)))
+    # pdcomp_store() = ...\LSPDFR\pdComp\data\store → LSPDFR на 3 уровня выше
+    return os.path.dirname(os.path.dirname(os.path.dirname(pdcomp_store())))
 
 
 def _set_ini_value(path, key, value, section=None):
@@ -244,7 +302,7 @@ def _name_key(s):
 
 
 def _load_personnel():
-    path = os.path.join(os.path.dirname(PDCOMP_STORE), "court_personnel.json")
+    path = os.path.join(os.path.dirname(pdcomp_store()), "court_personnel.json")
     pools = {"judges": [], "prosecutors": [], "defenseCounsel": []}
     data = read_json(path)
     if isinstance(data, dict):
@@ -447,7 +505,7 @@ def map_plate_check(r):
 
 
 def sync_arrests():
-    path = os.path.join(PDCOMP_STORE, "arrests.json")
+    path = os.path.join(pdcomp_store(), "arrests.json")
     arrests = read_json(path)
     if arrests is None:
         return 0, 0
@@ -469,7 +527,7 @@ def sync_arrests():
 
 
 def sync_court():
-    path = os.path.join(PDCOMP_STORE, "cases.json")
+    path = os.path.join(pdcomp_store(), "cases.json")
     cases = read_json(path)
     if cases is None:
         return 0, 0
@@ -628,12 +686,12 @@ def upload_to_github(shift=None):
         nm = (rec.get("OfficerName") or "").strip().lower()
         return nm in generic or (mine and nm == mine)
 
-    arrests = [a for a in (read_json(os.path.join(PDCOMP_STORE, "arrests.json")) or []) if ours(a)]
-    cits = [c for c in (read_json(os.path.join(PDCOMP_STORE, "citations.json")) or []) if ours(c)]
-    warns = [w for w in (read_json(os.path.join(PDCOMP_STORE, "warnings.json")) or []) if ours(w)]
+    arrests = [a for a in (read_json(os.path.join(pdcomp_store(), "arrests.json")) or []) if ours(a)]
+    cits = [c for c in (read_json(os.path.join(pdcomp_store(), "citations.json")) or []) if ours(c)]
+    warns = [w for w in (read_json(os.path.join(pdcomp_store(), "warnings.json")) or []) if ours(w)]
     warns = [map_warning(w) for w in warns]
     our_ids = {r.get("Id") for r in arrests + cits if r.get("Id")}
-    cases = [c for c in (read_json(os.path.join(PDCOMP_STORE, "cases.json")) or [])
+    cases = [c for c in (read_json(os.path.join(pdcomp_store(), "cases.json")) or [])
              if (c.get("CitationId") or c.get("ArrestReportId")) in our_ids]
 
     # живые данные из плагина (проверки ped/plate, статус смены)
@@ -672,8 +730,8 @@ def _save_owner_shift(shift):
 
 def _count_records():
     """Сколько всего арестов и штрафов сейчас в pdComp (для замера смены)."""
-    arrests = len(read_json(os.path.join(PDCOMP_STORE, "arrests.json")) or [])
-    cits = read_json(os.path.join(PDCOMP_STORE, "citations.json")) or []
+    arrests = len(read_json(os.path.join(pdcomp_store(), "arrests.json")) or [])
+    cits = read_json(os.path.join(pdcomp_store(), "citations.json")) or []
     fines = sum(sum(float(l.get("Fine") or 0) for l in (c.get("Lines") or [])) for c in cits)
     return arrests, len(cits), int(round(fines))
 
@@ -707,7 +765,7 @@ def _store_fp():
     По нему публикуем даже если детект запуска игры не сработал."""
     fp = []
     for name in ("arrests.json", "citations.json", "warnings.json", "cases.json"):
-        p = os.path.join(PDCOMP_STORE, name)
+        p = os.path.join(pdcomp_store(), name)
         fp.append(os.path.getmtime(p) if os.path.exists(p) else 0)
     mp = mdt_file()
     fp.append(os.path.getmtime(mp) if os.path.exists(mp) else 0)
@@ -769,7 +827,7 @@ def watch_game():
             if running and not OWNER_MODE:
                 for fname, fn in (("arrests.json", sync_arrests),
                                   ("cases.json", sync_court)):
-                    path = os.path.join(PDCOMP_STORE, fname)
+                    path = os.path.join(pdcomp_store(), fname)
                     mtime = os.path.getmtime(path) if os.path.exists(path) else 0
                     if mtime != seen.get(fname):
                         a, b = fn()
@@ -809,13 +867,13 @@ def watch_game():
 def main():
     if _setting("WATCH_GAME", "1") in ("1", "true", "yes", "on"):
         print("Dispatch One sync-агент запущен.")
-        print(f"  pdComp store: {PDCOMP_STORE}")
+        print(f"  pdComp store: {pdcomp_store()}")
         print(f"  сайт: {SITE_URL}\n")
         watch_game()
         return
 
     print(f"Dispatch One sync-агент запущен.")
-    print(f"  pdComp store: {PDCOMP_STORE}")
+    print(f"  pdComp store: {pdcomp_store()}")
     print(f"  сайт: {SITE_URL}")
     print(f"  опрос каждые {POLL_SECONDS} сек. Ctrl+C для выхода.\n")
 
@@ -827,7 +885,7 @@ def main():
             if prof and prof.get("callsign"):
                 apply_callsign_to_game(prof["callsign"], prof.get("nickname"))
             for fname, fn in (("arrests.json", sync_arrests), ("cases.json", sync_court)):
-                path = os.path.join(PDCOMP_STORE, fname)
+                path = os.path.join(pdcomp_store(), fname)
                 mtime = os.path.getmtime(path) if os.path.exists(path) else 0
                 if mtime != seen.get(fname):
                     a, b = fn()

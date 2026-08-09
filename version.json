@@ -1,9 +1,9 @@
 {
-  "launcher": "1.4.15",
-  "agent": "1.1.1",
+  "launcher": "1.4.16",
+  "agent": "1.1.2",
   "enabled": true,
   "min_launcher": "1.0.0",
-  "notes": "Новый лаунчер LAPD Records: скачай LAPD-Records-Launcher-Setup.exe, войди через Discord, проверь позывной и запускай игру через новый лаунчер. Старые ZIP-версии лучше не использовать. Агент теперь можно включать и выключать прямо из лаунчера, а поддержка привязывается к твоему аккаунту.",
+  "notes": "Важное исправление: теперь штрафы и задержания попадают на сайт, даже если игра установлена не на диске C (Steam/Epic/другой диск) — агент сам находит папку pdComp. Также починен внутриигровой плагин учёта. Обновление ставится само при запуске.",
   "installer_url": "https://github.com/osminoog09-star/dispatch-one-records/releases/latest/download/LAPD-Records-Launcher-Setup.exe",
   "launcher_url": "https://github.com/osminoog09-star/dispatch-one-records/releases/latest/download/LAPD-Records-Launcher.zip",
   "agent_url": "https://github.com/osminoog09-star/dispatch-one-records/releases/latest/download/pdcomp_sync.exe"

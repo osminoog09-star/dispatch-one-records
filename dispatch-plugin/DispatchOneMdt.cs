@@ -131,9 +131,23 @@ namespace DispatchOne
 
         private static string PluginFolder()
         {
-            // dll лежит в <game>\plugins\LSPDFR\ — пишем рядом
-            string loc = Assembly.GetExecutingAssembly().Location;
-            return Path.GetDirectoryName(loc);
+            // LSPDFR грузит плагин ИЗ ПАМЯТИ, поэтому Assembly.Location пустой
+            // (и Path.GetDirectoryName падал с ArgumentException). Пишем в
+            // <корень игры>\plugins\LSPDFR — рабочая папка процесса = корень GTA V.
+            string baseDir = Directory.GetCurrentDirectory();
+            string p = Path.Combine(baseDir, "plugins", "LSPDFR");
+            if (!Directory.Exists(p))
+            {
+                // запасной вариант: рядом со сборкой, если Location всё же доступен
+                try
+                {
+                    string loc = Assembly.GetExecutingAssembly().Location;
+                    if (!string.IsNullOrEmpty(loc))
+                        return Path.GetDirectoryName(loc);
+                }
+                catch { }
+            }
+            return p;
         }
 
         private static string NowIso()

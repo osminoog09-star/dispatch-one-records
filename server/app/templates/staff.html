@@ -43,6 +43,7 @@
     <div class="staff-who">
       <a href="{{ url_for('officer_view', callsign=o.callsign) }}"><span class="cs">{{ o.callsign }}</span></a>
       <b>{{ o.name or '' }}</b>
+      {% if o.discord %}<span class="sb-role" data-discord="{{ o.discord }}"></span>{% endif %}
       {% if not o.registered %}<span class="tag">из игровых записей</span>{% endif %}
       <div class="muted small">
         {% if o.discord %}Discord: {{ o.discord }} · {% endif %}
@@ -143,8 +144,30 @@
     rankSel.onchange = save; deptSel.onchange = save;
   }
 
+  const ROLE_META = {
+    owner:    { t: "Владелец",  c: "#f0b429" },
+    admin:    { t: "Админ",     c: "#f85149" },
+    moderator:{ t: "Модератор", c: "#3fb950" },
+    helper:   { t: "Хелпер",    c: "#2f81f7" },
+  };
+  async function fillRoleBadges() {
+    const cells = document.querySelectorAll(".sb-role[data-discord]");
+    if (!cells.length) return;
+    const { data, error } = await sb.rpc("public_staff_roles");
+    if (error || !data) return;
+    const map = {};
+    data.forEach(r => { if (r.discord) map[r.discord.toLowerCase()] = r.role; });
+    cells.forEach(el => {
+      const d = (el.getAttribute("data-discord") || "").toLowerCase();
+      const role = map[d];
+      const m = role && ROLE_META[role];
+      if (m) el.innerHTML = '<span class="sb-role-badge" style="background:'+m.c+'22;color:'+m.c+';border:1px solid '+m.c+'55">'+m.t+'</span>';
+    });
+  }
+
   document.addEventListener("lapd:auth", async function () {
     sb = window.lapd.sb;
+    fillRoleBadges();
     const cells = document.querySelectorAll(".sb-edit");
     if (!cells.length) return;
     try { await loadRefs(); } catch(e){ return; }

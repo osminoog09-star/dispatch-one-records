@@ -98,8 +98,7 @@
     </div>
 
     <div class="admin-add">
-      <input id="adm-email" type="email" placeholder="email пользователя из Supabase Auth">
-      <input id="adm-name" placeholder="отображаемое имя">
+      <select id="adm-user"><option value="">— выбери игрока (вошёл через Discord) —</option></select>
       <select id="adm-role">
         <option value="helper">Хелпер</option>
         <option value="moderator">Модератор</option>
@@ -108,7 +107,7 @@
       </select>
       <button class="btn primary" onclick="adminGrant()">Выдать доступ</button>
     </div>
-    <p class="muted small">Пользователь должен хотя бы один раз войти через Discord, чтобы Supabase создал его учётку. Роль “Главный админ” выдаётся только SQL-командой владельца.</p>
+    <p class="muted small">В списке — все, кто хотя бы раз заходил на сайт через Discord (в т.ч. игроки/персонал). Выбери человека и роль. Роль “Главный админ” выдаётся только SQL-командой владельца.</p>
 
     <div id="admin-users" class="admin-users"></div>
   </section>
@@ -243,18 +242,32 @@
     await adminLoad();
   };
 
+  window.loadSiteUsers = async function(){
+    const sel = document.getElementById("adm-user");
+    if (!sel) return;
+    const { data, error } = await sb.rpc("list_site_users");
+    if (error) { return; }
+    sel.innerHTML = '<option value="">— выбери игрока (вошёл через Discord) —</option>' +
+      (data || []).map(u =>
+        '<option value="'+esc(u.user_id)+'" data-name="'+esc(u.discord || "")+'">' +
+        esc(u.discord || u.email || u.user_id) +
+        (u.role && u.role !== "—" ? ' · ' + esc(u.role_title || u.role) : '') +
+        '</option>').join("");
+  };
+
   window.adminGrant = async function(){
-    const email = document.getElementById("adm-email").value.trim();
-    const name = document.getElementById("adm-name").value.trim();
+    const sel = document.getElementById("adm-user");
+    const uid = sel.value;
     const role = document.getElementById("adm-role").value;
-    if (!email) return alert("Укажи email из Supabase Auth.");
-    const { error } = await sb.rpc("set_admin_role", {
-      _email: email, _role: role, _status: "active", _display_name: name, _notes: ""
+    const opt = sel.selectedOptions[0];
+    const name = opt ? (opt.getAttribute("data-name") || "") : "";
+    if (!uid) return alert("Выбери игрока из списка.");
+    const { error } = await sb.rpc("set_admin_role_by_id", {
+      _user_id: uid, _role: role, _status: "active", _display_name: name
     });
     if (error) { alert("Не выдано: " + error.message); return; }
-    document.getElementById("adm-email").value = "";
-    document.getElementById("adm-name").value = "";
     await adminLoad();
+    await loadSiteUsers();
   };
 
   window.loadModeration = async function(){
@@ -324,6 +337,7 @@
     if (perms.can_admins) {
       document.getElementById("admin-users-section").style.display = "";
       adminLoad();
+      loadSiteUsers();
     }
     if (perms.can_staff) {
       document.getElementById("admin-moderation-section").style.display = "";

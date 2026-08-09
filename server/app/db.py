@@ -1050,10 +1050,15 @@ def case_file(name):
                FROM warnings LEFT JOIN officers ON officers.id = warnings.officer_id
                WHERE warnings.subject_name=? COLLATE NOCASE""", (name,)).fetchall()
         add("warning", wr, "subject_name", "issued_at", lambda d: "Предупреждение")
+        # Синтетические вызовы-зеркала (ext 'case-callout:...') не показываем в личном
+        # деле: они сгенерированы из ареста и дублировали бы его в хронологии.
+        # На странице /callouts они остаются (там это журнал вызовов).
         co = c.execute(
             """SELECT callouts.*, officers.callsign, officers.name AS officer_name
                FROM callouts LEFT JOIN officers ON officers.id = callouts.officer_id
-               WHERE callouts.suspect_name=? COLLATE NOCASE""", (name,)).fetchall()
+               WHERE callouts.suspect_name=? COLLATE NOCASE
+                 AND (callouts.external_id IS NULL
+                      OR callouts.external_id NOT LIKE 'case-callout:%')""", (name,)).fetchall()
         add("callout", co, "suspect_name", "occurred_at", lambda d: f"Вызов: {d.get('callout_type') or ''}")
         crt = c.execute("SELECT * FROM court_cases WHERE subject_name=? COLLATE NOCASE", (name,)).fetchall()
         add("court", crt, "subject_name", "filed_at",

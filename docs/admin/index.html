@@ -113,6 +113,27 @@
     <div id="admin-users" class="admin-users"></div>
   </section>
 
+  <section class="card admin-section" id="admin-moderation-section" style="display:none">
+    <div class="admin-section-head">
+      <div>
+        <span class="eyebrow">Модерация</span>
+        <h2>Одобрение офицеров</h2>
+      </div>
+      <button class="btn" onclick="loadModeration()">Обновить</button>
+    </div>
+    <label class="mod-auto">
+      <input type="checkbox" id="mod-auto" onchange="modToggleAuto(this.checked)">
+      <span>Авто-одобрение — пускать всех новых игроков на сайт без проверки</span>
+    </label>
+    <div class="admin-add">
+      <input id="mod-callsign" placeholder="позывной, напр. 7-ADAM-20">
+      <input id="mod-name" placeholder="имя офицера (необязательно)">
+      <button class="btn primary" onclick="modApproveManual()">Одобрить вручную</button>
+    </div>
+    <p class="muted small">Одобренные публикуются автоматически (в течение ~30 мин их прошлые смены/аресты «достаются» из модерации). Список ниже — кто наиграл, но ещё не одобрен.</p>
+    <div id="mod-pending"></div>
+  </section>
+
   <section class="admin-tools">
     <a class="admin-tool" href="/dispatch-one-records/staff" data-perm="can_staff">
       <span>Персонал</span>
@@ -236,6 +257,51 @@
     await adminLoad();
   };
 
+  window.loadModeration = async function(){
+    const box = document.getElementById("mod-pending");
+    const auto = await sb.from("moderation").select("auto_approve").eq("id", 1).maybeSingle();
+    const cb = document.getElementById("mod-auto");
+    if (cb && auto && auto.data) cb.checked = !!auto.data.auto_approve;
+    box.innerHTML = '<div class="empty">Загружаю…</div>';
+    const { data, error } = await sb.from("pending_officers").select("*").order("last_seen", { ascending:false });
+    if (error) { box.innerHTML = '<div class="empty">Не удалось загрузить: '+esc(error.message)+'</div>'; return; }
+    if (!data || !data.length) { box.innerHTML = '<div class="empty">На модерации никого нет<span class="empty-sub">Новые неодобренные игроки появятся здесь.</span></div>'; return; }
+    box.innerHTML = data.map(p =>
+      '<div class="admin-user" data-cs="'+esc(p.callsign)+'">' +
+      '<div><b>'+esc(p.callsign)+'</b><small>'+esc(p.name||"—")+' · заявок '+(p.submissions||1)+' · '+fmt(p.last_seen)+'</small></div>' +
+      '<button class="btn primary" onclick="modApprove(this)">Одобрить</button>' +
+      '<button class="btn" onclick="modReject(this)">Отклонить</button>' +
+      '</div>'
+    ).join("");
+  };
+  window.modApprove = async function(btn){
+    const cs = btn.closest("[data-cs]").dataset.cs;
+    btn.disabled = true; btn.textContent = "…";
+    const { error } = await sb.rpc("approve_officer", { _callsign: cs });
+    if (error) alert("Не одобрено: " + error.message);
+    await loadModeration();
+  };
+  window.modReject = async function(btn){
+    const cs = btn.closest("[data-cs]").dataset.cs;
+    const { error } = await sb.rpc("reject_officer", { _callsign: cs });
+    if (error) alert("Не отклонено: " + error.message);
+    await loadModeration();
+  };
+  window.modApproveManual = async function(){
+    const cs = document.getElementById("mod-callsign").value.trim();
+    const nm = document.getElementById("mod-name").value.trim();
+    if (!cs) return alert("Укажи позывной.");
+    const { error } = await sb.rpc("approve_officer", { _callsign: cs, _name: nm || null });
+    if (error) { alert("Не одобрено: " + error.message); return; }
+    document.getElementById("mod-callsign").value = "";
+    document.getElementById("mod-name").value = "";
+    await loadModeration();
+  };
+  window.modToggleAuto = async function(on){
+    const { error } = await sb.rpc("set_auto_approve", { _on: on });
+    if (error) { alert("Не изменено: " + error.message); await loadModeration(); }
+  };
+
   document.addEventListener("lapd:auth", async function () {
     sb = window.lapd.sb;
     perms = window.lapd.permissions || {};
@@ -258,6 +324,10 @@
     if (perms.can_admins) {
       document.getElementById("admin-users-section").style.display = "";
       adminLoad();
+    }
+    if (perms.can_staff) {
+      document.getElementById("admin-moderation-section").style.display = "";
+      loadModeration();
     }
     loadAudit();
   });

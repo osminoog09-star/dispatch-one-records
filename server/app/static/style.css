@@ -119,6 +119,9 @@ h3{font-size:14px;margin:0 0 .5em;color:var(--muted);text-transform:uppercase;le
   background:currentColor;-webkit-mask:center/contain no-repeat var(--empty-icon);mask:center/contain no-repeat var(--empty-icon)}
 .empty{--empty-icon:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'><path d='M4 5h11l5 5v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1z'/><path d='M14 5v5h5'/></svg>")}
 .empty-sub{display:block;font-weight:400;font-size:13px;color:var(--muted);opacity:.85}
+.mod-auto{display:flex;align-items:center;gap:10px;margin:4px 0 14px;padding:12px 14px;
+  border:1px solid var(--border);border-radius:12px;background:var(--surface);cursor:pointer;font-weight:600}
+.mod-auto input{width:18px;height:18px;flex-shrink:0;cursor:pointer}
 
 /* tags */
 .tag{display:inline-block;padding:2px 9px;border-radius:20px;font-size:12px;font-weight:600;

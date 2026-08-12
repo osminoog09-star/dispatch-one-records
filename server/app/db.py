@@ -680,13 +680,33 @@ def _fix_rooms(s):
     return re.sub(r"(\d)([А-Я])", lambda m: m.group(1) + _CYR2LAT.get(m.group(2), m.group(2)), s)
 
 
+def _cp1251_bytes(s):
+    """Обратно в байты для текста, побитого чтением UTF-8 как CP1251.
+
+    Обычный s.encode('cp1251') падает на символах, которых нет в таблице (например
+    U+0098 из «И» = D0 98) — тогда адреса вроде «Р‘СѓР»СЊРІР°СЂ РРЅРЅРѕСЃРµРЅСЃ»
+    оставались битыми. Такие символы возвращаем как одиночный байт.
+    """
+    out = bytearray()
+    for ch in s:
+        try:
+            out += ch.encode("cp1251")
+        except UnicodeEncodeError:
+            code = ord(ch)
+            if code < 256:
+                out.append(code)
+            else:
+                raise
+    return bytes(out)
+
+
 def _fix_mojibake(s):
     """Repair UTF-8 text that was accidentally decoded as CP1251."""
     if not s or not isinstance(s, str):
         return s
     try:
-        fixed = s.encode("cp1251").decode("utf-8")
-    except (UnicodeEncodeError, UnicodeDecodeError):
+        fixed = _cp1251_bytes(s).decode("utf-8")
+    except (UnicodeEncodeError, UnicodeDecodeError, ValueError):
         fixed = s
     else:
         return fixed if re.search(r"[А-Яа-яЁё]", fixed) else s

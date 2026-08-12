@@ -123,14 +123,31 @@ API_KEY = _setting("RECORDS_API_KEY", "dev-key")
 POLL_SECONDS = int(_setting("POLL_SECONDS", "8"))
 
 
+def _cp1251_bytes(s):
+    """Обратно в байты для текста, побитого чтением UTF-8 как CP1251.
+    Символы вне таблицы cp1251 (например U+0098 из «И») возвращаем одним байтом —
+    иначе адреса вида «Р‘СѓР»СЊРІР°СЂ РРЅРЅРѕСЃРµРЅСЃ» не чинились."""
+    out = bytearray()
+    for ch in s:
+        try:
+            out += ch.encode("cp1251")
+        except UnicodeEncodeError:
+            code = ord(ch)
+            if code < 256:
+                out.append(code)
+            else:
+                raise
+    return bytes(out)
+
+
 def fix_mojibake(s):
     """Чинит адреса, побитые двойной кодировкой (UTF-8, прочитанный как CP1251).
     Корректный русский текст при этом не трогается (там decode падает и остаётся оригинал)."""
     if not s:
         return s
     try:
-        return s.encode("cp1251").decode("utf-8")
-    except (UnicodeEncodeError, UnicodeDecodeError):
+        return _cp1251_bytes(s).decode("utf-8")
+    except (UnicodeEncodeError, UnicodeDecodeError, ValueError):
         return s
 
 

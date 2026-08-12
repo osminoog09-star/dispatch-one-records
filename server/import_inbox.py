@@ -191,12 +191,23 @@ def _feed(rec, kind, record_id=None):
 
 
 def _fix(s):
-    """Чинит адреса, побитые двойной кодировкой."""
+    """Чинит адреса, побитые двойной кодировкой (UTF-8, прочитанный как CP1251).
+    Символы вне таблицы cp1251 (например U+0098 из «И») отдаём одним байтом,
+    иначе адреса вида «Р‘СѓР»СЊРІР°СЂ РРЅРЅРѕСЃРµРЅСЃ» остаются битыми."""
     if not s:
         return s
+    out = bytearray()
     try:
-        return s.encode("cp1251").decode("utf-8")
-    except (UnicodeEncodeError, UnicodeDecodeError):
+        for ch in s:
+            try:
+                out += ch.encode("cp1251")
+            except UnicodeEncodeError:
+                code = ord(ch)
+                if code >= 256:
+                    return s
+                out.append(code)
+        return bytes(out).decode("utf-8")
+    except (UnicodeDecodeError, ValueError):
         return s
 
 

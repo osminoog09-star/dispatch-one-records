@@ -55,23 +55,26 @@
 9. Обновить `HANDOFF.md` и `WIP.md`.
 10. Commit + push.
 
-## Минимальные проверки
+## Проверки перед коммитом
 
-Для любых Python-правок:
-
-```powershell
-python -m py_compile server/app/db.py server/app/main.py server/app/discord_post.py server/export_static.py
-```
-
-Для правок сайта:
+Сайт и данные — одна команда (после `python server/export_static.py`, если менялись шаблоны):
 
 ```powershell
-python server/export_static.py
-python -c "from app.main import app; c=app.test_client(); paths=['/','/cases','/case/19','/court/20','/shifts','/map','/register','/staff','/tickets','/dictionaries']; [print(p, c.get(p).status_code) for p in paths]"
-rg -n "Wobbler|arrested|test-смена|CITATIONS|RECORDS|COURT|T[0-9]{2}:[0-9]{2}:[0-9]{2}|Рљ|Р‘СЂ|Р°РІРµ|Courtroom|Court-Appointed|CJA Panel" docs -g "*.html"
+py server/qa_check.py
 ```
 
-Последний `rg` должен быть пустым или содержать только явно допустимые технические meta/comment строки, которые не видны игроку.
+Проверяет все маршруты (включая каждое дело/офицера/досье), битые внутренние ссылки и мусор
+в `docs/`, дубли и сирот в базе, отсутствие второго источника званий и живость Supabase.
+Код возврата 1 при провале — этого достаточно, отдельные ручные проверки не нужны.
+
+Правки Python вне сайта:
+
+```powershell
+python -m py_compile agent/pdcomp_sync.py launcher/launcher.py launcher/setup_installer.py
+```
+
+Важно: проверка «страница отдаёт 200» НЕ ловит рассогласование данных. Если правишь то, что
+показывается в нескольких местах (звания, счётчики, статусы) — сверь эти места между собой.
 
 ## Как дробить задачи
 

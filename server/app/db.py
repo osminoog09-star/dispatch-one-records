@@ -1306,12 +1306,22 @@ def _row_to_callout(r):
     return d
 
 
-def list_callouts(limit=200, officer_id=None):
+# Вызовы-зеркала: CAD-карточки, созданные из задержаний (pdComp не отдаёт журнал
+# вызовов). В журнале /callouts они нужны, но рядом с задержаниями дублируют их.
+MIRROR_CALLOUT = "callouts.external_id IS NOT NULL AND callouts.external_id LIKE 'case-callout:%'"
+
+
+def list_callouts(limit=200, officer_id=None, real_only=False):
+    """real_only=True — без зеркал задержаний (чтобы не дублировать их в списках)."""
     q = """SELECT callouts.*, officers.callsign, officers.name AS officer_name
            FROM callouts LEFT JOIN officers ON officers.id = callouts.officer_id"""
-    params = []
+    params, where = [], []
     if officer_id:
-        q += " WHERE callouts.officer_id=?"; params.append(officer_id)
+        where.append("callouts.officer_id=?"); params.append(officer_id)
+    if real_only:
+        where.append(f"NOT ({MIRROR_CALLOUT})")
+    if where:
+        q += " WHERE " + " AND ".join(where)
     q += " ORDER BY callouts.id DESC LIMIT ?"; params.append(limit)
     with get_conn() as c:
         return [_row_to_callout(r) for r in c.execute(q, params).fetchall()]
@@ -1326,11 +1336,17 @@ def get_callout(cid):
         return _row_to_callout(r) if r else None
 
 
-def callouts_count(officer_id=None):
+def callouts_count(officer_id=None, real_only=False):
+    q, params = "SELECT COUNT(*) FROM callouts", []
+    where = []
+    if officer_id:
+        where.append("officer_id=?"); params.append(officer_id)
+    if real_only:
+        where.append(f"NOT ({MIRROR_CALLOUT})")
+    if where:
+        q += " WHERE " + " AND ".join(where)
     with get_conn() as c:
-        if officer_id:
-            return c.execute("SELECT COUNT(*) FROM callouts WHERE officer_id=?", (officer_id,)).fetchone()[0]
-        return c.execute("SELECT COUNT(*) FROM callouts").fetchone()[0]
+        return c.execute(q, params).fetchone()[0]
 
 
 def upsert_warning(data):
@@ -1678,7 +1694,8 @@ def subject_intel(name):
             "SELECT COUNT(*) FROM court_cases WHERE subject_name=? COLLATE NOCASE", (name,)
         ).fetchone()[0]
         callouts = c.execute(
-            "SELECT COUNT(*) FROM callouts WHERE suspect_name=? COLLATE NOCASE", (name,)
+            f"""SELECT COUNT(*) FROM callouts WHERE suspect_name=? COLLATE NOCASE
+                AND NOT ({MIRROR_CALLOUT})""", (name,)
         ).fetchone()[0]
         vehicles = [r["plate"] for r in c.execute(
             "SELECT DISTINCT plate FROM vehicles WHERE suspect_name=? COLLATE NOCASE AND plate IS NOT NULL AND plate!=''",

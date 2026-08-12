@@ -2,6 +2,8 @@
 {% block title %}Вызовы{% endblock %}
 {% block content %}
 <h1>Журнал вызовов</h1>
+<p class="muted small">CAD-карточки формируются из задержаний: игра не отдаёт отдельный журнал вызовов,
+  поэтому каждая карточка — это выезд, закончившийся задержанием.</p>
 
 <section class="stats">
   <div class="stat"><div class="num">{{ callouts|length }}</div><div class="lbl">Всего вызовов</div></div>

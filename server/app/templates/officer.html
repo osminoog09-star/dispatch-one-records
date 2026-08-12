@@ -18,11 +18,11 @@
   </div>
 </div>
 
-<section class="stats stats-5">
+<section class="stats {% if callouts %}stats-5{% endif %}">
   <div class="stat"><div class="num">{{ cases|length }}</div><div class="lbl">Задержаний</div></div>
   <div class="stat"><div class="num">{{ cit.count }}</div><div class="lbl">Штрафов</div></div>
   <div class="stat"><div class="num">${{ cit.total_fine }}</div><div class="lbl">Сумма штрафов</div></div>
-  <div class="stat"><div class="num">{{ callouts|length }}</div><div class="lbl">Вызовов</div></div>
+  {% if callouts %}<div class="stat"><div class="num">{{ callouts|length }}</div><div class="lbl">Вызовов</div></div>{% endif %}
   <div class="stat"><div class="num">{{ hours }}</div><div class="lbl">Часов на службе</div></div>
 </section>
 
@@ -56,8 +56,8 @@
 </table>
 {% else %}<p class="empty">Задержаний нет.</p>{% endif %}
 
-<h2>Вызовы</h2>
 {% if callouts %}
+<h2>Вызовы</h2>
 <table class="tbl">
   <thead><tr><th>#</th><th>Тип</th><th>Место</th><th>Когда</th><th>Связи</th></tr></thead>
   <tbody>
@@ -81,7 +81,7 @@
   {% endfor %}
   </tbody>
 </table>
-{% else %}<p class="empty">Вызовов нет.</p>{% endif %}
+{% endif %}
 
 <h2>Штрафы</h2>
 {% if citations %}

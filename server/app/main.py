@@ -403,7 +403,9 @@ def officer_view(callsign):
     return render_template("officer.html", officer=off,
                            cases=db.list_cases(200, officer_id=off["id"]),
                            citations=db.list_citations(200, officer_id=off["id"]),
-                           callouts=db.list_callouts(200, officer_id=off["id"]),
+                           # real_only: без CAD-зеркал задержаний — иначе секция
+                           # «Вызовы» дублирует секцию «Задержания» этой же страницы
+                           callouts=db.list_callouts(200, officer_id=off["id"], real_only=True),
                            court_cases=db.list_related_court_cases_for_officer(off["id"]),
                            cit=db.citations_summary(off["id"]),
                            evidence=db.evidence_catalog(off["id"]),

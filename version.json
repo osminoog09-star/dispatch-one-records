@@ -1,9 +1,9 @@
 {
-  "launcher": "1.4.16",
+  "launcher": "1.4.17",
   "agent": "1.1.2",
   "enabled": true,
   "min_launcher": "1.0.0",
-  "notes": "Важное исправление: теперь штрафы и задержания попадают на сайт, даже если игра установлена не на диске C (Steam/Epic/другой диск) — агент сам находит папку pdComp. Также починен внутриигровой плагин учёта. Обновление ставится само при запуске.",
+  "notes": "Починено обновление лаунчера: если провайдер или антивирус закрывают прямую ссылку на файл, лаунчер сам качает через запасной канал и повторяет попытки. Также штрафы и задержания теперь попадают на сайт при любой папке установки игры.",
   "installer_url": "https://github.com/osminoog09-star/dispatch-one-records/releases/latest/download/LAPD-Records-Launcher-Setup.exe",
   "launcher_url": "https://github.com/osminoog09-star/dispatch-one-records/releases/latest/download/LAPD-Records-Launcher.zip",
   "agent_url": "https://github.com/osminoog09-star/dispatch-one-records/releases/latest/download/pdcomp_sync.exe"

@@ -15,6 +15,7 @@ import subprocess
 import sys
 import tempfile
 import threading
+import time
 import urllib.request
 import zipfile
 from pathlib import Path
@@ -82,13 +83,15 @@ def close_running_launcher() -> None:
         _run_hidden(["taskkill", "/F", "/IM", f"{APP_NAME}.exe"])
 
 
-def download_zip(progress) -> Path:
-    DOWNLOAD_DIR.mkdir(parents=True, exist_ok=True)
-    zip_path = DOWNLOAD_DIR / f"{APP_NAME}.zip"
-    progress("Скачиваю актуальный лаунчер...", 12)
+UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) LAPD-Records-Launcher-Setup"
+GITHUB_REPO = "osminoog09-star/dispatch-one-records"
 
-    request = urllib.request.Request(ZIP_URL, headers={"User-Agent": "LAPD-Records-Launcher-Setup"})
-    with urllib.request.urlopen(request, timeout=60) as response:
+
+def _pull(url, zip_path, progress, extra_headers=None):
+    headers = {"User-Agent": UA, "Accept": "*/*", "Connection": "close"}
+    headers.update(extra_headers or {})
+    request = urllib.request.Request(url, headers=headers)
+    with urllib.request.urlopen(request, timeout=120) as response:
         total = int(response.headers.get("Content-Length") or 0)
         done = 0
         with open(zip_path, "wb") as fh:
@@ -102,9 +105,51 @@ def download_zip(progress) -> Path:
                     pct = 12 + int(done * 48 / total)
                     progress(f"Скачиваю лаунчер... {done // 1024 // 1024} МБ", pct)
 
-    if zip_path.stat().st_size < 1024 * 1024:
-        raise RuntimeError("Скачанный файл слишком маленький. Проверь интернет и попробуй снова.")
-    return zip_path
+
+def download_zip(progress) -> Path:
+    """Качает лаунчер: несколько попыток, затем запасной путь через GitHub API.
+
+    У части игроков домен раздачи релизов закрыт провайдером/антивирусом — прямая
+    ссылка обрывается с «Remote end closed connection», а api.github.com работает.
+    """
+    DOWNLOAD_DIR.mkdir(parents=True, exist_ok=True)
+    zip_path = DOWNLOAD_DIR / f"{APP_NAME}.zip"
+    progress("Скачиваю актуальный лаунчер...", 12)
+
+    last_err = None
+    for attempt in range(1, 4):
+        try:
+            _pull(ZIP_URL, zip_path, progress)
+            if zip_path.stat().st_size >= 1024 * 1024:
+                return zip_path
+            last_err = RuntimeError("файл скачан не полностью")
+        except Exception as exc:
+            last_err = exc
+        if attempt < 3:
+            progress(f"Повторная попытка {attempt + 1}/3...", 12)
+            time.sleep(2 * attempt)
+
+    # запасной путь: тот же файл через API релизов
+    try:
+        progress("Пробую запасной канал загрузки...", 14)
+        api = f"https://api.github.com/repos/{GITHUB_REPO}/releases/latest"
+        req = urllib.request.Request(api, headers={"User-Agent": UA,
+                                                   "Accept": "application/vnd.github+json"})
+        with urllib.request.urlopen(req, timeout=60) as resp:
+            release = json.load(resp)
+        name = ZIP_URL.rsplit("/", 1)[-1]
+        asset = next((a for a in release.get("assets", []) if a.get("name") == name), None)
+        if not asset:
+            raise RuntimeError(f"в релизе нет файла {name}")
+        _pull(asset["url"], zip_path, progress, {"Accept": "application/octet-stream"})
+        if zip_path.stat().st_size >= 1024 * 1024:
+            return zip_path
+        raise RuntimeError("файл скачан не полностью")
+    except Exception as exc:
+        raise RuntimeError(
+            f"Не удалось скачать лаунчер: {last_err or exc}. "
+            f"Чаще всего мешает антивирус или блокировка сети — отключи проверку и попробуй снова."
+        ) from exc
 
 
 def extract_launcher(zip_path: Path, progress) -> Path:

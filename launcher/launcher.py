@@ -23,7 +23,7 @@ import tkinter as tk
 from tkinter import messagebox
 
 APP_NAME = "LAPD Records"
-VERSION = "1.4.16"
+VERSION = "1.4.17"
 GITHUB_REPO = "osminoog09-star/dispatch-one-records"
 # Шлюз приёма данных (Cloudflare Worker) — вшивается при сборке, токена в клиенте нет.
 try:
@@ -563,19 +563,96 @@ def check_update():
     }
 
 
-def _download(url, dst, on_progress=None):
-    req = urllib.request.Request(url, headers={"User-Agent": "lapd-launcher"})
+def _download(url, dst, on_progress=None, attempts=4):
+    """Качает файл с докачкой и повторами.
+
+    Обновление весит ~20 МБ: одной сетевой икоты (или проверки антивирусом) хватало,
+    чтобы GitHub закрыл соединение и обновление падало с «Remote end closed connection».
+    Поэтому: несколько попыток, докачка с места обрыва через Range и пауза между ними.
+    """
+    UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) LAPD-Records-Launcher/" + VERSION)
+    last_err = None
+    for attempt in range(1, attempts + 1):
+        done = os.path.getsize(dst) if os.path.exists(dst) else 0
+        headers = {"User-Agent": UA, "Accept": "*/*", "Connection": "close"}
+        if done:
+            headers["Range"] = f"bytes={done}-"
+        try:
+            req = urllib.request.Request(url, headers=headers)
+            with urllib.request.urlopen(req, timeout=120) as r:
+                # сервер проигнорировал докачку — начинаем файл заново
+                resume = r.status == 206
+                if done and not resume:
+                    done = 0
+                total = int(r.headers.get("Content-Length", 0)) + done
+                with open(dst, "ab" if resume and done else "wb") as f:
+                    while True:
+                        chunk = r.read(65536)
+                        if not chunk:
+                            break
+                        f.write(chunk)
+                        done += len(chunk)
+                        if on_progress and total:
+                            on_progress(min(done / total, 1.0))
+            if total and os.path.getsize(dst) < total:
+                raise IOError(f"файл скачан не полностью ({os.path.getsize(dst)} из {total})")
+            return
+        except urllib.error.HTTPError as e:
+            last_err = e
+            # 416 = «такой диапазон уже есть»: остаток от прошлой попытки мешает, качаем заново
+            if e.code == 416 and os.path.exists(dst):
+                try:
+                    os.remove(dst)
+                except OSError:
+                    pass
+            log(f"загрузка {os.path.basename(dst)}: попытка {attempt}/{attempts} — HTTP {e.code}")
+            if attempt < attempts:
+                time.sleep(2 * attempt)
+        except Exception as e:
+            last_err = e
+            log(f"загрузка {os.path.basename(dst)}: попытка {attempt}/{attempts} не удалась — {e}")
+            if attempt < attempts:
+                time.sleep(2 * attempt)
+    # Запасной путь: у части игроков (провайдер/антивирус) закрыт домен раздачи релизов
+    # github.com/.../releases/download, при этом api.github.com работает. Качаем тем же
+    # файлом через API релизов.
+    try:
+        log("основная ссылка недоступна — пробую через GitHub API")
+        _download_via_api(url.rsplit("/", 1)[-1], dst, on_progress)
+        return
+    except Exception as e2:
+        log(f"запасной путь тоже не сработал: {e2}")
+    raise IOError(f"не удалось скачать после {attempts} попыток: {last_err}. "
+                  f"Обычно мешает антивирус или нестабильная сеть — попробуй ещё раз "
+                  f"или скачай установщик с сайта вручную.")
+
+
+def _download_via_api(asset_name, dst, on_progress=None):
+    """Скачивает ассет последнего релиза через api.github.com (обход блокировки CDN)."""
+    UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) LAPD-Records-Launcher/" + VERSION)
+    api = f"https://api.github.com/repos/{GITHUB_REPO}/releases/latest"
+    req = urllib.request.Request(api, headers={"User-Agent": UA,
+                                               "Accept": "application/vnd.github+json"})
+    with urllib.request.urlopen(req, timeout=60) as r:
+        rel = json.load(r)
+    asset = next((a for a in rel.get("assets", []) if a.get("name") == asset_name), None)
+    if not asset:
+        raise IOError(f"в релизе нет файла {asset_name}")
+    req = urllib.request.Request(asset["url"], headers={"User-Agent": UA,
+                                                        "Accept": "application/octet-stream"})
     with urllib.request.urlopen(req, timeout=180) as r, open(dst, "wb") as f:
-        total = int(r.headers.get("Content-Length", 0))
-        got = 0
+        total = int(r.headers.get("Content-Length", 0)) or asset.get("size", 0)
+        done = 0
         while True:
             chunk = r.read(65536)
             if not chunk:
                 break
             f.write(chunk)
-            got += len(chunk)
+            done += len(chunk)
             if on_progress and total:
-                on_progress(got / total)
+                on_progress(min(done / total, 1.0))
+    if asset.get("size") and os.path.getsize(dst) < asset["size"]:
+        raise IOError("файл скачан не полностью")
 
 
 def update_agent(manifest, on_progress=None):

@@ -6,8 +6,9 @@
 {% if static_export %}
   <p class="muted">Список офицеров департамента. Звания и отделы назначает руководство.</p>
 {% else %}
-  <p class="muted">Админка: меняй звания, отделы и доступы. После правок нажми
-    <b>«Обновить сайт.bat»</b> — изменения появятся на публичном сайте.</p>
+  <p class="muted">Звания, отделы и доступы назначаются на сайте (раздел «Персонал» и «Админ»)
+    — там единый источник данных. Здесь можно поправить Discord и удалить пустого офицера,
+    после правок нажми <b>«Обновить сайт.bat»</b>.</p>
 {% endif %}
 
 {% if pending and not static_export %}
@@ -56,20 +57,14 @@
         <div class="sb-edit" data-cs="{{ o.callsign }}"></div>
       </div>
     {% else %}
+      {# Звание, отдел и роль назначаются ТОЛЬКО на сайте (Supabase) — иначе данные
+         расходятся: локальная база не попадает на публичные страницы. #}
+      <div class="staff-meta">
+        <div class="sb-rankdept" data-cs="{{ o.callsign }}"></div>
+      </div>
       <form method="post" class="staff-form">
         <input type="hidden" name="officer_id" value="{{ o.id }}">
-        <select name="rank">
-          <option value="">— звание —</option>
-          {% for r in ranks %}<option value="{{ r }}" {{ 'selected' if o.rank==r }}>{{ staff_label(r) }}</option>{% endfor %}
-          {% if o.rank and o.rank not in ranks %}<option value="{{ o.rank }}" selected>{{ staff_label(o.rank) }}</option>{% endif %}
-        </select>
-        <select name="department">
-          <option value="">— отдел —</option>
-          {% for d in departments %}<option value="{{ d }}" {{ 'selected' if o.department==d }}>{{ staff_label(d) }}</option>{% endfor %}
-          {% if o.department and o.department not in departments %}<option value="{{ o.department }}" selected>{{ staff_label(o.department) }}</option>{% endif %}
-        </select>
         <input name="discord" value="{{ o.discord or '' }}" placeholder="discord" size="12">
-        <label class="chk"><input type="checkbox" name="is_admin" {{ 'checked' if o.is_admin }}> админ</label>
         <button class="btn">Сохранить</button>
         {% if not o.cases_count and not o.cit_count %}
           <button class="btn del" name="action" value="delete"
@@ -144,30 +139,8 @@
     rankSel.onchange = save; deptSel.onchange = save;
   }
 
-  const ROLE_META = {
-    owner:    { t: "Владелец",  c: "#f0b429" },
-    admin:    { t: "Админ",     c: "#f85149" },
-    moderator:{ t: "Модератор", c: "#3fb950" },
-    helper:   { t: "Хелпер",    c: "#2f81f7" },
-  };
-  async function fillRoleBadges() {
-    const cells = document.querySelectorAll(".sb-role[data-discord]");
-    if (!cells.length) return;
-    const { data, error } = await sb.rpc("public_staff_roles");
-    if (error || !data) return;
-    const map = {};
-    data.forEach(r => { if (r.discord) map[r.discord.toLowerCase()] = r.role; });
-    cells.forEach(el => {
-      const d = (el.getAttribute("data-discord") || "").toLowerCase();
-      const role = map[d];
-      const m = role && ROLE_META[role];
-      if (m) el.innerHTML = '<span class="sb-role-badge" style="background:'+m.c+'22;color:'+m.c+';border:1px solid '+m.c+'55">'+m.t+'</span>';
-    });
-  }
-
   document.addEventListener("lapd:auth", async function () {
     sb = window.lapd.sb;
-    fillRoleBadges();
     const cells = document.querySelectorAll(".sb-edit");
     if (!cells.length) return;
     try { await loadRefs(); } catch(e){ return; }

@@ -131,8 +131,8 @@
             <td><span class="cs">{{ o.callsign }}</span> {{ o.name or '' }}
               {% if o.discord %}<span class="sb-role" data-discord="{{ o.discord }}"></span>{% endif %}
               {% if o.discord %}<div class="muted small">Discord: {{ o.discord }}</div>{% endif %}</td>
-            <td>{% if o.rank %}<span class="tag rank">{{ o.rank_label }}</span>{% endif %}
-              {% if o.department %}<div class="muted small">{{ o.department_label }}</div>{% endif %}</td>
+            {# звание/отдел — единый источник: Supabase (назначается в «Персонале») #}
+            <td><span class="sb-rankdept" data-cs="{{ o.callsign }}"></span></td>
             <td>{{ o.cases_count }}</td>
           </tr>
         {% endfor %}
@@ -156,26 +156,4 @@
   </section>
 </div>
 
-<script>
-(function () {
-  const ROLE_META = {
-    owner:    { t: "Владелец",  c: "#f0b429" },
-    admin:    { t: "Админ",     c: "#f85149" },
-    moderator:{ t: "Модератор", c: "#3fb950" },
-    helper:   { t: "Хелпер",    c: "#2f81f7" },
-  };
-  document.addEventListener("lapd:auth", async function () {
-    const cells = document.querySelectorAll(".sb-role[data-discord]");
-    if (!cells.length) return;
-    const { data, error } = await window.lapd.sb.rpc("public_staff_roles");
-    if (error || !data) return;
-    const map = {};
-    data.forEach(r => { if (r.discord) map[r.discord.toLowerCase()] = r.role; });
-    cells.forEach(el => {
-      const m = ROLE_META[map[(el.getAttribute("data-discord") || "").toLowerCase()]];
-      if (m) el.innerHTML = '<span class="sb-role-badge" style="background:'+m.c+'22;color:'+m.c+';border:1px solid '+m.c+'55">'+m.t+'</span>';
-    });
-  });
-})();
-</script>
 {% endblock %}

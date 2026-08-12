@@ -11,7 +11,8 @@
       <span class="tag"><span class="status-dot {{ officer.status_cls }}"></span>{{ officer.status_ru }}</span>
     </div>
     <div class="muted small" style="margin-top:6px">
-      {% if officer.department %}{{ officer.department_label }}{% endif %}
+      {# звание/отдел — единый источник: Supabase (назначается в «Персонале») #}
+      <span class="sb-rankdept" data-cs="{{ officer.callsign }}"></span>
       {% if officer.discord %} · Discord: <b>{{ officer.discord }}</b>{% endif %}
       {% if officer.status_since_fmt %} · статус с {{ officer.status_since_fmt }}{% endif %}
     </div>

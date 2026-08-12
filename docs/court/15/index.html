@@ -183,8 +183,64 @@ function copyDiscord(){
       осминоог09-star</span>
   </footer>
   <!-- Dispatch One Records — исходная система: github.com/osminoog09-star/dispatch-one-records
-       Копирование оформления и кода без разрешения запрещено. build:20260812 -->
+       Копирование оформления и кода без разрешения запрещено. build:20260813 -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="/dispatch-one-records/static/supa.js"></script>
+  <script>
+  /* Единый источник званий/отделов и ролей — Supabase.
+     Заполняет .sb-rankdept[data-cs] (звание+отдел) и .sb-role[data-discord] (роль)
+     на любой странице, где эти плейсхолдеры есть. */
+  (function () {
+    const ROLE_META = {
+      owner:    { t: "Владелец",  c: "#f0b429" },
+      admin:    { t: "Админ",     c: "#f85149" },
+      moderator:{ t: "Модератор", c: "#3fb950" },
+      helper:   { t: "Хелпер",    c: "#2f81f7" },
+    };
+    function esc(s){return (s||"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
+
+    async function fillRankDept(sb) {
+      const cells = document.querySelectorAll(".sb-rankdept[data-cs]");
+      if (!cells.length) return;
+      const [rk, dp, pr] = await Promise.all([
+        sb.from("ranks").select("id,name,color"),
+        sb.from("departments").select("id,name"),
+        sb.from("officer_profiles").select("callsign,rank_id,department_id"),
+      ]);
+      const ranks = {}, deps = {}, prof = {};
+      (rk.data || []).forEach(r => ranks[r.id] = r);
+      (dp.data || []).forEach(d => deps[d.id] = d);
+      (pr.data || []).forEach(p => prof[(p.callsign || "").toLowerCase()] = p);
+      cells.forEach(el => {
+        const p = prof[(el.getAttribute("data-cs") || "").toLowerCase()];
+        if (!p) return;
+        const r = p.rank_id && ranks[p.rank_id], d = p.department_id && deps[p.department_id];
+        let h = "";
+        if (r) h += '<span class="sb-badge" style="background:' + (r.color || "#12294a") + '22;color:' + (r.color || "#cdd9e5") + '">' + esc(r.name) + '</span>';
+        if (d) h += '<div class="muted small">' + esc(d.name) + '</div>';
+        el.innerHTML = h;
+      });
+    }
+
+    async function fillRoles(sb) {
+      const cells = document.querySelectorAll(".sb-role[data-discord]");
+      if (!cells.length) return;
+      const { data, error } = await sb.rpc("public_staff_roles");
+      if (error || !data) return;
+      const map = {};
+      data.forEach(r => { if (r.discord) map[r.discord.toLowerCase()] = r.role; });
+      cells.forEach(el => {
+        const m = ROLE_META[map[(el.getAttribute("data-discord") || "").toLowerCase()]];
+        if (m) el.innerHTML = '<span class="sb-role-badge" style="background:' + m.c + '22;color:' + m.c + ';border:1px solid ' + m.c + '55">' + m.t + '</span>';
+      });
+    }
+
+    document.addEventListener("lapd:auth", function () {
+      const sb = window.lapd && window.lapd.sb;
+      if (!sb) return;
+      fillRankDept(sb); fillRoles(sb);
+    });
+  })();
+  </script>
 </body>
 </html>

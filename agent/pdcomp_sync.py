@@ -483,6 +483,46 @@ def read_mdt():
     return out
 
 
+def map_callouts(records, callsign, officer_name):
+    """Настоящие вызовы LSPDFR из событий плагина → карточки для сайта.
+
+    Плагин пишет стадии: displayed (диспетчер предложил), accepted (взял),
+    declined (отказался), finished (закрыт). В журнал идут только принятые —
+    это реальный выезд. Отклонённые не засоряют реестр.
+    """
+    out, cur = [], None
+    for r in records:
+        if r.get("type") != "callout":
+            continue
+        stage = (r.get("stage") or "").strip()
+        ts = r.get("ts") or ""
+        name = (r.get("friendly") or r.get("name") or "").strip() or "Вызов"
+        if stage in ("displayed", "accepted"):
+            if cur is None or cur["callout_type"] != name:
+                cur = {
+                    "external_id": "live-callout:" + ts,
+                    "callsign": callsign,
+                    "officer_name": officer_name,
+                    "callout_type": name,
+                    "occurred_at": ts,
+                    "x": r.get("x"),
+                    "y": r.get("y"),
+                    "accepted": False,
+                    "outcome": None,
+                }
+            if stage == "accepted":
+                cur["accepted"] = True
+                if cur not in out:
+                    out.append(cur)
+        elif stage == "finished" and cur is not None:
+            cur["outcome"] = "Завершён"
+            cur["ended_at"] = ts
+            cur = None
+        elif stage == "declined":
+            cur = None
+    return [c for c in out if c.get("accepted")]
+
+
 def map_ped_check(r):
     """Проверка человека из плагина → документ NPC для сайта."""
     prof = _PROFILE or _CONFIG_PROFILE
@@ -633,17 +673,17 @@ def _via_gateway(payload):
 
 
 def _gh_upload_records(repo, token, profile, arrests, citations, cases, shifts=None, warnings=None,
-                       ped_checks=None, plate_checks=None, duty_events=None):
+                       ped_checks=None, plate_checks=None, duty_events=None, live_callouts=None):
     """Кладёт данные игрока в inbox. Через шлюз (если задан GATEWAY_URL) или прямо в GitHub."""
     import base64
     payload = {"profile": profile, "arrests": arrests or [],
                "citations": citations or [], "cases": cases or [],
                "shifts": shifts or [], "warnings": warnings or [],
                "ped_checks": ped_checks or [], "plate_checks": plate_checks or [],
-               "duty_events": duty_events or [],
+               "duty_events": duty_events or [], "live_callouts": live_callouts or [],
                "sent_at": time.strftime("%Y-%m-%dT%H:%M:%S")}
     if not any(payload[k] for k in ("arrests", "citations", "cases", "shifts", "warnings",
-                                     "ped_checks", "plate_checks", "duty_events")):
+                                     "ped_checks", "plate_checks", "duty_events", "live_callouts")):
         return True, "новых данных нет"
 
     # приоритет — шлюз (токена в клиенте нет)
@@ -713,7 +753,8 @@ def upload_to_github(shift=None):
 
     # живые данные из плагина (проверки ped/plate, статус смены)
     ped_checks, plate_checks, duty_events = [], [], []
-    for rec in read_mdt():
+    mdt = read_mdt()
+    for rec in mdt:
         t = rec.get("type")
         if t == "ped":
             ped_checks.append(map_ped_check(rec))
@@ -722,12 +763,13 @@ def upload_to_github(shift=None):
         elif t == "duty":
             duty_events.append({"on_duty": rec.get("onDuty"), "at": rec.get("ts"),
                                 "external_id": "duty:" + str(rec.get("ts"))})
+    live_callouts = map_callouts(mdt, profile.get("callsign"), profile.get("nickname"))
 
     print("[github] отправляю данные...")
     ok, msg = _gh_upload_records(
         _setting("GITHUB_REPO", ""), _setting("GITHUB_TOKEN", ""),
         profile, arrests, cits, cases, [shift] if shift else [], warns,
-        ped_checks, plate_checks, duty_events)
+        ped_checks, plate_checks, duty_events, live_callouts)
     print(("[github] " if ok else "[github] ошибка: ") + msg)
 
 

@@ -958,15 +958,21 @@ def create_callout(data):
         cols = {r["name"] for r in c.execute("PRAGMA table_info(callouts)").fetchall()}
         if "suspect_name" not in cols:
             c.execute("ALTER TABLE callouts ADD COLUMN suspect_name TEXT")
+        # координаты события: их шлёт игровой плагин для настоящих вызовов
+        if "pos_x" not in cols:
+            c.execute("ALTER TABLE callouts ADD COLUMN pos_x REAL")
+        if "pos_y" not in cols:
+            c.execute("ALTER TABLE callouts ADD COLUMN pos_y REAL")
         if c.execute("SELECT id FROM callouts WHERE external_id=?", (ext,)).fetchone():
             return None, False
         cur = c.execute(
             """INSERT INTO callouts (external_id, officer_id, callout_type, priority,
-               location, zone, description, outcome, occurred_at, suspect_name)
-               VALUES (?,?,?,?,?,?,?,?,?,?)""",
+               location, zone, description, outcome, occurred_at, suspect_name, pos_x, pos_y)
+               VALUES (?,?,?,?,?,?,?,?,?,?,?,?)""",
             (ext, officer_id, data.get("callout_type"), data.get("priority"),
              data.get("location"), data.get("zone"), data.get("description"),
-             data.get("outcome"), data.get("occurred_at") or _now(), data.get("suspect_name")))
+             data.get("outcome"), data.get("occurred_at") or _now(), data.get("suspect_name"),
+             data.get("x"), data.get("y")))
         return cur.lastrowid, True
 
 

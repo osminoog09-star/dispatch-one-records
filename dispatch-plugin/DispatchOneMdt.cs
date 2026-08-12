@@ -40,6 +40,15 @@ namespace DispatchOne
                 CI.Events.OnPlateCheck += OnPlateCheck;
                 Functions.OnOnDutyStateChanged += OnDutyStateChanged;
 
+                // Настоящие вызовы LSPDFR: раньше журнал вызовов на сайте собирался
+                // из задержаний, потому что pdComp вызовы не сохраняет.
+                LSPD_First_Response.Mod.API.Events.OnCalloutDisplayed += OnCalloutDisplayed;
+                LSPD_First_Response.Mod.API.Events.OnCalloutAccepted += OnCalloutAccepted;
+                LSPD_First_Response.Mod.API.Events.OnCalloutNotAccepted += OnCalloutNotAccepted;
+                LSPD_First_Response.Mod.API.Events.OnCalloutFinished += OnCalloutFinished;
+                LSPD_First_Response.Mod.API.Events.OnPursuitStarted += OnPursuitStarted;
+                LSPD_First_Response.Mod.API.Events.OnPursuitEnded += OnPursuitEnded;
+
                 Write("{\"type\":\"boot\",\"ts\":\"" + NowIso() + "\"}");
                 Game.LogTrivial("[DispatchOne.MDT] Загружен. Пишу в: " + _outFile);
             }
@@ -56,6 +65,12 @@ namespace DispatchOne
                 CI.Events.OnPedCheck -= OnPedCheck;
                 CI.Events.OnPlateCheck -= OnPlateCheck;
                 Functions.OnOnDutyStateChanged -= OnDutyStateChanged;
+                LSPD_First_Response.Mod.API.Events.OnCalloutDisplayed -= OnCalloutDisplayed;
+                LSPD_First_Response.Mod.API.Events.OnCalloutAccepted -= OnCalloutAccepted;
+                LSPD_First_Response.Mod.API.Events.OnCalloutNotAccepted -= OnCalloutNotAccepted;
+                LSPD_First_Response.Mod.API.Events.OnCalloutFinished -= OnCalloutFinished;
+                LSPD_First_Response.Mod.API.Events.OnPursuitStarted -= OnPursuitStarted;
+                LSPD_First_Response.Mod.API.Events.OnPursuitEnded -= OnPursuitEnded;
                 Game.LogTrivial("[DispatchOne.MDT] Выгружен.");
             }
             catch (Exception ex)
@@ -108,6 +123,67 @@ namespace DispatchOne
                 Game.LogTrivial("[DispatchOne.MDT] plate: " + r.LicensePlate);
             }
             catch (Exception ex) { Game.LogTrivial("[DispatchOne.MDT] plate err: " + ex.Message); }
+        }
+
+        // --- НАСТОЯЩИЕ ВЫЗОВЫ LSPDFR ---
+        // stage: displayed (диспетчер предложил) / accepted (взял) / declined (отказался)
+        //        / finished (закрыт) — агент собирает из них карточку вызова.
+        private static void OnCalloutDisplayed(LHandle handle) { WriteCallout("displayed", handle); }
+        private static void OnCalloutAccepted(LHandle handle) { WriteCallout("accepted", handle); }
+        private static void OnCalloutNotAccepted(LHandle handle) { WriteCallout("declined", handle); }
+        private static void OnCalloutFinished(LHandle handle) { WriteCallout("finished", handle); }
+        private static void OnPursuitStarted(LHandle handle) { WritePursuit("started"); }
+        private static void OnPursuitEnded(LHandle handle) { WritePursuit("ended"); }
+
+        private static void WriteCallout(string stage, LHandle handle)
+        {
+            try
+            {
+                string name = "", friendly = "";
+                try { name = Functions.GetCalloutName(handle); } catch { }
+                try { friendly = Functions.GetCalloutFriendlyName(handle); } catch { }
+
+                var sb = new StringBuilder();
+                sb.Append("{\"type\":\"callout\",\"ts\":\"").Append(NowIso()).Append("\"");
+                J(sb, "stage", stage);
+                J(sb, "name", name);
+                J(sb, "friendly", friendly);
+                AppendPosition(sb);
+                sb.Append("}");
+                Write(sb.ToString());
+                Game.LogTrivial("[DispatchOne.MDT] вызов " + stage + ": " +
+                                (string.IsNullOrEmpty(friendly) ? name : friendly));
+            }
+            catch (Exception ex) { Game.LogTrivial("[DispatchOne.MDT] callout err: " + ex.Message); }
+        }
+
+        private static void WritePursuit(string stage)
+        {
+            try
+            {
+                var sb = new StringBuilder();
+                sb.Append("{\"type\":\"pursuit\",\"ts\":\"").Append(NowIso()).Append("\"");
+                J(sb, "stage", stage);
+                AppendPosition(sb);
+                sb.Append("}");
+                Write(sb.ToString());
+                Game.LogTrivial("[DispatchOne.MDT] погоня: " + stage);
+            }
+            catch (Exception ex) { Game.LogTrivial("[DispatchOne.MDT] pursuit err: " + ex.Message); }
+        }
+
+        /// <summary>Координаты игрока. В отдельном методе: если этой части Rage API вдруг
+        /// нет, упадёт только он, а сама запись о вызове всё равно сохранится.</summary>
+        private static void AppendPosition(StringBuilder sb)
+        {
+            try
+            {
+                Vector3 p = Game.LocalPlayer.Character.Position;
+                sb.Append(",\"x\":").Append(p.X.ToString("F1", CultureInfo.InvariantCulture));
+                sb.Append(",\"y\":").Append(p.Y.ToString("F1", CultureInfo.InvariantCulture));
+                sb.Append(",\"z\":").Append(p.Z.ToString("F1", CultureInfo.InvariantCulture));
+            }
+            catch { /* координаты не обязательны */ }
         }
 
         // --- статус смены ---

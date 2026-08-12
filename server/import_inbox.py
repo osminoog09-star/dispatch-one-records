@@ -310,6 +310,15 @@ def main():
             if created:
                 _feed(w, "warning")
 
+        # настоящие вызовы LSPDFR из плагина (в отличие от CAD-зеркал задержаний)
+        for co in data.get("live_callouts", []):
+            co.setdefault("callsign", callsign)
+            co.setdefault("officer_name", nickname)
+            co["callout_type"] = _fix(co.get("callout_type"))
+            _cid, created = db.create_callout(co)
+            if created:
+                print(f"   [вызов] {co.get('callout_type')}")
+
         # живые данные из игрового плагина DispatchOne.MDT
         for p in data.get("ped_checks", []):
             p.setdefault("callsign", callsign)

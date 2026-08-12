@@ -16,6 +16,13 @@ namespace Rage
     {
         public static void LogTrivial(string message) { }
         public static void DisplayNotification(string text) { }
+        // нужно для координат вызова; в игре подменяется настоящим Rage
+        public static Player LocalPlayer { get { return null; } }
+    }
+
+    public class Player
+    {
+        public Ped Character { get { return null; } }
     }
 
     public static class World
@@ -23,7 +30,10 @@ namespace Rage
         public static TimeSpan TimeOfDay { get; set; }
     }
 
-    public class Entity { }
+    public class Entity
+    {
+        public Vector3 Position { get { return default(Vector3); } }
+    }
     public class Ped : Entity { }
     public class Vehicle : Entity { }
 

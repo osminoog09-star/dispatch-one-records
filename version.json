@@ -1,9 +1,9 @@
 {
-  "launcher": "1.4.17",
-  "agent": "1.1.2",
+  "launcher": "1.4.18",
+  "agent": "1.1.3",
   "enabled": true,
   "min_launcher": "1.0.0",
-  "notes": "Починено обновление лаунчера: если провайдер или антивирус закрывают прямую ссылку на файл, лаунчер сам качает через запасной канал и повторяет попытки. Также штрафы и задержания теперь попадают на сайт при любой папке установки игры.",
+  "notes": "Теперь на сайт попадают настоящие вызовы: плагин записывает выезды LSPDFR (что за вызов, когда принят, когда закрыт) вместе с координатами, а не собирает журнал из задержаний. Обновление ставится само при запуске.",
   "installer_url": "https://github.com/osminoog09-star/dispatch-one-records/releases/latest/download/LAPD-Records-Launcher-Setup.exe",
   "launcher_url": "https://github.com/osminoog09-star/dispatch-one-records/releases/latest/download/LAPD-Records-Launcher.zip",
   "agent_url": "https://github.com/osminoog09-star/dispatch-one-records/releases/latest/download/pdcomp_sync.exe"

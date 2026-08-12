@@ -148,7 +148,21 @@ def sync_from_game():
 
     # живые данные из игрового плагина DispatchOne.MDT (проверки ped/plate, статус смены)
     n_ped = n_plate = n_duty = 0
-    for rec in agent.read_mdt():
+    _mdt = agent.read_mdt()
+
+    # настоящие вызовы LSPDFR (не CAD-зеркала задержаний)
+    _prof = agent._PROFILE or agent._CONFIG_PROFILE
+    n_co = 0
+    for co in agent.map_callouts(_mdt, _prof.get("callsign"), _prof.get("nickname")):
+        try:
+            _cid, created = db.create_callout(co)
+            n_co += 1 if created else 0
+        except Exception as e:
+            print(f"   вызов пропущен: {e}")
+    if n_co:
+        print(f"   плагин: настоящих вызовов {n_co}")
+
+    for rec in _mdt:
         t = rec.get("type")
         try:
             if t == "ped":

@@ -1,0 +1,31 @@
+{
+ "profile": {
+  "callsign": "7-ADAM-1",
+  "nickname": "Jonn Nolan",
+  "discord": ""
+ },
+ "arrests": [],
+ "citations": [],
+ "cases": [],
+ "shifts": [
+  {
+   "callsign": "7-ADAM-1",
+   "officer_name": "Jonn Nolan",
+   "shift_type": "night",
+   "started_at": "2026-08-13T00:37:27",
+   "ended_at": "2026-08-13T00:39:05",
+   "duration_min": 1,
+   "arrests": 0,
+   "traffic_stops": 0,
+   "callouts": 0,
+   "pursuits": 0,
+   "pit": 0,
+   "fines_total": 0
+  }
+ ],
+ "warnings": [],
+ "ped_checks": [],
+ "plate_checks": [],
+ "duty_events": [],
+ "sent_at": "2026-08-13T00:39:05"
+}

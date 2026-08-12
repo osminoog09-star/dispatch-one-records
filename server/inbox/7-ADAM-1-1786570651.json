@@ -1,0 +1,204 @@
+{
+ "profile": {
+  "callsign": "7-ADAM-1",
+  "nickname": "Jonn Nolan",
+  "discord": ""
+ },
+ "arrests": [
+  {
+   "Id": "efa77026-8d54-418a-be0d-f9a3eb67dec5",
+   "ArrestedAt": "2026-08-12T20:33:45.8927571Z",
+   "ArrestedAtWall": "2026-08-13T01:33:45.8927571+05:00",
+   "OfficerName": "Jonn Nolan",
+   "SubjectFullName": "Jemma Romano",
+   "SubjectDob": "2005-03-29",
+   "Location": "РЎС‚СЂРѕР±РµСЂСЂРё-Р°РІРµРЅСЋ, Strawberry",
+   "Charges": [
+    {
+     "ChargeCode": "VC.2800.2",
+     "Description": "Уклонение от сотрудника полиции при отягчающих",
+     "Severity": 2,
+     "Category": "Vehicular Offenses",
+     "Tier": 3,
+     "LegalClass": "Wobbler",
+     "Statute": "VC 2800.2",
+     "Notes": "Когда бегство от офицера сопряжено с грубым пренебрежением, опасным вождением или риском вреда.",
+     "CourtNotes": "Уклонение с грубым пренебрежением (тяжкое).",
+     "Jurisdiction": null,
+     "CourtWeight": 0,
+     "Wobbler": true,
+     "SeriousFelony": false,
+     "ViolentFelony": false,
+     "Modifiers": [],
+     "Enhancements": [],
+     "SelectedModifiers": [],
+     "SelectedEnhancements": []
+    }
+   ],
+   "Evidence": [],
+   "Narrative": "On Aug 13, 01:32, Jonn Nolan arrested Jemma Romano (DOB 2005-03-29) following a [VH] Угон городского автобуса call at РЎС‚СЂРѕР±РµСЂСЂРё-Р°РІРµРЅСЋ, Chamberlain Hills. After investigation, probable cause was determined for the arrest."
+  }
+ ],
+ "citations": [],
+ "cases": [
+  {
+   "Id": "36ccca0e-443a-4c00-b10c-8a086e901360",
+   "CitationId": null,
+   "ArrestReportId": "efa77026-8d54-418a-be0d-f9a3eb67dec5",
+   "SubjectFullName": "Jemma Romano",
+   "Jurisdiction": "State",
+   "FiledAt": "2026-08-12T20:33:47.4094989Z",
+   "FiledAtWall": "2026-08-13T01:33:45.8927571+05:00",
+   "HearingAt": "2026-08-12T20:36:47.4094989Z",
+   "Status": 3,
+   "Outcome": 3,
+   "OutcomePublished": true,
+   "Sentence": "2 years county jail / felony probation",
+   "Notes": "The court sustained the filed charge set and entered sentence. The record was reviewed on the report, testimony, and filed charge details.",
+   "JudgeName": "Hon. Lena Whitaker",
+   "JudgeStyle": "Ориентирован на реабилитацию",
+   "JudgeTendency": "Предпочитает сделки, условный срок и более мягкие приговоры.",
+   "ProsecutorName": "DDA Grant Holloway",
+   "ProsecutorStyle": "Специалист по судебным процессам",
+   "ProsecutorTendency": "Охотнее доводит сильные дела до вердикта.",
+   "DefenseCounsel": "Alternate Public Defender",
+   "DefenseCounselStyle": "Адвокат по конфликту интересов",
+   "DefenseCounselTendency": "Похож на назначенного адвоката, но охотнее торгуется.",
+   "Courtroom": "Отдел 6C",
+   "Plea": "Not guilty",
+   "RepeatOffenderScore": 1,
+   "RepeatOffenderSummary": "Prior record: 0 indexed arrest(s), 1 reported citation(s)",
+   "IndexedPriorHistory": {
+    "ReportedCitations": 1,
+    "GeneratedArrests": 0,
+    "GeneratedArrestDetails": []
+   },
+   "BenchWarrantIssued": false,
+   "BenchWarrantIssuedAt": null,
+   "BenchWarrantReason": null,
+   "ProbationOrdered": false,
+   "ProbationViolation": false,
+   "ProbationViolationAt": null,
+   "ProbationViolationNote": null,
+   "AppealFiled": true,
+   "AppealFiledAt": "2026-08-19T20:36:47.4094989Z",
+   "AppealGranted": false,
+   "AppealResolvedAt": "2026-09-09T20:36:47.4094989Z",
+   "AppealOutcome": 3,
+   "AppealSummary": "Appeal denied; original disposition affirmed.",
+   "ChargeDispositions": [
+    {
+     "ChargeCode": "VC.2800.2",
+     "Description": "Уклонение от сотрудника полиции при отягчающих",
+     "Category": "Vehicular Offenses",
+     "Severity": "Felony",
+     "Tier": 3,
+     "LegalClass": "Wobbler",
+     "EnhancementSummary": "",
+     "CourtWeight": 5,
+     "FactorSummary": "ориентирован на реабилитацию judge, специалист по судебным процессам prosecutor, адвокат по конфликту интересов defense, officer-observed count",
+     "SentenceMultiplier": 0.9687149999999999,
+     "Outcome": 3,
+     "Sentence": "2 years county jail / felony probation",
+     "SentenceFine": 0,
+     "CourtCosts": 0,
+     "CustodyDays": 990,
+     "CustodySentence": "2 years county jail / felony probation",
+     "CustodyFacility": "county jail / felony probation",
+     "CustodyIsStatePrison": false,
+     "CustodyIsLife": false,
+     "SentenceReducedToMisdemeanor": false,
+     "SentenceRunType": 1,
+     "SentenceRunNote": "Principal term; concurrent terms do not add custody time.",
+     "SentenceConcurrent": true,
+     "CollateralOrders": [],
+     "EvidenceSupported": false,
+     "EvidenceScore": 0,
+     "EvidenceSummary": "Report / officer observation",
+     "CourtNote": "The court entered a guilty finding on this count. Reviewed on the report and officer observation."
+    }
+   ],
+   "Timeline": [
+    {
+     "At": "2026-08-12T20:33:47.4094989Z",
+     "AtWall": "2026-08-13T01:33:45.8927571+05:00",
+     "Title": "Case filed",
+     "Detail": "State v. Jemma Romano case file opened."
+    },
+    {
+     "At": "2026-08-12T20:36:47.4094989Z",
+     "AtWall": "2026-08-13T01:36:45.8927571+05:00",
+     "Title": "Hearing scheduled",
+     "Detail": "Отдел 6C assigned before Hon. Lena Whitaker."
+    },
+    {
+     "At": "2026-08-12T20:36:47.4094989Z",
+     "AtWall": "2026-08-13T01:36:45.8927571+05:00",
+     "Title": "Hearing held",
+     "Detail": "Hon. Lena Whitaker heard the matter in Отдел 6C."
+    },
+    {
+     "At": "2026-08-12T20:44:47.4094989Z",
+     "AtWall": "2026-08-13T01:44:45.8927571+05:00",
+     "Title": "Plea entered",
+     "Detail": "Not guilty"
+    },
+    {
+     "At": "2026-08-12T20:54:47.4094989Z",
+     "AtWall": "2026-08-13T01:54:45.8927571+05:00",
+     "Title": "Disposition entered",
+     "Detail": "Convicted: 2 years county jail / felony probation"
+    },
+    {
+     "At": "2026-08-19T20:36:47.4094989Z",
+     "AtWall": "2026-08-20T01:36:45.8927571+05:00",
+     "Title": "Appeal filed",
+     "Detail": "Defense filed notice of appeal."
+    },
+    {
+     "At": "2026-09-09T20:36:47.4094989Z",
+     "AtWall": "2026-09-10T01:36:45.8927571+05:00",
+     "Title": "Appeal resolved",
+     "Detail": "Appeal denied; original disposition affirmed."
+    }
+   ]
+  }
+ ],
+ "shifts": [
+  {
+   "callsign": "7-ADAM-1",
+   "officer_name": "Jonn Nolan",
+   "shift_type": "night",
+   "started_at": "2026-08-13T01:42:29",
+   "ended_at": "2026-08-13T02:37:31",
+   "duration_min": 55,
+   "arrests": 0,
+   "traffic_stops": 0,
+   "callouts": 0,
+   "pursuits": 0,
+   "pit": 0,
+   "fines_total": 0
+  }
+ ],
+ "warnings": [],
+ "ped_checks": [],
+ "plate_checks": [],
+ "duty_events": [
+  {
+   "on_duty": true,
+   "at": "2026-08-13T00:51:47",
+   "external_id": "duty:2026-08-13T00:51:47"
+  },
+  {
+   "on_duty": true,
+   "at": "2026-08-13T01:45:21",
+   "external_id": "duty:2026-08-13T01:45:21"
+  },
+  {
+   "on_duty": true,
+   "at": "2026-08-13T01:55:17",
+   "external_id": "duty:2026-08-13T01:55:17"
+  }
+ ],
+ "sent_at": "2026-08-13T02:37:31"
+}

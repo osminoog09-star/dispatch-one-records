@@ -163,7 +163,29 @@ def game_map():
 
     return render_template("map.html", zones=zones, top_zones=top_zones,
                            regions=regions, officers=db.list_officers_with_stats(),
-                           focus_zone=focus_zone)
+                           focus_zone=focus_zone,
+                           point=_map_point(request.args.get("x"), request.args.get("y")),
+                           point_label=request.args.get("label", ""))
+
+
+# Привязка игровых координат GTA V к атласу карты (SVG viewBox 2048×2048).
+# Подобрана по ориентирам: аэропорт LSIA, база Zancudo, Палето-Бэй, Сэнди-Шорс —
+# расхождение около 2-3% ширины карты, для реестра этого достаточно.
+MAP_ORIGIN_X, MAP_ORIGIN_Y, MAP_SCALE = 880.0, 1305.0, 0.1655
+
+
+def _map_point(x, y):
+    """Координаты события из игры → точка на карте. None, если координат нет."""
+    if x in (None, "") or y in (None, ""):
+        return None
+    try:
+        px = MAP_ORIGIN_X + MAP_SCALE * float(x)
+        py = MAP_ORIGIN_Y - MAP_SCALE * float(y)
+    except (TypeError, ValueError):
+        return None
+    if not (0 <= px <= 2048 and 0 <= py <= 2048):
+        return None      # за пределами карты — не рисуем
+    return {"x": round(px, 1), "y": round(py, 1)}
 
 
 def _server_dir():

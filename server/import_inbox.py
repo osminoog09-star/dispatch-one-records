@@ -34,6 +34,7 @@ SUPABASE_KEY = os.environ.get("SUPABASE_KEY", "sb_publishable_gkXQmLngTvpGQfLFDk
 
 # заполняется load_supabase_moderation()
 SB_CALLSIGNS = set()   # одобренные позывные (нижний регистр) из Supabase roster
+SB_BLOCKED = set()     # заблокированные — их данные не принимаем вообще
 AUTO_APPROVE = False   # включён ли режим «одобрять всех»
 _SB_OK = False         # удалось ли связаться с Supabase
 
@@ -64,14 +65,20 @@ def _sb_rpc(fn, payload):
 def load_supabase_moderation():
     """Тянет из Supabase список одобренных позывных и флаг авто-одобрения.
     Если Supabase недоступен/не настроен — тихо откатываемся на roster.json."""
-    global SB_CALLSIGNS, AUTO_APPROVE, _SB_OK
+    global SB_CALLSIGNS, SB_BLOCKED, AUTO_APPROVE, _SB_OK
     try:
-        rows = _sb_get("roster?select=callsign")
-        SB_CALLSIGNS = {(r.get("callsign") or "").strip().lower() for r in rows if r.get("callsign")}
+        rows = _sb_get("roster?select=callsign,blocked")
+        SB_CALLSIGNS, SB_BLOCKED = set(), set()
+        for r in rows:
+            cs = (r.get("callsign") or "").strip().lower()
+            if not cs:
+                continue
+            (SB_BLOCKED if r.get("blocked") else SB_CALLSIGNS).add(cs)
         mod = _sb_get("moderation?select=auto_approve&id=eq.1")
         AUTO_APPROVE = bool(mod and mod[0].get("auto_approve"))
         _SB_OK = True
-        print(f"[supabase] одобренных: {len(SB_CALLSIGNS)}, авто-одобрение: {'ВКЛ' if AUTO_APPROVE else 'выкл'}")
+        print(f"[supabase] одобренных: {len(SB_CALLSIGNS)}, заблокированных: {len(SB_BLOCKED)}, "
+              f"авто-одобрение: {'ВКЛ' if AUTO_APPROVE else 'выкл'}")
     except Exception as e:
         _SB_OK = False
         print(f"[supabase] недоступен ({e}) — использую только roster.json")
@@ -105,10 +112,13 @@ def load_roster():
 
 def is_approved(roster, callsign, discord):
     """Одобрен, если: включён авто-режим, ИЛИ позывной есть в Supabase-реестре,
-    ИЛИ discord/позывной есть в roster.json (легаси-фолбэк)."""
+    ИЛИ discord/позывной есть в roster.json (легаси-фолбэк).
+    Заблокированный не проходит никогда — даже при авто-одобрении."""
+    cs = (callsign or "").strip().lower()
+    if cs and cs in SB_BLOCKED:
+        return False
     if AUTO_APPROVE:
         return True
-    cs = (callsign or "").strip().lower()
     if cs and cs in SB_CALLSIGNS:
         return True
     if not roster and not _SB_OK:

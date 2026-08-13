@@ -79,6 +79,13 @@
     </div>
     <p class="muted small">Одобренные публикуются автоматически (в течение ~30 мин их прошлые смены/аресты «достаются» из модерации). Список ниже — кто наиграл, но ещё не одобрен.</p>
     <div id="mod-pending"></div>
+
+    <div class="admin-section-head" style="margin-top:22px">
+      <div><span class="eyebrow">Реестр</span><h2>Одобренные офицеры</h2></div>
+    </div>
+    <p class="muted small">Блокировка останавливает приём новых данных от игрока (даже при
+      авто-одобрении). Уже опубликованные записи остаются — история не переписывается.</p>
+    <div id="mod-roster"></div>
   </section>
 
   <section class="card admin-section" id="admin-ai-section" style="display:none">
@@ -163,18 +170,40 @@
     return perms.can_admins && !["owner","admin"].includes(role);
   }
 
-  async function loadAudit(){
-    if (!perms.can_audit) return;
+  const ACTION_RU = {
+    "officer.approve": "Одобрил офицера",
+    "officer.reject":  "Отклонил заявку",
+    "officer.block":   "Заблокировал офицера",
+    "officer.unblock": "Разблокировал офицера",
+    "moderation.auto": "Переключил авто-одобрение",
+    "support.answer":  "Сохранил ответ поддержки",
+    "admin.role.set":  "Изменил доступ",
+    "admin.protect":   "Изменил защиту учётки",
+    "rank.set":        "Назначил звание/отдел",
+  };
+
+  window.loadAudit = async function(){
+    if (!perms.can_audit && !perms.can_staff) return;
     document.getElementById("admin-audit-section").style.display = "";
-    const { data, error } = await sb.from("audit_log").select("*").order("created_at", { ascending:false }).limit(20);
     const box = document.getElementById("admin-audit");
+    let { data, error } = await sb.rpc("list_audit", { _limit: 40 });
+    if (error) {   // фолбэк на прямое чтение, если функция ещё не применена
+      const alt = await sb.from("audit_log").select("*").order("created_at", { ascending:false }).limit(40);
+      data = alt.data; error = alt.error;
+    }
     if (error) { box.textContent = "Журнал недоступен: " + error.message; return; }
-    if (!data || !data.length) { box.innerHTML = '<div class="empty">Действий пока нет.</div>'; return; }
-    box.innerHTML = data.map(a =>
-      '<div class="audit-row"><b>'+esc(a.action)+'</b><span>'+esc(a.actor||"система")+
-      '</span><small>'+esc(a.entity||"")+" · "+esc(a.entity_id||"")+" · "+fmt(a.created_at)+'</small></div>'
-    ).join("");
-  }
+    if (!data || !data.length) {
+      box.innerHTML = '<div class="empty">Действий пока нет<span class="empty-sub">Здесь появятся одобрения, блокировки и другие решения.</span></div>';
+      return;
+    }
+    box.innerHTML = data.map(a => {
+      const d = a.details || {};
+      const extra = d.reason ? " · причина: " + esc(String(d.reason))
+                  : (typeof d.enabled === "boolean" ? (d.enabled ? " · включено" : " · выключено") : "");
+      return '<div class="audit-row"><b>'+esc(ACTION_RU[a.action] || a.action)+'</b><span>'+
+        esc(a.actor||"система")+'</span><small>'+esc(a.entity_id||"")+extra+" · "+fmt(a.created_at)+'</small></div>';
+    }).join("");
+  };
 
   window.adminLoad = async function(){
     const box = document.getElementById("admin-users");
@@ -254,6 +283,41 @@
       '</div>'
     ).join("");
   };
+  window.loadRoster = async function(){
+    const box = document.getElementById("mod-roster");
+    if (!box) return;
+    const { data, error } = await sb.rpc("list_roster");
+    if (error) { box.innerHTML = '<div class="empty">Не удалось загрузить: '+esc(error.message)+'</div>'; return; }
+    if (!data || !data.length) {
+      box.innerHTML = '<div class="empty">Реестр пуст<span class="empty-sub">Одобри первого офицера выше.</span></div>';
+      return;
+    }
+    box.innerHTML = data.map(r =>
+      '<div class="admin-user" data-cs="'+esc(r.callsign)+'">' +
+        '<div><b>'+esc(r.callsign)+'</b>' + (r.blocked ? ' <span class="sb-role-badge" style="background:#f8514922;color:#f85149;border:1px solid #f8514955">заблокирован</span>' : '') +
+        '<small>'+esc(r.name||"—")+(r.blocked && r.blocked_reason ? ' · причина: '+esc(r.blocked_reason) : '')+'</small></div>' +
+        (r.blocked
+          ? '<button class="btn primary" onclick="modUnblock(this)">Разблокировать</button>'
+          : '<button class="btn" onclick="modBlock(this)">Заблокировать</button>') +
+      '</div>').join("");
+  };
+
+  window.modBlock = async function(btn){
+    const cs = btn.closest("[data-cs]").dataset.cs;
+    const reason = prompt("Причина блокировки " + cs + " (необязательно):", "");
+    if (reason === null) return;
+    const { error } = await sb.rpc("block_officer", { _callsign: cs, _reason: reason || null });
+    if (error) { alert("Не заблокирован: " + error.message); return; }
+    await loadModeration(); await loadRoster(); await loadAudit();
+  };
+
+  window.modUnblock = async function(btn){
+    const cs = btn.closest("[data-cs]").dataset.cs;
+    const { error } = await sb.rpc("unblock_officer", { _callsign: cs });
+    if (error) { alert("Не разблокирован: " + error.message); return; }
+    await loadRoster(); await loadAudit();
+  };
+
   window.modApprove = async function(btn){
     const cs = btn.closest("[data-cs]").dataset.cs;
     btn.disabled = true; btn.textContent = "…";
@@ -392,6 +456,7 @@
     if (perms.can_staff) {
       document.getElementById("admin-moderation-section").style.display = "";
       loadModeration();
+      loadRoster();
       document.getElementById("admin-ai-section").style.display = "";
       aiLoad();
     }

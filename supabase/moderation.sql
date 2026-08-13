@@ -139,3 +139,53 @@ insert into public.roster (callsign, name, is_admin) values
   ('7-WILLIAM-1', 'Denis Sherman',  true),
   ('3-LINCOLN-17','Matthew Redview', false)
 on conflict (callsign) do nothing;
+
+-- ============================================================
+--  Блокировка офицеров и журнал решений (применено 2026-08-13)
+-- ============================================================
+alter table public.roster add column if not exists blocked boolean not null default false;
+alter table public.roster add column if not exists blocked_reason text;
+
+-- Заблокированный не проходит приём данных НИКОГДА — даже при авто-одобрении
+-- (проверка в server/import_inbox.py: is_approved). История записей не трогается.
+create or replace function public.block_officer(_callsign text, _reason text default null)
+returns void language plpgsql security definer set search_path = public as $$
+begin
+  if not public.can_manage_staff() then raise exception 'нет прав'; end if;
+  insert into public.roster (callsign, blocked, blocked_reason, added_by, added_at)
+  values (_callsign, true, _reason, coalesce(auth.jwt() ->> 'email','admin'), now())
+  on conflict (callsign) do update set blocked = true, blocked_reason = _reason;
+  delete from public.pending_officers where lower(callsign) = lower(_callsign);
+  perform public.log_action('officer.block', 'officer', _callsign, jsonb_build_object('reason', _reason));
+end; $$;
+
+create or replace function public.unblock_officer(_callsign text)
+returns void language plpgsql security definer set search_path = public as $$
+begin
+  if not public.can_manage_staff() then raise exception 'нет прав'; end if;
+  update public.roster set blocked = false, blocked_reason = null where lower(callsign) = lower(_callsign);
+  perform public.log_action('officer.unblock', 'officer', _callsign, '{}'::jsonb);
+end; $$;
+
+create or replace function public.list_roster()
+returns table (callsign text, name text, blocked boolean, blocked_reason text, added_by text, added_at timestamptz)
+language sql stable security definer set search_path = public as $$
+  select r.callsign, r.name, r.blocked, r.blocked_reason, r.added_by, r.added_at
+  from public.roster r where public.can_manage_staff()
+  order by r.blocked desc, r.callsign;
+$$;
+
+-- Журнал решений: approve/reject/block/unblock/auto-режим/ответы поддержки
+create or replace function public.list_audit(_limit int default 40)
+returns table (action text, actor text, entity text, entity_id text, details jsonb, created_at timestamptz)
+language sql stable security definer set search_path = public as $$
+  select a.action, a.actor, a.entity, a.entity_id, a.details, a.created_at
+  from public.audit_log a
+  where public.has_admin_perm('audit') or public.can_manage_staff()
+  order by a.created_at desc limit greatest(1, least(_limit, 200));
+$$;
+
+grant execute on function public.block_officer(text, text) to authenticated;
+grant execute on function public.unblock_officer(text)     to authenticated;
+grant execute on function public.list_roster()             to authenticated;
+grant execute on function public.list_audit(int)           to authenticated;

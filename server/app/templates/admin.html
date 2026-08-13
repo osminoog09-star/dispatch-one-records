@@ -81,6 +81,25 @@
     <div id="mod-pending"></div>
   </section>
 
+  <section class="card admin-section" id="admin-ai-section" style="display:none">
+    <div class="admin-section-head">
+      <div>
+        <span class="eyebrow">Поддержка</span>
+        <h2>Помощник и частые ошибки</h2>
+      </div>
+      <button class="btn" onclick="aiLoad()">Обновить</button>
+    </div>
+    <div id="ai-stats" class="muted small">Загружаю…</div>
+    <label class="mod-auto">
+      <input type="checkbox" id="ai-enabled" onchange="aiToggle(this.checked)">
+      <span>Разрешить платный разбор (без галочки платные запросы невозможны)</span>
+    </label>
+    <p class="muted small">Игрокам разбор по правилам и бесплатный помощник доступны всегда.
+      Сюда попадают ошибки, которые они не смогли решить. Ответ сохраняется и дальше
+      раздаётся всем с такой же ошибкой бесплатно.</p>
+    <div id="ai-requests"></div>
+  </section>
+
   <section class="admin-tools">
     <a class="admin-tool" href="{{ url_for('staff') }}" data-perm="can_staff">
       <span>Персонал</span>
@@ -263,6 +282,89 @@
     if (error) { alert("Не изменено: " + error.message); await loadModeration(); }
   };
 
+  const AI_URL = "https://lapd-gateway.osminoog09.workers.dev/ai";
+
+  window.aiLoad = async function(){
+    const st = document.getElementById("ai-stats");
+    const box = document.getElementById("ai-requests");
+    const { data: s } = await sb.rpc("ai_stats");
+    if (s) {
+      document.getElementById("ai-enabled").checked = !!s.enabled;
+      st.innerHTML = 'Платных разборов сегодня: <b>' + (s.used_today||0) + '</b> из ' + (s.daily_limit||0) +
+        ' · бесплатно из готовых ответов: <b>' + (s.saved_today||0) + '</b> сегодня, ' + (s.saved_total||0) + ' всего' +
+        ' · готовых ответов в базе: <b>' + (s.cached||0) + '</b>';
+    }
+    const { data, error } = await sb.from("ai_requests").select("*")
+      .eq("status","pending").order("count",{ascending:false}).limit(30);
+    if (error) { box.innerHTML = '<div class="empty">Не удалось загрузить: '+esc(error.message)+'</div>'; return; }
+    if (!data || !data.length) {
+      box.innerHTML = '<div class="empty">Неразобранных ошибок нет<span class="empty-sub">Сюда попадут проблемы, которые игроки не решили сами.</span></div>';
+      return;
+    }
+    box.innerHTML = data.map(r =>
+      '<div class="admin-user" data-key="'+esc(r.key)+'" style="display:block">' +
+        '<div><b>'+ (r.count>1 ? '⚠ уже у '+r.count+' игроков' : 'встретилось 1 раз') +'</b>' +
+        '<small> · '+fmt(r.last_seen)+'</small></div>' +
+        '<pre class="ai-sample">'+esc((r.sample||"").slice(0,600))+'</pre>' +
+        '<textarea class="ai-answer" rows="3" placeholder="Ответ игрокам (можно написать руками — это бесплатно)"></textarea>' +
+        '<div class="sp-ai-row">' +
+          '<button class="btn primary" onclick="aiSave(this)">Сохранить ответ</button>' +
+          '<button class="btn" onclick="aiAsk(this)">Разобрать помощником</button>' +
+          '<button class="btn" onclick="aiSkip(this)">Скрыть</button>' +
+        '</div>' +
+      '</div>').join("");
+  };
+
+  window.aiToggle = async function(on){
+    const { error } = await sb.rpc("ai_set_settings", { _enabled: on, _daily_limit: null });
+    if (error) alert("Не изменено: " + error.message);
+  };
+
+  window.aiAsk = async function(btn){
+    const row = btn.closest("[data-key]");
+    const key = row.dataset.key;
+    btn.disabled = true; btn.textContent = "Смотрю…";
+    // талон: проверяет выключатель и дневной лимит на сервере
+    const { data: t, error } = await sb.rpc("ai_approve", { _key: key });
+    if (error || !t || !t.ok) {
+      alert(!t ? ("Ошибка: " + (error && error.message))
+        : t.reason === "off" ? "Платный разбор выключен — включи галочку выше."
+        : t.reason === "limit" ? "Дневной лимит исчерпан." : "Заявка не найдена.");
+      btn.disabled = false; btn.textContent = "Разобрать помощником"; return;
+    }
+    try {
+      const r = await fetch(AI_URL, { method:"POST", headers:{"Content-Type":"application/json"},
+        body: JSON.stringify({ log: t.sample }) });
+      const j = await r.json();
+      if (j.answer) {
+        row.querySelector(".ai-answer").value = j.answer;
+        btn.textContent = "Готово — проверь и сохрани";
+      } else {
+        alert("Помощник не ответил: " + (j.error || "нет ответа"));
+        btn.disabled = false; btn.textContent = "Разобрать помощником";
+      }
+    } catch (e) {
+      alert("Помощник недоступен: " + e);
+      btn.disabled = false; btn.textContent = "Разобрать помощником";
+    }
+  };
+
+  window.aiSave = async function(btn){
+    const row = btn.closest("[data-key]");
+    const answer = row.querySelector(".ai-answer").value.trim();
+    if (!answer) return alert("Напиши ответ или получи его помощником.");
+    const { error } = await sb.rpc("ai_save_answer", { _key: row.dataset.key, _answer: answer });
+    if (error) { alert("Не сохранено: " + error.message); return; }
+    await aiLoad();
+  };
+
+  window.aiSkip = async function(btn){
+    const row = btn.closest("[data-key]");
+    const { error } = await sb.rpc("ai_reject", { _key: row.dataset.key });
+    if (error) { alert("Не получилось: " + error.message); return; }
+    await aiLoad();
+  };
+
   document.addEventListener("lapd:auth", async function () {
     sb = window.lapd.sb;
     perms = window.lapd.permissions || {};
@@ -290,6 +392,8 @@
     if (perms.can_staff) {
       document.getElementById("admin-moderation-section").style.display = "";
       loadModeration();
+      document.getElementById("admin-ai-section").style.display = "";
+      aiLoad();
     }
     loadAudit();
   });

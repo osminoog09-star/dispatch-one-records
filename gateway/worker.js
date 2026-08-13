@@ -9,9 +9,29 @@
  *   GITHUB_TOKEN — fine-grained токен с правом Contents:write на репозиторий
  *   GITHUB_REPO  — например "osminoog09-star/dispatch-one-records"
  *   SHARED_KEY   — простой пароль, который знает лаунчер (защита от чужих запросов)
+ *
+ * Разбор логов помощником: POST /ai  {"log": "...вырезка..."}
+ *   Работает на БЕСПЛАТНОМ Workers AI (binding "AI" в настройках Worker).
+ *   Платный ключ не нужен; если binding не подключён — вернётся понятная ошибка,
+ *   а сайт просто покажет разбор по правилам.
  */
 
 const RATE = new Map(); // простая защита от флуда: позывной -> время последнего запроса
+const AI_RATE = new Map(); // антифлуд разбора логов: ip -> время последнего запроса
+
+// Бесплатная модель Cloudflare Workers AI. Лимита free-уровня хватает на сотни
+// разборов в день; на платные модели это не тратится.
+const AI_MODEL = "@cf/meta/llama-3.1-8b-instruct";
+
+const AI_SYSTEM = [
+  "Ты — техподдержка мода LAPD Records для GTA V LSPDFR.",
+  "Тебе дают вырезку лога игрока. Ответь ПО-РУССКИ, коротко и по делу:",
+  "1) что случилось простыми словами; 2) что игроку сделать по шагам.",
+  "Максимум 6 строк. Без вступлений и извинений. Если данных мало — скажи, что приложить.",
+  "Частые причины: неверный позывной (нужен вид 7-WILLIAM-1 без пробелов);",
+  "антивирус блокирует лаунчер; игра установлена не на диске C и агент не находил папку pdComp;",
+  "агент выключен; игрок не одобрен и его записи на модерации; нет интернета или закрыт GitHub.",
+].join(" ");
 
 export default {
   async fetch(request, env) {
@@ -20,8 +40,54 @@ export default {
       return cors(new Response(null, { status: 204 }));
     }
 
-    // ВРЕМЕННАЯ ДИАГНОСТИКА: GET ?debug=1 показывает, что видит Worker (без раскрытия секретов)
     const url = new URL(request.url);
+
+    // ---- Разбор лога бесплатным помощником (Workers AI) ----
+    // Ключа не требует, на платные модели не тратится. Ходит сюда страница /support.
+    if (url.pathname.replace(/\/+$/, "").endsWith("/ai")) {
+      if (request.method !== "POST") {
+        return cors(json({ error: "нужен POST" }, 405));
+      }
+      if (!env.AI) {
+        return cors(json({ error: "помощник не подключён (нет binding AI)" }, 503));
+      }
+      // антифлуд: не чаще раза в 8 секунд с одного адреса
+      const ip = request.headers.get("CF-Connecting-IP") || "anon";
+      const now = Date.now();
+      if (now - (AI_RATE.get(ip) || 0) < 8000) {
+        return cors(json({ error: "слишком часто, подожди пару секунд" }, 429));
+      }
+      AI_RATE.set(ip, now);
+
+      let payload = {};
+      try {
+        payload = await request.json();
+      } catch (e) {
+        return cors(json({ error: "плохой JSON" }, 400));
+      }
+      const logText = String(payload.log || "").slice(0, 6000);  // жёсткий потолок
+      if (logText.length < 20) {
+        return cors(json({ error: "пустая вырезка лога" }, 400));
+      }
+      try {
+        const out = await env.AI.run(AI_MODEL, {
+          messages: [
+            { role: "system", content: AI_SYSTEM },
+            { role: "user", content: "Вырезка лога:\n" + logText },
+          ],
+          max_tokens: 400,
+        });
+        const answer = (out && (out.response || out.result || "")).toString().trim();
+        if (!answer) {
+          return cors(json({ error: "помощник не дал ответа" }, 502));
+        }
+        return cors(json({ answer, model: AI_MODEL, free: true }));
+      } catch (e) {
+        return cors(json({ error: "помощник недоступен: " + e }, 502));
+      }
+    }
+
+    // ВРЕМЕННАЯ ДИАГНОСТИКА: GET ?debug=1 показывает, что видит Worker (без раскрытия секретов)
     if (request.method === "GET" && url.searchParams.get("debug") === "1") {
       const t = env.GITHUB_TOKEN || env.GITHUB_TOKE || "";
       // Worker сам делает GET к GitHub тем же токеном — увидим точный ответ

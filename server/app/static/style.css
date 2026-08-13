@@ -273,6 +273,17 @@ h3{font-size:14px;margin:0 0 .5em;color:var(--muted);text-transform:uppercase;le
   .map-district-text{display:none}
 }
 
+/* помощник поддержки: очередь ошибок в админке */
+.ai-sample{max-height:150px;overflow:auto;background:var(--surface2);border:1px solid var(--border);
+  border-radius:8px;padding:10px;font-size:12px;white-space:pre-wrap;word-break:break-word;margin:8px 0}
+.ai-answer{width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);
+  border-radius:8px;padding:8px 10px;font:inherit;font-size:13px;margin-bottom:8px}
+
+/* помощник поддержки: разбор лога */
+.sp-ai-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:12px}
+.sp-ai-answer{margin-top:10px;padding:12px 14px;border:1px solid var(--border);border-radius:12px;
+  background:var(--surface2);color:var(--text);font-weight:500;line-height:1.5}
+
 /* точное место события: координаты приходят из игры от плагина */
 .map-point{pointer-events:none}
 .map-point-pulse{fill:#ef4444;fill-opacity:.18;animation:pointPulse 1.8s ease-out infinite}

@@ -76,6 +76,10 @@
   const statusRu = s => ({ open: "Открыт", in_progress: "В работе", closed: "Закрыт" }[s] || s || "Открыт");
   const dateRu = s => s ? new Date(s).toLocaleString("ru-RU", { dateStyle: "short", timeStyle: "short" }) : "";
   let logSummary = "";
+  let lastLogText = "";      // очищенный от секретов текст лога для помощника
+  let aiAnswered = false;    // помощник уже дал разбор
+  // бесплатный помощник живёт в нашем шлюзе (Cloudflare Workers AI)
+  const AI_URL = "https://lapd-gateway.osminoog09.workers.dev/ai";
 
   async function currentUserId() {
     try {
@@ -104,6 +108,71 @@
     ];
     const found = checks.filter(([rx]) => rx.test(text)).map(([, msg]) => msg);
     return found.length ? found : ["Критичных известных ошибок не найдено. Нужны описание действий и время проблемы."];
+  }
+
+  // Вырезка для помощника: строки с ошибками и контекст вокруг них, а не весь лог.
+  // Так ответ точнее, а нагрузка на бесплатный лимит минимальная.
+  function logExcerpt(text) {
+    const lines = String(text).split(/\r?\n/);
+    const rx = /error|exception|traceback|failed|warn|не удалось|ошибка|denied|refused|timeout/i;
+    const keep = new Set();
+    lines.forEach((l, i) => {
+      if (rx.test(l)) for (let j = Math.max(0, i - 2); j <= Math.min(lines.length - 1, i + 2); j++) keep.add(j);
+    });
+    let picked = [...keep].sort((a, b) => a - b).map(i => lines[i]);
+    if (!picked.length) picked = lines.slice(-60);        // ошибок нет — берём хвост
+    return picked.slice(-120).join("\n").slice(-5000);
+  }
+
+  function problemKey(excerpt) {
+    // ключ проблемы: только «скелет» строк с ошибками, без чисел, путей и времени —
+    // чтобы одна и та же ошибка у разных игроков сходилась в одну заявку
+    const norm = excerpt.toLowerCase()
+      .replace(/\d+/g, "#").replace(/[a-z]:\\[^\s]+/g, "path").replace(/\s+/g, " ").trim();
+    let h = 5381;
+    for (let i = 0; i < norm.length; i++) h = ((h * 33) ^ norm.charCodeAt(i)) >>> 0;
+    return "log:" + h.toString(16);
+  }
+
+  async function askAssistant() {
+    const btn = document.getElementById("sp-ai-btn");
+    const out = document.getElementById("sp-ai-out");
+    if (!lastLogText) return;
+    const excerpt = logExcerpt(lastLogText);
+    const key = problemKey(excerpt);
+    btn.disabled = true; btn.textContent = "Смотрю лог…";
+    out.innerHTML = "";
+
+    // 1) готовый ответ на такую же ошибку — бесплатно и мгновенно
+    try {
+      const { data } = await sb.rpc("ai_report_problem", { _key: key, _sample: excerpt, _title: null });
+      if (data && data.answer) {
+        out.innerHTML = '<div class="sp-ai-answer"><b>Разбор:</b><br>' + esc(data.answer).replace(/\n/g, "<br>") + "</div>";
+        btn.disabled = false; btn.textContent = "Разобрать помощником";
+        aiAnswered = true;
+        return;
+      }
+    } catch (e) { /* нет схемы помощника — просто идём дальше */ }
+
+    // 2) бесплатный помощник шлюза
+    try {
+      const r = await fetch(AI_URL, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ log: excerpt }),
+      });
+      const j = await r.json();
+      if (j.answer) {
+        out.innerHTML = '<div class="sp-ai-answer"><b>Разбор:</b><br>' + esc(j.answer).replace(/\n/g, "<br>") +
+          '<div class="muted small" style="margin-top:8px">Не помогло? Опиши проблему в форме слева и отправь обращение — администратор разберёт вручную.</div></div>';
+        aiAnswered = true;
+      } else {
+        out.innerHTML = '<div class="muted small">Помощник сейчас недоступен (' + esc(j.error || "нет ответа") +
+          '). Разбор по правилам выше уже сохранён — просто отправь обращение, администратор посмотрит.</div>';
+      }
+    } catch (e) {
+      out.innerHTML = '<div class="muted small">Помощник недоступен. Отправь обращение — администратор разберёт вручную.</div>';
+    }
+    btn.disabled = false; btn.textContent = "Разобрать помощником";
   }
 
   async function insertSafe(table, payload, fallbackKeys) {
@@ -216,7 +285,13 @@
       reader.onload = function () {
         const text = scrubLog(String(reader.result || "")).slice(-40000);
         logSummary = diagnoseLog(text).map(x => "- " + x).join("\n");
-        out.innerHTML = "<b>Что найдено:</b><br>" + esc(logSummary).replace(/\n/g, "<br>");
+        lastLogText = text;
+        out.innerHTML = "<b>Что найдено:</b><br>" + esc(logSummary).replace(/\n/g, "<br>") +
+          '<div class="sp-ai-row">' +
+          '<button type="button" class="btn" id="sp-ai-btn">Разобрать помощником</button>' +
+          '<span class="muted small">бесплатно, лог отправляется без личных данных</span>' +
+          '</div><div id="sp-ai-out"></div>';
+        document.getElementById("sp-ai-btn").addEventListener("click", askAssistant);
       };
       reader.readAsText(file);
     });

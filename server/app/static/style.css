@@ -267,6 +267,12 @@ h3{font-size:14px;margin:0 0 .5em;color:var(--muted);text-transform:uppercase;le
   fill:#fff;filter:drop-shadow(0 0 10px var(--district-color))}
 .air-sector .map-district-shape{fill:transparent;fill-opacity:0;stroke-width:3.4;stroke-opacity:.48;stroke-dasharray:24 18;pointer-events:stroke}
 
+/* На телефоне карта мельче примерно в 7 раз: подписи районов превращались в кашу
+   в несколько пикселей и налезали друг на друга. Район там выбирается легендой. */
+@media(max-width:560px){
+  .map-district-text{display:none}
+}
+
 /* точное место события: координаты приходят из игры от плагина */
 .map-point{pointer-events:none}
 .map-point-pulse{fill:#ef4444;fill-opacity:.18;animation:pointPulse 1.8s ease-out infinite}

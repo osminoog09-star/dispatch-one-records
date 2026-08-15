@@ -1,0 +1,38 @@
+{
+ "profile": {
+  "callsign": "1-ADAM-13",
+  "nickname": "Tim Bradford",
+  "discord": "ree1111"
+ },
+ "arrests": [],
+ "citations": [],
+ "cases": [],
+ "shifts": [
+  {
+   "callsign": "1-ADAM-13",
+   "officer_name": "Tim Bradford",
+   "shift_type": "night",
+   "started_at": "2026-08-15T04:53:40",
+   "ended_at": "2026-08-15T05:03:35",
+   "duration_min": 9,
+   "arrests": 0,
+   "traffic_stops": 0,
+   "callouts": 0,
+   "pursuits": 0,
+   "pit": 0,
+   "fines_total": 0
+  }
+ ],
+ "warnings": [],
+ "ped_checks": [],
+ "plate_checks": [],
+ "duty_events": [
+  {
+   "on_duty": true,
+   "at": "2026-08-15T04:58:59",
+   "external_id": "duty:2026-08-15T04:58:59"
+  }
+ ],
+ "live_callouts": [],
+ "sent_at": "2026-08-15T05:03:35"
+}

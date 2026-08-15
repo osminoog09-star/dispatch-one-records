@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Предупреждения · LAPD</title>
+  <title>Смена #65 · LAPD</title>
   <meta name="generator" content="Dispatch One Records — osminoog09-star">
   <meta name="author" content="LAPD Records · osminoog09-star.github.io/dispatch-one-records">
   <link rel="stylesheet" href="/dispatch-one-records/static/style.css">
@@ -53,29 +53,67 @@
       
     
     
-<h1>Вынесенные предупреждения</h1>
+<a class="back" href="/dispatch-one-records/shifts">← к сменам</a>
 
-<section class="stats">
-  <div class="stat"><div class="num">1</div><div class="lbl">Всего предупреждений</div></div>
-</section>
-
-
-<table class="tbl">
-  <thead><tr><th>#</th><th>Гражданин</th><th>Причина</th><th>Район</th><th>Офицер</th><th>Когда</th></tr></thead>
-  <tbody>
+<div class="case-head">
+  <h1>Рапорт смены #65</h1>
   
-    <tr>
-      <td>#1</td>
-      <td><a class="row-link" href="/dispatch-one-records/file/Junior%20Tyson">Junior Tyson</a></td>
-      <td>Verbal warning</td>
-      <td>Дэвис-авеню, Davis</td>
-      <td><a class="cs" href="/dispatch-one-records/officer/1-ADAM-13">1-ADAM-13</a></td>
-      <td class="muted">15.08.2026 02:42</td>
-    </tr>
-  
-  </tbody>
-</table>
+  <span class="tag big">дневная</span>
+</div>
 
+<div class="case-grid">
+  <section class="card report">
+    <div class="report-top">
+      <span class="badge">🕓</span>
+      <div>
+        <div class="rep-title">LAPD · Рапорт смены</div>
+        <div class="rep-sub">
+          Офицер <a href="/dispatch-one-records/officer/1-ADAM-13"><span class="cs">1-ADAM-13</span></a>
+          Tim Bradford · начало 15.08.2026 15:29
+        </div>
+      </div>
+    </div>
+
+    <div class="shift-metrics">
+      <div class="metric big-metric"><div class="mnum">0ч 6м</div><div class="mlbl">Длительность</div></div>
+      <div class="metric"><div class="mnum">0%</div><div class="mlbl">Норма 12ч</div></div>
+      <div class="metric"><div class="mnum">0</div><div class="mlbl">Задержаний</div></div>
+      <div class="metric"><div class="mnum">0</div><div class="mlbl">Остановок</div></div>
+      <div class="metric"><div class="mnum">0</div><div class="mlbl">Погонь</div></div>
+      <div class="metric"><div class="mnum">0</div><div class="mlbl">PIT-манёвров</div></div>
+      <div class="metric"><div class="mnum">0</div><div class="mlbl">Вызовов</div></div>
+      <div class="metric"><div class="mnum">$0</div><div class="mlbl">Штрафов</div></div>
+    </div>
+  </section>
+
+  <aside class="side">
+    <div class="card">
+      <h3>Скопировать для Discord</h3>
+      <p class="muted small">Вставь текст рапорта смены в канал вручную.</p>
+      <textarea id="dmd" class="dmd" readonly rows="9">🕓 **Рапорт смены #65 — дневная**
+**Офицер:** 1-ADAM-13 (Tim Bradford)
+**Длительность:** 0ч 6м
+**Норма 12 часов:** 0%
+**Задержаний:** 0
+**Остановок транспорта:** 0
+**Погонь:** 0 · **PIT-манёвров:** 0
+**Вызовов обработано:** 0
+**Штрафов на сумму:** $0
+*Начало смены: 15.08.2026 15:29*</textarea>
+      <button class="btn primary" onclick="copyDiscord()">📋 Скопировать текст</button>
+      <p id="copied" class="sent" style="display:none">✓ Скопировано! Вставь в канал (Ctrl+V)</p>
+    </div>
+  </aside>
+</div>
+
+<script>
+function copyDiscord(){
+  var ta=document.getElementById('dmd');
+  var done=function(){var c=document.getElementById('copied');c.style.display='block';setTimeout(function(){c.style.display='none';},3000);};
+  if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(ta.value).then(done,function(){ta.select();document.execCommand('copy');done();});}
+  else{ta.select();document.execCommand('copy');done();}
+}
+</script>
 
   </main>
 

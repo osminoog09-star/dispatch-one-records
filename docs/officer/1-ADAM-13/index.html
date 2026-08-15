@@ -71,12 +71,12 @@
   </div>
 </div>
 
-<section class="stats ">
-  <div class="stat"><div class="num">9</div><div class="lbl">Задержаний</div></div>
+<section class="stats stats-5">
+  <div class="stat"><div class="num">10</div><div class="lbl">Задержаний</div></div>
   <div class="stat"><div class="num">6</div><div class="lbl">Штрафов</div></div>
   <div class="stat"><div class="num">$2568</div><div class="lbl">Сумма штрафов</div></div>
-  
-  <div class="stat"><div class="num">3.9</div><div class="lbl">Часов на службе</div></div>
+  <div class="stat"><div class="num">4</div><div class="lbl">Вызовов</div></div>
+  <div class="stat"><div class="num">4.0</div><div class="lbl">Часов на службе</div></div>
 </section>
 
 <h2>Задержания</h2>
@@ -84,6 +84,26 @@
 <table class="tbl">
   <thead><tr><th>#</th><th>Подозреваемый</th><th>Район</th><th>Когда</th><th>Статус</th><th>Связи</th></tr></thead>
   <tbody>
+  
+    <tr onclick="location='/dispatch-one-records/case/45'">
+      <td><a class="row-link" href="/dispatch-one-records/case/45" onclick="event.stopPropagation()">#45</a></td>
+      <td><a class="row-link" href="/dispatch-one-records/file/Jamal%20Braxton" onclick="event.stopPropagation()">Jamal Braxton</a>
+        
+        </td>
+      <td><a href="/dispatch-one-records/map?zone=%D0%9A%D1%80%D1%83%D0%B7%D0%B5%D0%B9%D0%B4-%D1%80%D0%BE%D1%83%D0%B4,+Strawberry" onclick="event.stopPropagation()">Крузейд-роуд, Strawberry</a></td>
+      <td class="muted">15.08.2026 12:36</td>
+      <td><span class="tag st-submitted">Подано</span></td>
+      <td>
+        <details class="link-pop" onclick="event.stopPropagation()">
+          <summary>связи</summary>
+          <div class="link-pop-menu">
+            <a href="/dispatch-one-records/case/45">Карточка ареста</a>
+            <a href="/dispatch-one-records/file/Jamal%20Braxton">Досье человека</a>
+            <a href="/dispatch-one-records/map?zone=%D0%9A%D1%80%D1%83%D0%B7%D0%B5%D0%B9%D0%B4-%D1%80%D0%BE%D1%83%D0%B4,+Strawberry">Район на карте</a>
+          </div>
+        </details>
+      </td>
+    </tr>
   
     <tr onclick="location='/dispatch-one-records/case/31'">
       <td><a class="row-link" href="/dispatch-one-records/case/31" onclick="event.stopPropagation()">#31</a></td>
@@ -270,6 +290,82 @@
 
 
 
+<h2>Вызовы</h2>
+<table class="tbl">
+  <thead><tr><th>#</th><th>Тип</th><th>Место</th><th>Когда</th><th>Связи</th></tr></thead>
+  <tbody>
+  
+    <tr onclick="location='/dispatch-one-records/callout/39'">
+      <td><a class="row-link" href="/dispatch-one-records/callout/39" onclick="event.stopPropagation()">#39</a></td>
+      <td><b>[686] Vehicle Fire</b></td>
+      <td>—</td>
+      <td class="muted">15.08.2026 05:52</td>
+      <td>
+        <details class="link-pop" onclick="event.stopPropagation()">
+          <summary>связи</summary>
+          <div class="link-pop-menu">
+            <a href="/dispatch-one-records/callout/39">Карточка вызова</a>
+            
+            
+          </div>
+        </details>
+      </td>
+    </tr>
+  
+    <tr onclick="location='/dispatch-one-records/callout/38'">
+      <td><a class="row-link" href="/dispatch-one-records/callout/38" onclick="event.stopPropagation()">#38</a></td>
+      <td><b>[686] Aircraft In Distress</b></td>
+      <td>—</td>
+      <td class="muted">15.08.2026 05:47</td>
+      <td>
+        <details class="link-pop" onclick="event.stopPropagation()">
+          <summary>связи</summary>
+          <div class="link-pop-menu">
+            <a href="/dispatch-one-records/callout/38">Карточка вызова</a>
+            
+            
+          </div>
+        </details>
+      </td>
+    </tr>
+  
+    <tr onclick="location='/dispatch-one-records/callout/37'">
+      <td><a class="row-link" href="/dispatch-one-records/callout/37" onclick="event.stopPropagation()">#37</a></td>
+      <td><b>[686] Alleyway Robbery</b></td>
+      <td>—</td>
+      <td class="muted">15.08.2026 05:23</td>
+      <td>
+        <details class="link-pop" onclick="event.stopPropagation()">
+          <summary>связи</summary>
+          <div class="link-pop-menu">
+            <a href="/dispatch-one-records/callout/37">Карточка вызова</a>
+            
+            
+          </div>
+        </details>
+      </td>
+    </tr>
+  
+    <tr onclick="location='/dispatch-one-records/callout/36'">
+      <td><a class="row-link" href="/dispatch-one-records/callout/36" onclick="event.stopPropagation()">#36</a></td>
+      <td><b>[VH] Сопровождение лимузина</b></td>
+      <td>—</td>
+      <td class="muted">15.08.2026 05:16</td>
+      <td>
+        <details class="link-pop" onclick="event.stopPropagation()">
+          <summary>связи</summary>
+          <div class="link-pop-menu">
+            <a href="/dispatch-one-records/callout/36">Карточка вызова</a>
+            
+            
+          </div>
+        </details>
+      </td>
+    </tr>
+  
+  </tbody>
+</table>
+
 
 <h2>Штрафы</h2>
 
@@ -370,6 +466,22 @@
 <table class="tbl">
   <thead><tr><th>#</th><th>Фигурант</th><th>Решение</th><th>Когда</th><th>Связи</th></tr></thead>
   <tbody>
+  
+    <tr onclick="location='/dispatch-one-records/court/61'">
+      <td><a class="row-link" href="/dispatch-one-records/court/61" onclick="event.stopPropagation()">#61</a></td>
+      <td><a class="row-link" href="/dispatch-one-records/file/Jamal%20Braxton" onclick="event.stopPropagation()">Jamal Braxton</a></td>
+      <td>Осуждён<div class="muted small">17 лет лишения свободы</div></td>
+      <td class="muted">15.08.2026 02:33</td>
+      <td>
+        <details class="link-pop" onclick="event.stopPropagation()">
+          <summary>связи</summary>
+          <div class="link-pop-menu">
+            <a href="/dispatch-one-records/court/61">Карточка суда</a>
+            <a href="/dispatch-one-records/file/Jamal%20Braxton">Досье человека</a>
+          </div>
+        </details>
+      </td>
+    </tr>
   
     <tr onclick="location='/dispatch-one-records/court/40'">
       <td><a class="row-link" href="/dispatch-one-records/court/40" onclick="event.stopPropagation()">#40</a></td>
@@ -619,7 +731,7 @@
 <h2>Что изымал</h2>
 <table class="tbl">
   <thead><tr><th>Предмет</th><th>Раз</th></tr></thead>
-  <tbody><tr><td>бутылек с раствором PCP</td><td>2</td></tr><tr><td>шприц в подстаканнике</td><td>1</td></tr><tr><td>Pistol</td><td>1</td></tr><tr><td>рецептурные таблетки без упаковки</td><td>1</td></tr><tr><td>трубка с остатками</td><td>1</td></tr><tr><td>полупустая бутылка ликера</td><td>1</td></tr><tr><td>флакон с раствором PCP</td><td>1</td></tr><tr><td>полоска мокрой бумаги</td><td>1</td></tr><tr><td>обожженая ложка</td><td>1</td></tr></tbody>
+  <tbody><tr><td>бутылек с раствором PCP</td><td>2</td></tr><tr><td>шприц в подстаканнике</td><td>1</td></tr><tr><td>Pistol</td><td>1</td></tr><tr><td>рецептурные таблетки без упаковки</td><td>1</td></tr><tr><td>трубка с остатками</td><td>1</td></tr><tr><td>полупустая бутылка ликера</td><td>1</td></tr><tr><td>флакон с раствором PCP</td><td>1</td></tr><tr><td>полоска мокрой бумаги</td><td>1</td></tr><tr><td>обожженая ложка</td><td>1</td></tr><tr><td>Assault Rifle</td><td>1</td></tr><tr><td>макательная бумажка</td><td>1</td></tr></tbody>
 </table>
 
 
@@ -628,6 +740,11 @@
 <table class="tbl">
   <thead><tr><th>#</th><th>Тип</th><th>Длит.</th><th>Задерж.</th><th>Остан.</th><th>Начало</th></tr></thead>
   <tbody>
+  
+    <tr onclick="location='/dispatch-one-records/shift/65'">
+      <td><a class="row-link" href="/dispatch-one-records/shift/65" onclick="event.stopPropagation()">#65</a></td><td>дневная</td><td>0ч 6м</td>
+      <td>0</td><td>0</td><td class="muted">15.08.2026 15:29</td>
+    </tr>
   
     <tr onclick="location='/dispatch-one-records/shift/64'">
       <td><a class="row-link" href="/dispatch-one-records/shift/64" onclick="event.stopPropagation()">#64</a></td><td>ночная</td><td>0ч 9м</td>

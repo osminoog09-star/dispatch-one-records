@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Предупреждения · LAPD</title>
+  <title>Дело — Jamal Braxton · LAPD</title>
   <meta name="generator" content="Dispatch One Records — osminoog09-star">
   <meta name="author" content="LAPD Records · osminoog09-star.github.io/dispatch-one-records">
   <link rel="stylesheet" href="/dispatch-one-records/static/style.css">
@@ -53,29 +53,123 @@
       
     
     
-<h1>Вынесенные предупреждения</h1>
+<a class="back" href="/dispatch-one-records/files">← ко всем делам</a>
 
-<section class="stats">
-  <div class="stat"><div class="num">1</div><div class="lbl">Всего предупреждений</div></div>
-</section>
+<div class="case-head">
+  <h1>Дело · Jamal Braxton</h1>
+  <span class="tag">2 записей</span>
+</div>
 
+<div class="doc-actions">
+  <button class="btn primary" onclick="downloadDoc()">📄 Скачать карточку дела (PNG)</button>
+  <span class="muted small">Картинку можно перетащить в Discord.</span>
+</div>
 
-<table class="tbl">
-  <thead><tr><th>#</th><th>Гражданин</th><th>Причина</th><th>Район</th><th>Офицер</th><th>Когда</th></tr></thead>
-  <tbody>
+<div id="doc" class="doc">
+  <div class="doc-title">
+    <div class="doc-court">ЛИЧНОЕ ДЕЛО · LAPD</div>
+    <div class="doc-county">ДОСЬЕ · JAMAL BRAXTON · ЗАПИСЕЙ: 2</div>
+  </div>
+  <div class="doc-sec-title">ЛИЧНОСТЬ</div>
+  <table class="doc-tbl">
+    <tr><td>ФИО</td><td><b>Jamal Braxton</b></td></tr>
+    <tr><td>Дата рождения</td><td>—</td></tr>
+    
+    <tr><td>Статус</td><td>не в розыске</td></tr>
+    
+    
+    
+    
+    
+  </table>
+  <div class="doc-sec-title">ХРОНОЛОГИЯ СОБЫТИЙ</div>
+  <table class="doc-tbl doc-chain-tbl">
+    <tr><th>СОБЫТИЕ</th><th>ДЕТАЛИ</th><th>ОФИЦЕР</th><th>ДАТА</th></tr>
+    
+      
+      <tr>
+        <td><b>⚖ Суд: 17 лет лишения свободы</b></td>
+        <td>—</td>
+        <td>—</td>
+        <td>2026-08-15</td>
+      </tr>
+    
+      
+      <tr>
+        <td><b>🚔 Задержание</b></td>
+        <td>Крузейд-роуд, Strawberry</td>
+        <td><a href="/dispatch-one-records/officer/1-ADAM-13">1-ADAM-13</a></td>
+        <td>2026-08-15</td>
+      </tr>
+    
+  </table>
+  <div class="doc-footer">
+    <div class="doc-seal">🗂️</div>
+    <div class="doc-cert" style="margin-left:46px">
+      Сводное личное дело. Объединяет все записи по указанному лицу из систем LAPD.
+    </div>
+    <div class="doc-form">LAPD РЕЕСТР · ЛИЧНОЕ ДЕЛО · ФОРМА CF-001</div>
+  </div>
+</div>
+
+<h2>Хронология</h2>
+<p class="muted small">Кликни событие, чтобы открыть его карточку.</p>
+
+<div class="timeline">
   
-    <tr>
-      <td>#1</td>
-      <td><a class="row-link" href="/dispatch-one-records/file/Junior%20Tyson">Junior Tyson</a></td>
-      <td>Verbal warning</td>
-      <td>Дэвис-авеню, Davis</td>
-      <td><a class="cs" href="/dispatch-one-records/officer/1-ADAM-13">1-ADAM-13</a></td>
-      <td class="muted">15.08.2026 02:42</td>
-    </tr>
+    
+    
+    <div class="tl-item tl-court">
+      <div class="tl-dot">⚖</div>
+      <div class="tl-body">
+        <div class="tl-head">
+          <b>Суд: 17 лет лишения свободы</b>
+          <a class="tl-open" href="/dispatch-one-records/court/61">открыть →</a>
+        </div>
+        <div class="muted small">
+          17 лет лишения свободы
+          
+          
+          
+           · 2026-08-15 02:33
+        </div>
+      </div>
+    </div>
   
-  </tbody>
-</table>
+    
+    
+    <div class="tl-item tl-arrest">
+      <div class="tl-dot">🚔</div>
+      <div class="tl-body">
+        <div class="tl-head">
+          <b>Задержание</b>
+          <a class="tl-open" href="/dispatch-one-records/case/45">открыть →</a>
+        </div>
+        <div class="muted small">
+          Крузейд-роуд, Strawberry
+          
+           · <a class="cs" href="/dispatch-one-records/officer/1-ADAM-13">1-ADAM-13</a>
+          
+            
+             · <a href="/dispatch-one-records/map?zone=%D0%9A%D1%80%D1%83%D0%B7%D0%B5%D0%B9%D0%B4-%D1%80%D0%BE%D1%83%D0%B4,+Strawberry">карта</a>
+          
+           · 2026-08-15 12:36
+        </div>
+      </div>
+    </div>
+  
+</div>
 
+<script src="/dispatch-one-records/static/html2canvas.min.js"></script>
+<script>
+function downloadDoc(){
+  html2canvas(document.getElementById('doc'),{scale:2,backgroundColor:'#f4f1e8'}).then(function(c){
+    var a=document.createElement('a');
+    a.download='delo_Jamal Braxton.png';
+    a.href=c.toDataURL('image/png'); a.click();
+  });
+}
+</script>
 
   </main>
 

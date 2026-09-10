@@ -1,2 +1,5 @@
-# lapd-records-updates
-LAPD Records distribution: updates and links. No application source.
+# LAPD Records
+
+Сайт: https://mercurypolice.com/records/
+
+Здесь находятся только готовые обновления лаунчера. Исходники хранятся в закрытом репозитории.

@@ -1,9 +1,9 @@
 {
-  "launcher": "1.4.24",
+  "launcher": "1.4.25",
   "agent": "1.1.4",
   "enabled": true,
   "min_launcher": "1.0.0",
-  "notes": "Mercury Police PvE: в лаунчере появилась ссылка «Новости проекта» на статью и позицию M1lash. Новое название системы — Mercury Records. Срок версии LAPD сохранён.",
+  "notes": "Единая новость прямо в лаунчере: хронология перехода, позиция M1lash и открытые вопросы. Полная статья и скриншот доступны по кнопке.",
   "installer_url": "https://github.com/osminoog09-star/dispatch-one-records/releases/latest/download/LAPD-Records-Launcher-Setup.exe",
   "launcher_url": "https://github.com/osminoog09-star/dispatch-one-records/releases/latest/download/LAPD-Records-Launcher.zip",
   "agent_url": "https://github.com/osminoog09-star/dispatch-one-records/releases/latest/download/pdcomp_sync.exe",
